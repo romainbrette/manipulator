@@ -10,8 +10,8 @@ import tkFileDialog
 from devices import *
 
 ndevices = 2
-#dev = LuigsNeumann_SM10()
-dev = Device()
+dev = LuigsNeumann_SM10()
+#dev = Device()
 microscope = VirtualDevice(dev, [7,8,9])
 manip = [VirtualDevice(dev, [1,2,3]),
          VirtualDevice(dev, [4,5,6])]
@@ -44,7 +44,6 @@ class DeviceFrame(LabelFrame):
         for i in range(3):
             self.coordinate[i] = self.dev.position(i)
             self.coordinate_text[i].set("{:7.1f}".format(self.coordinate[i]) + " um")
-        self.after(100, DeviceFrame.refresh_coordinates, self)
 
 class TransformedFrame(Frame):
     '''
@@ -67,8 +66,6 @@ class TransformedFrame(Frame):
         for i in range(3):
             self.coordinate[i] = self.dev.position(i)
             self.coordinate_text[i].set("{:7.1f}".format(self.coordinate[i]) + " um")
-        self.after(100, TransformedFrame.refresh_coordinates, self)
-
 
 frame_microscope = DeviceFrame(window, text = 'Microscope', dev = microscope)
 #frame_microscope.pack(side=LEFT, padx=10, pady=10)
@@ -88,14 +85,27 @@ for i in range(ndevices):
     cancel_button = Button(window, text="Cancel", command=window.quit)
     cancel_button.grid(row = 3, column = i+1)
 
-status_text=StringVar(value = "Nothing's happening")
+status_text=StringVar(value = "Move pipette to center")
 status = Label(window, textvariable = status_text)
 status.grid(row = 4, column = 0, columnspan = 3, pady = 30)
 
-OK_button = Button(window, text="OK", command=window.quit)
+def pipette_moved():
+    pass
+
+OK_button = Button(window, text="OK", command=pipette_moved)
 OK_button.grid(row = 5, column = 0, columnspan = 3, padx = 5, pady = 5)
 
-microscope.move(0, 0)
+
+def refresh():
+    frame_microscope.refresh_coordinates()
+    for i in range(ndevices):
+        frame_manipulator[i].refresh_coordinates()
+        frame_transformed[i].refresh_coordinates()
+    window.after(500, refresh)
+
+window.after(500, refresh)
+
+microscope.move(0, axis = 0)
 microscope.move(0, 1)
 microscope.move(0, 2)
 

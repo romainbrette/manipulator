@@ -49,7 +49,7 @@ class VirtualDevice(Device):
         if axis is None:
             axes = self.axes # then we move all axes
         else:
-            axes = [axis]
+            axes = [self.axes[axis]]
 
         for axis in axes:
             self.dev.move(x, axis, speed)

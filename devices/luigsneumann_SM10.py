@@ -62,7 +62,7 @@ class LuigsNeumann_SM10(SerialDevice):
 
         return answer[4:4+nbytes_answer]
 
-    def position(self, axis):
+    def position(self, axis = None):
         '''
         Current position along an axis.
 
@@ -77,7 +77,7 @@ class LuigsNeumann_SM10(SerialDevice):
         res = self.send_command('0101', [axis], 4)
         return struct.unpack('f', res)[0]
 
-    def move(self, axis, x, speed = None):
+    def move(self, x, axis = None, speed = None):
         '''
         Moves the device axis to position x, with optional speed.
         It uses the fast movement command (speed not used).
