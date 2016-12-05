@@ -11,20 +11,27 @@ class Device(object):
     def __init__(self):
         pass
 
-    def position(self):
+    def position(self, axis):
         '''
-        Returns
-        -------
-        The current XYZ position of the device in um.
-        '''
-        pass
-
-    def move(self,v, speed = None):
-        '''
-        Moves the device to position v, with optional speed.
+        Current position along an axis.
 
         Parameters
         ----------
-        v : x,y,z vector (array) in um.
+        axis : axis number (starting at 1)
+
+        Returns
+        -------
+        The current position of the device axis in um.
+        '''
+        pass
+
+    def move(self, axis, x, speed = None):
+        '''
+        Moves the device axis to position x, with optional speed.
+
+        Parameters
+        ----------
+        axis: axis number
+        x : target position in um.
         speed : optional speed in um/s.
         '''

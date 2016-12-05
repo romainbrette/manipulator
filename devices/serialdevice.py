@@ -5,6 +5,7 @@ a device that communicates through the serial port.
 from device import Device
 import serial
 import ctypes
+from serial.tools import list_ports
 
 __all__ = ['SerialDevice']
 
@@ -12,13 +13,18 @@ class SerialDevice(Device):
     '''
     A device that communicates through the serial port.
     '''
-    def __init__(self):
+    def __init__(self, name = None):
         Device.__init__(self)
 
         # Open the serial port
-        #self.port = serial.Serial(port='COM5', baudrate=38400, bytesize=serial.EIGHTBITS, parity=serial.PARITY_NONE,
-        #                     stopbits=serial.STOPBITS_ONE, timeout=self.timeOut)
-        #except serial.SerialException
+        self.port = serial.Serial()
+
+        if name is None: # looks for USB serial device
+            for port in list_ports.grep('USB Serial Port'):
+                name,_,_ = port
+                break # just the first one
+
+        self.port.port = name
 
     def __del__(self):
         self.port.close()
