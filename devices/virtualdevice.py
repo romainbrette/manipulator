@@ -47,9 +47,9 @@ class VirtualDevice(Device):
         speed : optional speed in um/s.
         '''
         if axis is None:
-            axes = self.axes # then we move all axes
+            # then we move all axes
+            for i, axis in enumerate(self.axes):
+                self.dev.move(x[i], axis, speed)
         else:
-            axes = [self.axes[axis]]
+            self.dev.move(x, self.axes[axis], speed)
 
-        for axis in axes:
-            self.dev.move(x, axis, speed)

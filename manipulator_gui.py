@@ -11,8 +11,8 @@ from devices import *
 from numpy import array
 
 ndevices = 2
-#dev = LuigsNeumann_SM10()
-dev = Device()
+dev = LuigsNeumann_SM10()
+#dev = Device()
 microscope = VirtualDevice(dev, [7,8,9])
 manip = [VirtualDevice(dev, [1,2,3]),
          VirtualDevice(dev, [4,5,6])]
@@ -72,6 +72,12 @@ frame_microscope = DeviceFrame(window, text = 'Microscope', dev = microscope)
 #frame_microscope.pack(side=LEFT, padx=10, pady=10)
 frame_microscope.grid(row=1, column = 0, padx = 5, pady = 5)
 
+def move_manip():
+    x = array([microscope.position(i) for i in range(3)])
+    transformed[0].move(x)
+
+go_command = [move_manip, window.quit]
+
 frame_manipulator = []
 frame_transformed = []
 go_button = []
@@ -81,9 +87,9 @@ for i in range(ndevices):
     frame_manipulator[i].grid(row=0, column = i+1, padx = 5, pady = 5) #pack(side=LEFT, padx=10, pady=10)
     frame_transformed.append(TransformedFrame(window, dev=transformed[i]))
     frame_transformed[i].grid(row=1, column=i + 1, padx = 5, pady = 5)  # pack(side=LEFT, padx=10, pady=10)
-    go_button = Button(window, text="Go", command=window.quit)
+    go_button = Button(window, text="Go", command=go_command[i])
     go_button.grid(row = 2, column = i+1)
-    cancel_button = Button(window, text="Cancel", command=window.quit)
+    cancel_button = Button(window, text="Withdraw", command=window.quit)
     cancel_button.grid(row = 3, column = i+1)
 
 status_text=StringVar(value = "Move pipette to center")
@@ -103,11 +109,14 @@ def pipette_moved():
     # Move to new axis
     if n>0:
         manip[0].move(old_position, axis = n-1)
+        microscope.move(x[n-1])
+        pass
     if n<3:
         old_position = manip[0].position(axis = n)
-        manip[0].move(old_position + 1000.,axis = n)
+        manip[0].move(old_position + 500.,axis = n)
     n+= 1
     if n == 4: # Done
+        print x
         transformed[0].calibrate(x,y)
 
 OK_button = Button(window, text="OK", command=pipette_moved)
@@ -123,8 +132,9 @@ def refresh():
 
 window.after(500, refresh)
 
+"""
 microscope.move(0, axis = 0)
 microscope.move(0, 1)
 microscope.move(0, 2)
-
+"""
 window.mainloop()

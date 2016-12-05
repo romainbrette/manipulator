@@ -64,6 +64,6 @@ class Manipulator(object): # could be a device
             centered, X offset, Y offset, Z offset
         '''
         for i in range(3):
-            self.M[:,i] = 0.001*(x[i+1]-x[0])
+            self.M[:,i] = 0.002*(x[i+1]-x[0])
         self.x0 = x[0]-dot(self.M, y[0])
         self.Minv=inv(self.M)
