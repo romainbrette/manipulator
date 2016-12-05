@@ -10,11 +10,10 @@ import tkFileDialog
 from devices import *
 
 ndevices = 2
-
-dev = Device()
+dev = LuigsNeumann_SM10()
 microscope = VirtualDevice(dev, [7,8,9])
-manip_left = VirtualDevice(dev, [1,2,3])
-manip_right = VirtualDevice(dev, [4,5,6])
+manip = [VirtualDevice(dev, [1,2,3]),
+         VirtualDevice(dev, [4,5,6])]
 
 window = Tk()
 window.title('Manipulator')
@@ -40,21 +39,23 @@ class DeviceFrame(LabelFrame):
     def refresh_coordinates(self):
         for i in range(3):
             self.coordinate[i] = self.dev.position(i)
-            self.coordinate_text[i].set(str(self.coordinate[i]) + " um")
+            self.coordinate_text[i].set("{:7.1f}".format(self.coordinate[i]) + " um")
         self.after(100, DeviceFrame.refresh_coordinates, self)
 
 
-frame_microscope = DeviceFrame(window, text = 'Microscope', dev = dev)
+frame_microscope = DeviceFrame(window, text = 'Microscope', dev = microscope)
 frame_microscope.pack(side=LEFT, padx=10, pady=10)
 
 frame_manipulator = []
 for i in range(ndevices):
-    frame_manipulator.append(DeviceFrame(window, text = device_name[i], dev = dev))
+    frame_manipulator.append(DeviceFrame(window, text = device_name[i], dev = manip[i]))
     frame_manipulator[i].pack(side=LEFT, padx=10, pady=10)
 
-"""
 OK=Button(window, text="OK", command=window.quit)
 OK.pack()
-"""
+
+microscope.move(0, 100)
+microscope.move(1, -100)
+microscope.move(2, 0)
 
 window.mainloop()
