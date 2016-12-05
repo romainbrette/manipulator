@@ -2,6 +2,7 @@
 A class for access to a particular manipulator managed by a device
 """
 from device import *
+from numpy import array
 
 __all__ = ['VirtualDevice']
 
@@ -18,7 +19,7 @@ class VirtualDevice(Device):
         self.dev = dev
         self.axes = axes
 
-    def position(self, axis):
+    def position(self, axis = None):
         '''
         Current position along an axis.
 
@@ -30,9 +31,12 @@ class VirtualDevice(Device):
         -------
         The current position of the device axis in um.
         '''
-        return self.dev.position(self.axes[axis])
+        if axis is None: # all positions in a vector
+            return array([self.dev.position(self.axes[axis]) for axis in range(self.naxes)])
+        else:
+            return self.dev.position(self.axes[axis])
 
-    def move(self, axis, x, speed=None):
+    def move(self, x, axis = None, speed=None):
         '''
         Moves the device axis to position x, with optional speed.
 
@@ -42,4 +46,10 @@ class VirtualDevice(Device):
         x : target position in um.
         speed : optional speed in um/s.
         '''
-        self.dev.move(self.axes[axis], x, speed)
+        if axis is None:
+            axes = self.axes # then we move all axes
+        else:
+            axes = [axis]
+
+        for axis in axes:
+            self.dev.move(x, axis, speed)

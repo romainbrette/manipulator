@@ -4,6 +4,7 @@ Generic Device class for manipulators
 Notes:
     It could be better to store the position, and have an update() function.
 """
+from numpy import array
 
 __all__ = ['Device']
 
@@ -11,7 +12,7 @@ class Device(object):
     def __init__(self):
         pass
 
-    def position(self, axis):
+    def position(self, axis = None):
         '''
         Current position along an axis.
 
@@ -25,7 +26,7 @@ class Device(object):
         '''
         return 0. # fake
 
-    def move(self, axis, x, speed = None):
+    def move(self, x, axis = None, speed = None):
         '''
         Moves the device axis to position x, with optional speed.
 
