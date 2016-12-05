@@ -4,6 +4,7 @@ Device class for the Luigs and Neumann SM-10 manipulator controller.
 Adapted from Michael Graupner's LandNSM5 class.
 """
 from serialdevice import SerialDevice
+from serial.tools import list_ports
 import serial
 import binascii
 import time
@@ -40,18 +41,11 @@ class LuigsNeumann_SM10(SerialDevice):
         # Convert hex string to bytes
         sendbytes = binascii.unhexlify(send)
 
-        nLoops = 0
-        while True:
-            # Write, wait, and read
-            self.port.write(sendbytes)
-            time.sleep(0.05) # 50 us; could be changed
-            answer = self.port.read(nbytes_answer)
+        self.port.flush()
+        self.port.write(sendbytes)
+        answer = self.port.read(nbytes_answer)
 
-            # Compare answer with answer mask, if true: break, if false : redo
-            if answer[:len(expected)] == expected :
-				break
-			if nLoops >= self.maxLoops:
-				print 'Command was not successful!'
-				break
-			nLoops += 1
-		return answer
+        if answer[:len(expected)] != expected :
+            raise serial.SerialException # TODO: something a bit more explicit!
+
+        return answer
