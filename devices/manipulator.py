@@ -4,6 +4,7 @@ Manipulator class contains access to a manipulator and transformed coordinates.
 from virtualdevice import VirtualDevice
 from device import Device
 from numpy import array, ones, zeros, eye, dot
+from numpy.linalg import inv
 
 __all__ = ['Manipulator']
 
@@ -56,3 +57,13 @@ class Manipulator(object): # could be a device
         ytarget = dot(self.Minv, x - self.x0)
         for i in range(3):
             self.dev.move(ytarget[i], i, speed)
+
+    def calibrate(self, x, y):
+        '''
+        x and y are two lists of 4 vectors, corresponding to
+            centered, X offset, Y offset, Z offset
+        '''
+        for i in range(3):
+            self.M[:,i] = 0.001*(x[i+1]-x[0])
+        self.x0 = x[0]-dot(self.M, y[0])
+        self.Minv=inv(self.M)

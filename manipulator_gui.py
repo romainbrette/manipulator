@@ -8,10 +8,11 @@ http://fsincere.free.fr/isn/python/cours_python_tkinter.php
 from Tkinter import *
 import tkFileDialog
 from devices import *
+from numpy import array
 
 ndevices = 2
-dev = LuigsNeumann_SM10()
-#dev = Device()
+#dev = LuigsNeumann_SM10()
+dev = Device()
 microscope = VirtualDevice(dev, [7,8,9])
 manip = [VirtualDevice(dev, [1,2,3]),
          VirtualDevice(dev, [4,5,6])]
@@ -89,8 +90,25 @@ status_text=StringVar(value = "Move pipette to center")
 status = Label(window, textvariable = status_text)
 status.grid(row = 4, column = 0, columnspan = 3, pady = 30)
 
+n = 0
+x = [None, None, None, None]
+y = [None, None, None, None]
+
 def pipette_moved():
-    pass
+    global n, old_position
+    # Store positions
+    x[n] = array([microscope.position(i) for i in range(3)])
+    transformed[0].update()
+    y[n] = transformed[0].y
+    # Move to new axis
+    if n>0:
+        manip[0].move(old_position, axis = n-1)
+    if n<3:
+        old_position = manip[0].position(axis = n)
+        manip[0].move(old_position + 1000.,axis = n)
+    n+= 1
+    if n == 4: # Done
+        transformed[0].calibrate(x,y)
 
 OK_button = Button(window, text="OK", command=pipette_moved)
 OK_button.grid(row = 5, column = 0, columnspan = 3, padx = 5, pady = 5)
