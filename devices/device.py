@@ -23,7 +23,7 @@ class Device(object):
         -------
         The current position of the device axis in um.
         '''
-        pass
+        return 0. # fake
 
     def move(self, axis, x, speed = None):
         '''
@@ -35,3 +35,4 @@ class Device(object):
         x : target position in um.
         speed : optional speed in um/s.
         '''
+        pass
