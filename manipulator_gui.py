@@ -53,7 +53,7 @@ class DeviceFrame(LabelFrame):
     def refresh_coordinates(self):
         for i in range(3):
             self.coordinate[i] = self.dev.position(i)
-            self.coordinate_text[i].set(self.coordinate[i]) #"{:7.1f}".format(self.coordinate[i]))# + " um")
+            self.coordinate_text[i].set("{:7.1f}".format(self.coordinate[i])) #"{:7.1f}".format(self.coordinate[i]))# + " um")
             #self.coordinate_text[i].set("{:7.1f}".format(self.coordinate[i]) + " um")
 
     def move(self, j):
@@ -90,15 +90,15 @@ class TransformedFrame(LabelFrame):
             #self.coordinate_text[i].set("{:7.1f}".format(self.coordinate[i]) + " um")
 
     def move(self, j):
-        self.dev.move(float(self.coordinate_text[j].get()), axis = j)
+        self.dev.move(float(self.coordinate_text[j].get()), axis = j) # this does not work!
 
 frame_microscope = DeviceFrame(window, text = 'Microscope', dev = microscope)
 #frame_microscope.pack(side=LEFT, padx=10, pady=10)
-frame_microscope.grid(row=4, column = 0, padx = 5, pady = 5)
+frame_microscope.grid(row=1, column = 0, padx = 5, pady = 5)
 def zero_microscope():
     pass
 
-Button(window, text="Zero", command=zero_microscope).grid(row=5, column = 0, padx = 5, pady = 5)
+Button(window, text="Zero", command=zero_microscope).grid(row=2, column = 0)
 
 def move_manip():
     x = array([microscope.position(i) for i in range(3)])
@@ -128,15 +128,14 @@ for i in range(ndevices):
     #frame_manipulator.append(DeviceFrame(window, text = device_name[i], dev = manip[i]))
     #frame_manipulator[i].grid(row=0, column = i+1, padx = 5, pady = 5) #pack(side=LEFT, padx=10, pady=10)
     frame_transformed.append(TransformedFrame(window, text = device_name[i], dev=transformed[i]))
-    frame_transformed[i].grid(row=4, column=i + 1, padx = 5, pady = 5)  # pack(side=LEFT, padx=10, pady=10)
-    Button(window, text="Calibrate", command=lambda: None).grid(row = 1, column = i+1)
-    Button(window, text="Change pipette", command=lambda: None).grid(row = 2, column = i+1)
+    frame_transformed[i].grid(row=1, column=i + 1, padx = 5, pady = 5)  # pack(side=LEFT, padx=10, pady=10)
+    Button(window, text="Calibrate", command=lambda: None).grid(row = 4, column = i+1)
     go_button = Button(window, text="Go", command=go_command[i])
-    go_button.grid(row = 5, column = i+1)
-    cancel_button = Button(window, text="Withdraw", command=window.quit)
-    cancel_button.grid(row = 6, column = i+1)
+    go_button.grid(row = 2, column = i+1)
+    cancel_button = Button(window, text="Change pipette", command=window.quit)
+    cancel_button.grid(row = 3, column = i+1)
     lock_button = Checkbutton(window, text="Locked", variable = locked[i], command=lock_command[i])
-    lock_button.grid(row=3, column=i + 1)
+    lock_button.grid(row=0, column=i + 1)
 
 n = 0
 x = zeros((4,3))
@@ -162,7 +161,7 @@ def pipette_moved():
         pickle.dump(cfg, open("config.cfg","wb"))
 
 statusframe = LabelFrame(window, text='Status')
-statusframe.grid(row = 7, column = 0, columnspan = 3, padx = 5, pady = 30, sticky = W+E)
+statusframe.grid(row = 5, column = 0, columnspan = 3, padx = 5, pady = 30, sticky = W+E)
 Label(statusframe, text='Ready to patch!').pack(padx = 5, pady = 5)
 Button(statusframe, text="OK", command=pipette_moved).pack()
 #OK_button.grid(row = 8, column = 0, columnspan = 3, padx = 5, pady = 5)
