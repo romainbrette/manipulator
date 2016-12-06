@@ -9,30 +9,26 @@ GUI
 ---
 1) Start-up
 * Load previous configuration file.
+* Move all manipulators to zero (X) (home) (= withdraw)
+    - if zero has changed, redo calibration; save zero
+* We might want to measure the course length of motors, with no pipette
 
-2) Primary calibration
-All is saved to configuration file (pickle)
-
-2a) Motor calibration
-If not calibrated yet:
-* Find out the starting points of the motors (ask user or automatic)
-* Zero position of the microscope
-If calibrated:
-* Go to zeros
-* Check whether zeros are actually reached, and no more movement is possible (-> recalibrate)
-
-2b) Manipulator calibration
-If not calibrated yet; or recalibrate button (or menu):
-* Center pipette
-* Check whether microscope has moved (but no big deal)
-* (Optional) Indicate angle estimate. Used for initial guess.
-* Move along X slowly, ask to follow with microscope.
-* Check whether pipette has moved (-> fail).
+2) Manipulator calibration (calibrate)
+If not calibrated yet, or recalibrate button, or triggered calibration (fail):
+* If not triggered by button, display dialog (ok/cancel)
+* Move microscope to zero + 2 mm Z
+* Withdraw pipette
+* User: center pipette
+* (Optional) Check whether microscope has moved
+* Move along X slowly.
+* Move microscope (guess), possibly assuming 30-45° angle
+* Display status text: move the microscope/stage
+* (Optional) Check whether pipette has moved (-> fail).
 * Check whether microscope movement has same length.
 * Repeat for Y and Z
 * Calculate M and x0
 
-3) Secondary calibration
+3) Secondary calibration (change pipette)
 If not calibrated or recalibrate button:
 * Move microscope to zero
 * Move pipette in (guess based on previous position)

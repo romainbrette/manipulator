@@ -59,31 +59,46 @@ class DeviceFrame(LabelFrame):
     def move(self, j):
         self.dev.move(float(self.coordinate_text[j].get()), axis = j)
 
-class TransformedFrame(Frame):
+class TransformedFrame(LabelFrame):
     '''
     A named frame that displays device coordinates
     '''
     def __init__(self, master = None, cnf = {}, dev = None, **kw):
-        Frame.__init__(self, master, cnf, **kw)
+        LabelFrame.__init__(self, master, cnf, **kw)
 
         self.dev = dev # device
         self.coordinate = [0,0,0]
         self.coordinate_text = [StringVar(), StringVar(), StringVar()]
         self.refresh_coordinates()
         self.coordinate_label = [None, None, None]
-        for j in range(3):
-            self.coordinate_label[j] = Label(self, textvariable = self.coordinate_text[j])
-            self.coordinate_label[j].pack()
+        #for j in range(3):
+        #    self.coordinate_label[j] = Label(self, textvariable = self.coordinate_text[j])
+        #    self.coordinate_label[j].pack()
+
+        self.coordinate_label[0] = Spinbox(self, from_=-50000, to=50000, increment=10, textvariable=self.coordinate_text[0], command=lambda: self.move(0))
+        self.coordinate_label[0].pack()
+        self.coordinate_label[1] = Spinbox(self, from_=-50000, to=50000, increment=10, textvariable=self.coordinate_text[1], command=lambda: self.move(1))
+        self.coordinate_label[1].pack()
+        self.coordinate_label[2] = Spinbox(self, from_=-50000, to=50000, increment=10, textvariable=self.coordinate_text[2], command=lambda: self.move(2))
+        self.coordinate_label[2].pack()
 
     def refresh_coordinates(self):
         self.dev.update()
         for i in range(3):
             self.coordinate[i] = self.dev.position(i)
-            self.coordinate_text[i].set("{:7.1f}".format(self.coordinate[i]) + " um")
+            self.coordinate_text[i].set("{:7.1f}".format(self.coordinate[i]))
+            #self.coordinate_text[i].set("{:7.1f}".format(self.coordinate[i]) + " um")
+
+    def move(self, j):
+        self.dev.move(float(self.coordinate_text[j].get()), axis = j)
 
 frame_microscope = DeviceFrame(window, text = 'Microscope', dev = microscope)
 #frame_microscope.pack(side=LEFT, padx=10, pady=10)
-frame_microscope.grid(row=1, column = 0, padx = 5, pady = 5)
+frame_microscope.grid(row=4, column = 0, padx = 5, pady = 5)
+def zero_microscope():
+    pass
+
+Button(window, text="Zero", command=zero_microscope).grid(row=5, column = 0, padx = 5, pady = 5)
 
 def move_manip():
     x = array([microscope.position(i) for i in range(3)])
@@ -100,10 +115,9 @@ def lock_manip():
         transformed[0].update()
         x = array([microscope.position(i) for i in range(3)])
         locked_position = transformed[0].position() - x
-        print "locked at",locked_position
 
-go_command = [move_manip, window.quit]
-lock_command = [lock_manip, window.quit]
+go_command = [move_manip, lambda: None]
+lock_command = [lock_manip, lambda: None]
 
 frame_manipulator = []
 frame_transformed = []
@@ -111,20 +125,18 @@ go_button = []
 cancel_button = []
 locked = [IntVar(), IntVar()]
 for i in range(ndevices):
-    frame_manipulator.append(DeviceFrame(window, text = device_name[i], dev = manip[i]))
-    frame_manipulator[i].grid(row=0, column = i+1, padx = 5, pady = 5) #pack(side=LEFT, padx=10, pady=10)
-    frame_transformed.append(TransformedFrame(window, dev=transformed[i]))
-    frame_transformed[i].grid(row=1, column=i + 1, padx = 5, pady = 5)  # pack(side=LEFT, padx=10, pady=10)
+    #frame_manipulator.append(DeviceFrame(window, text = device_name[i], dev = manip[i]))
+    #frame_manipulator[i].grid(row=0, column = i+1, padx = 5, pady = 5) #pack(side=LEFT, padx=10, pady=10)
+    frame_transformed.append(TransformedFrame(window, text = device_name[i], dev=transformed[i]))
+    frame_transformed[i].grid(row=4, column=i + 1, padx = 5, pady = 5)  # pack(side=LEFT, padx=10, pady=10)
+    Button(window, text="Calibrate", command=lambda: None).grid(row = 1, column = i+1)
+    Button(window, text="Change pipette", command=lambda: None).grid(row = 2, column = i+1)
     go_button = Button(window, text="Go", command=go_command[i])
-    go_button.grid(row = 2, column = i+1)
+    go_button.grid(row = 5, column = i+1)
     cancel_button = Button(window, text="Withdraw", command=window.quit)
-    cancel_button.grid(row = 3, column = i+1)
+    cancel_button.grid(row = 6, column = i+1)
     lock_button = Checkbutton(window, text="Locked", variable = locked[i], command=lock_command[i])
-    lock_button.grid(row=4, column=i + 1)
-
-status_text=StringVar(value = "Move pipette to center")
-status = Label(window, textvariable = status_text)
-status.grid(row = 5, column = 0, columnspan = 3, pady = 30)
+    lock_button.grid(row=3, column=i + 1)
 
 n = 0
 x = zeros((4,3))
@@ -149,9 +161,11 @@ def pipette_moved():
         cfg = {'x' : x, 'y' : y}
         pickle.dump(cfg, open("config.cfg","wb"))
 
-
-OK_button = Button(window, text="OK", command=pipette_moved)
-OK_button.grid(row = 6, column = 0, columnspan = 3, padx = 5, pady = 5)
+statusframe = LabelFrame(window, text='Status')
+statusframe.grid(row = 7, column = 0, columnspan = 3, padx = 5, pady = 30, sticky = W+E)
+Label(statusframe, text='Ready to patch!').pack(padx = 5, pady = 5)
+Button(statusframe, text="OK", command=pipette_moved).pack()
+#OK_button.grid(row = 8, column = 0, columnspan = 3, padx = 5, pady = 5)
 
 cfg = pickle.load(open("config.cfg","rb"))
 x = cfg['x']
@@ -162,7 +176,7 @@ def refresh():
     global locked_position
     frame_microscope.refresh_coordinates()
     for i in range(ndevices):
-        frame_manipulator[i].refresh_coordinates()
+        #frame_manipulator[i].refresh_coordinates()
         frame_transformed[i].refresh_coordinates()
     if locked[0].get():
         # manipulator 1 is locked to the camera view
