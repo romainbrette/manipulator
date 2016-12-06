@@ -42,7 +42,10 @@ class Manipulator(object): # could be a device
         -------
         The current position of the device axis in um.
         '''
-        return self.x[axis]
+        if axis is None:
+            return self.x
+        else:
+            return self.x[axis]
 
     def move(self, x, axis = None, speed=None):
         '''
