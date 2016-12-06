@@ -1,0 +1,48 @@
+General notes
+-------------
+Some advice for Tk programming here:
+http://stackoverflow.com/questions/17466561/best-way-to-structure-a-tkinter-application
+http://apprendre-python.com/page-tkinter-interface-graphique-python-tutoriel
+http://fsincere.free.fr/isn/python/cours_python_tkinter.php
+
+GUI
+---
+1) Start-up
+* Load previous configuration file.
+
+2) Primary calibration
+All is saved to configuration file (pickle)
+
+2a) Motor calibration
+If not calibrated yet:
+* Find out the starting points of the motors (ask user or automatic)
+* Zero position of the microscope
+If calibrated:
+* Go to zeros
+* Check whether zeros are actually reached, and no more movement is possible (-> recalibrate)
+
+2b) Manipulator calibration
+If not calibrated yet; or recalibrate button (or menu):
+* Center pipette
+* Check whether microscope has moved (but no big deal)
+* (Optional) Indicate angle estimate. Used for initial guess.
+* Move along X slowly, ask to follow with microscope.
+* Check whether pipette has moved (-> fail).
+* Check whether microscope movement has same length.
+* Repeat for Y and Z
+* Calculate M and x0
+
+3) Secondary calibration
+If not calibrated or recalibrate button:
+* Move microscope to zero
+* Move pipette in (guess based on previous position)
+* User: center pipette
+* Calculate x0
+* Check whether pipette is in axis, otherwise primary recalibration
+
+4) Manipulator movement (GO)
+* Check if calibrated; otherwise calibrate (dialog)
+
+5) Manipulator withdrawal (WITHDRAW)
+* Move home
+* Status = not calibrated
