@@ -12,8 +12,8 @@ from numpy import array, zeros
 import pickle
 
 ndevices = 2
-dev = LuigsNeumann_SM10()
-#dev = Device()
+#dev = LuigsNeumann_SM10()
+dev = Device()
 microscope = VirtualDevice(dev, [7,8,9])
 manip = [VirtualDevice(dev, [1,2,3]),
          VirtualDevice(dev, [4,5,6])]
@@ -38,14 +38,24 @@ class DeviceFrame(LabelFrame):
         self.coordinate_text = [StringVar(), StringVar(), StringVar()]
         self.refresh_coordinates()
         self.coordinate_label = [None, None, None]
-        for j in range(3):
-            self.coordinate_label[j] = Label(self, textvariable = self.coordinate_text[j])
-            self.coordinate_label[j].pack()
+        #for j in range(3):
+        #self.coordinate_label[j] = Label(self, textvariable = self.coordinate_text[j])
+        self.coordinate_label[0] = Spinbox(self, from_=-50000, to=50000, increment=10, textvariable=self.coordinate_text[0], command=lambda: self.move(0))
+        self.coordinate_label[0].pack()
+        self.coordinate_label[1] = Spinbox(self, from_=-50000, to=50000, increment=10, textvariable=self.coordinate_text[1], command=lambda: self.move(1))
+        self.coordinate_label[1].pack()
+        self.coordinate_label[2] = Spinbox(self, from_=-50000, to=50000, increment=10, textvariable=self.coordinate_text[2], command=lambda: self.move(2))
+        self.coordinate_label[2].pack()
 
     def refresh_coordinates(self):
         for i in range(3):
             self.coordinate[i] = self.dev.position(i)
-            self.coordinate_text[i].set("{:7.1f}".format(self.coordinate[i]) + " um")
+            self.coordinate_text[i].set(self.coordinate[i]) #"{:7.1f}".format(self.coordinate[i]))# + " um")
+            #self.coordinate_text[i].set("{:7.1f}".format(self.coordinate[i]) + " um")
+
+    def move(self, j):
+        print j,self.coordinate_text[j].get()
+        self.dev.move(float(self.coordinate_text[j].get()), axis = j)
 
 class TransformedFrame(Frame):
     '''
@@ -125,6 +135,10 @@ def pipette_moved():
 OK_button = Button(window, text="OK", command=pipette_moved)
 OK_button.grid(row = 5, column = 0, columnspan = 3, padx = 5, pady = 5)
 
+cfg = pickle.load(open("config.cfg","rb"))
+x = cfg['x']
+y = cfg['y']
+transformed[0].calibrate(x,y)
 
 def refresh():
     frame_microscope.refresh_coordinates()
