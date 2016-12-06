@@ -12,8 +12,8 @@ from numpy import array, zeros
 import pickle
 
 ndevices = 2
-dev = LuigsNeumann_SM10()
-#dev = Device()
+#dev = LuigsNeumann_SM10()
+dev = Device()
 microscope = VirtualDevice(dev, [7,8,9])
 manip = [VirtualDevice(dev, [1,2,3]),
          VirtualDevice(dev, [4,5,6])]
@@ -94,12 +94,13 @@ locked = False
 def lock_manip():
     # Lock the manipulator to the camera view
     # Should be a check
-    global locked, locked_position
-    locked = True
-    transformed[0].update()
-    x = array([microscope.position(i) for i in range(3)])
-    locked_position = transformed[0].position() - x
-    print "locked at",locked_position
+    global locked_position
+
+    if locked[0].get():
+        transformed[0].update()
+        x = array([microscope.position(i) for i in range(3)])
+        locked_position = transformed[0].position() - x
+        print "locked at",locked_position
 
 go_command = [move_manip, window.quit]
 lock_command = [lock_manip, window.quit]
@@ -108,6 +109,7 @@ frame_manipulator = []
 frame_transformed = []
 go_button = []
 cancel_button = []
+locked = [IntVar(), IntVar()]
 for i in range(ndevices):
     frame_manipulator.append(DeviceFrame(window, text = device_name[i], dev = manip[i]))
     frame_manipulator[i].grid(row=0, column = i+1, padx = 5, pady = 5) #pack(side=LEFT, padx=10, pady=10)
@@ -117,7 +119,7 @@ for i in range(ndevices):
     go_button.grid(row = 2, column = i+1)
     cancel_button = Button(window, text="Withdraw", command=window.quit)
     cancel_button.grid(row = 3, column = i+1)
-    lock_button = Button(window, text="Lock", command=lock_command[i])
+    lock_button = Checkbutton(window, text="Locked", variable = locked[i], command=lock_command[i])
     lock_button.grid(row=4, column=i + 1)
 
 status_text=StringVar(value = "Move pipette to center")
@@ -162,7 +164,7 @@ def refresh():
     for i in range(ndevices):
         frame_manipulator[i].refresh_coordinates()
         frame_transformed[i].refresh_coordinates()
-    if locked:
+    if locked[0].get():
         # manipulator 1 is locked to the camera view
         x = array([microscope.position(i) for i in range(3)])
         transformed[0].move(x+locked_position)
