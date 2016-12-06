@@ -8,7 +8,7 @@ http://fsincere.free.fr/isn/python/cours_python_tkinter.php
 from Tkinter import *
 import tkFileDialog
 from devices import *
-from numpy import array
+from numpy import array, zeros
 import pickle
 
 ndevices = 2
@@ -98,8 +98,8 @@ status = Label(window, textvariable = status_text)
 status.grid(row = 4, column = 0, columnspan = 3, pady = 30)
 
 n = 0
-x = [None, None, None, None]
-y = [None, None, None, None]
+x = zeros((4,3))
+y = zeros((4,3))
 
 def pipette_moved():
     global n, old_position
@@ -107,6 +107,7 @@ def pipette_moved():
     x[n] = array([microscope.position(i) for i in range(3)])
     transformed[0].update()
     y[n] = transformed[0].y
+    print y[n]
     # Move to new axis
     if n<3:
         old_position = manip[0].position(axis = n)
@@ -114,6 +115,8 @@ def pipette_moved():
     n+= 1
     if n == 4: # Done
         transformed[0].calibrate(x,y)
+        microscope.move(x[0])
+        manip[0].move(y[0])
         # Save configuration
         cfg = {'x' : x, 'y' : y}
         pickle.dump(cfg, open("config.cfg","wb"))

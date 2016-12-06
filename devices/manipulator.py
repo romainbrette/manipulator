@@ -63,7 +63,7 @@ class Manipulator(object): # could be a device
         x and y are two lists of 4 vectors, corresponding to
             centered, X offset, Y offset, Z offset
         '''
-        for i in range(1,4):
+        for i in range(3):
             self.M[:,i] = 0.002*(x[i+1]-x[i])
         self.x0 = x[0]-dot(self.M, y[0])
         self.Minv=inv(self.M)
