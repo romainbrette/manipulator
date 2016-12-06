@@ -108,13 +108,9 @@ def pipette_moved():
     transformed[0].update()
     y[n] = transformed[0].y
     # Move to new axis
-    if n>0:
-        manip[0].move(old_position, axis = n-1)
-        microscope.move(x[n-1])
-        pass
     if n<3:
         old_position = manip[0].position(axis = n)
-        manip[0].move(old_position + 500.,axis = n)
+        manip[0].move(old_position + 500.,axis = n) # relative move
     n+= 1
     if n == 4: # Done
         transformed[0].calibrate(x,y)
