@@ -9,6 +9,7 @@ from Tkinter import *
 import tkFileDialog
 from devices import *
 from numpy import array
+import pickle
 
 ndevices = 2
 dev = LuigsNeumann_SM10()
@@ -116,8 +117,11 @@ def pipette_moved():
         manip[0].move(old_position + 500.,axis = n)
     n+= 1
     if n == 4: # Done
-        print x
         transformed[0].calibrate(x,y)
+        # Save configuration
+        cfg = {'x' : x, 'y' : y}
+        pickle.dump(cfg, open("config.cfg","wb"))
+
 
 OK_button = Button(window, text="OK", command=pipette_moved)
 OK_button.grid(row = 5, column = 0, columnspan = 3, padx = 5, pady = 5)
