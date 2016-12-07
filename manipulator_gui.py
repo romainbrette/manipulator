@@ -3,8 +3,8 @@ Software to control SM-10 micromanipulator controller
 
 TODO:
 * Group moves (in LN SM 10)
+* Move up/down: continuous increase?
 * Change pipette
-* Change move in UnitFrame (spinbox)
 * Safer moves
 * Memories with editable names
 '''
@@ -38,6 +38,26 @@ class MemoryFrame(Frame):
         self.master.master.display_status("Moving to position '" + self.name + "'")
 
 
+class CoordinateFrame(Frame):
+    '''
+    A frame for displaying a coordinate and moving up/down
+    '''
+    def __init__(self, master=None, value = None, callback = None, cnf={}, dev=None, **kw):
+        Frame.__init__(self, master, cnf, **kw)
+
+        self.master = master
+        self.callback = callback
+        Label(self, textvariable=value, width = 8).pack(side = LEFT)
+        Button(self, text='-', command=self.minus).pack(side=LEFT)
+        Button(self, text='+', command=self.plus).pack(side=RIGHT)
+
+    def minus(self):
+        self.callback(-1)
+
+    def plus(self):
+        self.callback(1)
+
+
 class UnitFrame(LabelFrame):
     '''
     A named frame that displays unit coordinates.
@@ -59,21 +79,19 @@ class UnitFrame(LabelFrame):
         self.coordinate = [0,0,0]
         self.coordinate_text = [StringVar(), StringVar(), StringVar()]
         self.refresh_coordinates()
-        self.coordinate_label = [None, None, None]
-        self.coordinate_label[0] = Spinbox(self, from_=-50000, to=50000, increment=10, textvariable=self.coordinate_text[0], command=lambda: self.move(0))
-        self.coordinate_label[0].pack()
-        self.coordinate_label[1] = Spinbox(self, from_=-50000, to=50000, increment=10, textvariable=self.coordinate_text[1], command=lambda: self.move(1))
-        self.coordinate_label[1].pack()
-        self.coordinate_label[2] = Spinbox(self, from_=-50000, to=50000, increment=10, textvariable=self.coordinate_text[2], command=lambda: self.move(2))
-        self.coordinate_label[2].pack()
+
+        CoordinateFrame(self, value=self.coordinate_text[0], callback=lambda x: self.move(0, x)).pack()
+        CoordinateFrame(self, value=self.coordinate_text[1], callback=lambda x: self.move(1, x)).pack()
+        CoordinateFrame(self, value=self.coordinate_text[2], callback=lambda x: self.move(2, x)).pack()
 
     def refresh_coordinates(self):
         for i in range(3):
             self.coordinate[i] = self.unit.position(i)
             self.coordinate_text[i].set("{:7.1f}".format(self.coordinate[i]))
 
-    def move(self, j):
-        self.unit.absolute_move(float(self.coordinate_text[j].get()), axis = j)
+    def move(self, j, direction):
+        #self.unit.absolute_move(float(self.coordinate_text[j].get()), axis = j)
+        self.unit.relative_move(10*direction, axis = j)
 
 class MicroscopeFrame(UnitFrame):
     '''
@@ -180,13 +198,14 @@ class ManipulatorApplication(Frame):
     '''
     The main application.
     '''
-    def __init__(self, master, stage, unit):
+    def __init__(self, master, stage, units, names):
         '''
         Parameters
         ----------
         master : parent window
         stage : the stage/microscope unit
-        unit : a dictionary of XYZ virtual units (manipulators)
+        units : a list of XYZ virtual units (manipulators)
+        names : names of the units
         '''
         Frame.__init__(self, master)
 
@@ -195,8 +214,8 @@ class ManipulatorApplication(Frame):
 
         self.frame_manipulator = []
         i = 0
-        for name, u in unit.iteritems():
-            frame = ManipulatorFrame(self, text=name, unit=u)
+        for name, unit in zip(names, units):
+            frame = ManipulatorFrame(self, text=name, unit=unit)
             frame.grid(row=0, column=i + 1, padx=5, pady=5)
             self.frame_manipulator.append(frame)
             i += 1
@@ -204,7 +223,7 @@ class ManipulatorApplication(Frame):
         self.statusframe = LabelFrame(self, text='Status')
         self.statusframe.grid(row=1, column=0, columnspan=3, padx=5, pady=30, sticky=W + E)
         self.status = StringVar('')
-        Label(self.statusframe, textvariable=self.status).pack(padx=5, pady=5)
+        Label(self.statusframe, textvariable=self.status, justify=LEFT).pack(padx=5, pady=5)
         Button(self, text="STOP", command=self.stop).grid(row=2, column=1, padx=5, pady=5)
 
         # Load configuration file
@@ -284,5 +303,5 @@ if __name__ == '__main__':
 
     print "Device initialized"
 
-    app = ManipulatorApplication(root, microscope, {'Left': virtual_unit[0], 'Right': virtual_unit[1]}).pack(side="top", fill="both", expand=True)
+    app = ManipulatorApplication(root, microscope, virtual_unit, ['Left','Right']).pack(side="top", fill="both", expand=True)
     root.mainloop()

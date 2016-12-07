@@ -28,6 +28,7 @@ class VirtualXYZUnit(XYZUnit): # could be a device
         self.Minv = eye(3) # Inverse of M
         self.x0 = zeros(3) # Offset
         self.is_calibrated = False # calibration status
+        self.axes=[0,1,2]
 
     def position(self, axis = None):
         '''

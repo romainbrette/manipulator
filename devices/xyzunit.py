@@ -86,11 +86,11 @@ class XYZUnit(Device):
             for i, axis in enumerate(self.axes):
                 self.dev.stop(axis)
         else:
-            self.dev.stop(axis)
+            self.dev.stop(self.axes[axis])
 
     def home(self, axis = 0):
         """
         Drives the motor to minimum position.
         By default, the X axis is chosen.
         """
-        self.dev.home(axis)
+        self.dev.home(self.axes[axis])
