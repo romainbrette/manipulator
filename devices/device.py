@@ -47,3 +47,15 @@ class Device(object):
         x : position shift in um.
         '''
         self.absolute_move(self.position(axis)+x, axis)
+
+    def stop(self, axis):
+        """
+        Stops current movements.
+        """
+        pass
+
+    def home(self, axis):
+        """
+        Drives the motor to minimum position.
+        """
+        pass

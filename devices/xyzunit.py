@@ -35,7 +35,7 @@ class XYZUnit(Device):
         The current position of the device axis in um.
         '''
         if axis is None: # all positions in a vector
-            return array([self.dev.position(self.axes[axis]) for axis in range(self.naxes)])
+            return array([self.dev.position(self.axes[axis]) for axis in range(len(self.axes))])
         else:
             return self.dev.position(self.axes[axis])
 
@@ -76,3 +76,16 @@ class XYZUnit(Device):
 
     def load(self, name):
         self.absolute_move(self.memory[name])
+
+    def stop(self, axis = None):
+        """
+        Stop current movements.
+        """
+        pass
+
+    def home(self, axis = 0):
+        """
+        Drives the motor to minimum position.
+        By default, the X axis is chosen.
+        """
+        self.dev.home(axis)

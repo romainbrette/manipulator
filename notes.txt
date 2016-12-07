@@ -112,7 +112,7 @@ or VirtualXYZUnit
 * Relative and absolute movements in microscope system
 * Home
 
-DeviceFrame (microscope or manipulator)
+UnitFrame (microscope or manipulator)
 * Refers to XYZUnit
 * Displays 3 coordinates with up/down buttons
 * Save/load positions in dictionary
@@ -130,9 +130,6 @@ StatusFrame
 * Display status
 * Write last calibration date
 
-Change pipette and Calibrate could be in Manipulator, with
-link to function called after each step.
-
 Notes
 -----
 * GUI could be simplified by removing coordinates?
@@ -142,4 +139,3 @@ Then only pipette length differs. Calibration here means moving the
 pipette to the center, then we actually only need to save the center position,
 except for the Z coordinate. No software necessary.
 * What would be nice is the ability to adjust the GUI for a particular experiment.
-* Maybe I just remove the lock

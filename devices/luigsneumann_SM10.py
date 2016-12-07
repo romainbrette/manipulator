@@ -93,3 +93,15 @@ class LuigsNeumann_SM10(SerialDevice):
         x_hex = binascii.hexlify(struct.pack('>f', x))
         data = [axis, int(x_hex[6:], 16), int(x_hex[4:6], 16), int(x_hex[2:4], 16), int(x_hex[:2], 16)]
         self.send_command('0048', data, 0)
+
+    def stop(self, axis):
+        """
+        Stop current movements.
+        """
+        pass
+
+    def home(self, axis):
+        """
+        Drives the motor to minimum position.
+        """
+        self.send_command('0104', [axis], 0)

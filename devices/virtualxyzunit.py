@@ -7,9 +7,9 @@ from numpy import array, ones, zeros, eye, dot
 from numpy.linalg import inv
 from xyzunit import XYZUnit
 
-__all__ = ['VirtualXYZUnit','CalibrationException']
+__all__ = ['VirtualXYZUnit','CalibrationError']
 
-class CalibrationException(Exception):
+class CalibrationError(Exception):
     def __init__(self, msg):
         self.msg = msg
 
@@ -23,7 +23,7 @@ class VirtualXYZUnit(XYZUnit): # could be a device
         '''
         self.dev = dev
         self.stage = stage
-        self.memory = dict
+        self.memory = dict()
         self.M = eye(3) # Matrix transform
         self.Minv = eye(3) # Inverse of M
         self.x0 = zeros(3) # Offset
@@ -96,9 +96,9 @@ class VirtualXYZUnit(XYZUnit): # could be a device
         stage and manipulator systems.
         '''
         dx = array(x).T
-        dx = dx[:,1] - dx[:,0] # we calculate shifts relative to first position
+        dx = dx[:,1:] - dx[:,0:-1] # we calculate shifts relative to first position
         dy = array(y).T
-        dy = dy[:, 1] - dy[:, 0]
+        dy = dy[:, 1:] - dy[:, 0:-1]
         self.M = dot(dx, inv(dy))
         self.Minv=inv(self.M)
         self.x0 = x[0]-dot(self.M, y[0])
@@ -112,5 +112,8 @@ class VirtualXYZUnit(XYZUnit): # could be a device
         Returns
         -------
         x, y, z: relative error in x, y and z axes of the stage system
+
+        Specifically: relative error in length of motor course when the system is moved
+        in each of the three directions of the stage/microscope.
         '''
-        return [abs(1-(sum(self.M[i,:]**2))**.5) for i in range(3)]
+        return [abs(1-(sum(self.Minv[:,i]**2))**.5) for i in range(3)]
