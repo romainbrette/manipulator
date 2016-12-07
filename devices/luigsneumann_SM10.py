@@ -2,6 +2,8 @@
 Device class for the Luigs and Neumann SM-10 manipulator controller.
 
 Adapted from Michael Graupner's LandNSM5 class.
+
+TODO: group commands
 """
 from serialdevice import SerialDevice
 import serial
@@ -62,7 +64,7 @@ class LuigsNeumann_SM10(SerialDevice):
 
         return answer[4:4+nbytes_answer]
 
-    def position(self, axis = None):
+    def position(self, axis):
         '''
         Current position along an axis.
 
@@ -77,10 +79,10 @@ class LuigsNeumann_SM10(SerialDevice):
         res = self.send_command('0101', [axis], 4)
         return struct.unpack('f', res)[0]
 
-    def move(self, x, axis = None, speed = None):
+    def absolute_move(self, x, axis):
         '''
-        Moves the device axis to position x, with optional speed.
-        It uses the fast movement command (speed not used).
+        Moves the device axis to position x.
+        It uses the fast movement command.
 
         Parameters
         ----------

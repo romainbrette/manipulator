@@ -12,7 +12,7 @@ class Device(object):
     def __init__(self):
         pass
 
-    def position(self, axis = None):
+    def position(self, axis):
         '''
         Current position along an axis.
 
@@ -26,14 +26,24 @@ class Device(object):
         '''
         return 0. # fake
 
-    def move(self, x, axis = None, speed = None):
+    def absolute_move(self, x, axis):
         '''
-        Moves the device axis to position x, with optional speed.
+        Moves the device axis to position x.
 
         Parameters
         ----------
         axis: axis number
         x : target position in um.
-        speed : optional speed in um/s.
         '''
         pass
+
+    def relative_move(self, x, axis):
+        '''
+        Moves the device axis by relative amount x in um.
+
+        Parameters
+        ----------
+        axis: axis number
+        x : position shift in um.
+        '''
+        self.absolute_move(self.position(axis)+x, axis)

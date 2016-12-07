@@ -14,31 +14,132 @@ GUI
 * We might want to measure the course length of motors, with no pipette
 
 2) Manipulator calibration (calibrate)
-If not calibrated yet, or recalibrate button, or triggered calibration (fail):
+If not calibrated yet, or "calibrate" button, or triggered calibration (fail):
 * If not triggered by button, display dialog (ok/cancel)
-* Move microscope to zero + 2 mm Z
+* Move microscope to Zero (= calibration position)
 * Withdraw pipette
-* User: center pipette
+* User: center pipette and click "Tip centered"
 * (Optional) Check whether microscope has moved
 * Move along X slowly.
 * Move microscope (guess), possibly assuming 30-45° angle
-* Display status text: move the microscope/stage
+* Display status text: move the microscope/stage and click "Tip centered"
 * (Optional) Check whether pipette has moved (-> fail).
 * Check whether microscope movement has same length.
 * Repeat for Y and Z
 * Calculate M and x0
+* Withdraw pipette
 
 3) Secondary calibration (change pipette)
-If not calibrated or recalibrate button:
-* Move microscope to zero
-* Move pipette in (guess based on previous position)
-* User: center pipette
+a) "Tip centered"
+* Recalculate x0 at current position
+
+b) "Change pipette"
+* Withdraw pipette
+* Move microscope to Zero
+* Move pipette in axis (so that movement in x puts it under microscope)
+* User: center pipette and click "Tip centered"
 * Calculate x0
 * Check whether pipette is in axis, otherwise primary recalibration
+* Move pipette and microscope back (confirm).
 
 4) Manipulator movement (GO)
 * Check if calibrated; otherwise calibrate (dialog)
 
-5) Manipulator withdrawal (WITHDRAW)
-* Move home
-* Status = not calibrated
+5) Saving/Retrieving positions
+Microscope and possibly manipulators have saved positions,
+as a dictionary. GUI: editable text (name), GO, SAVE.
+
+6) Emergency stop
+A global Stop button stops all manipulators.
+
+Typical experiments
+-------------------
+1) Paramecium
+a) Method 1, put droplet with pressure
+* Sharp pipette is 1 is calibrated
+* Large pipette is filled by capillarity with paramecium medium
+* Pipette is mounted
+* Large pipette is calibrated (or not; possibly just placed at X = 0)
+* Microscope and pipettes are positioned to saved position
+* Pipette is brought to coverslip manually (just X)
+* Pressure is applied to release droplet
+* Pipette is withdrawn
+* Pipette is changed to sharp pipette 2 (could be later)
+* Sharp pipette 2 is calibrated
+* Sharp pipette 1 and 2 are brought simultaneously
+
+To save time: tip calibration need not be done (maybe).
+
+b) Method 2, put droplet manually
+* Sharp pipettes are calibrated
+* Coverslip has little groove or mark
+* Microscope is manually positioned on mark and saved
+* Droplet is released on coverslip
+* Microscope moves to saved position, manually fine tuned
+* Sharp pipettes are moved in
+
+Then in both cases:
+* Move microscope and pipettes together
+
+2) Patch in culture
+* Pipette is calibrated
+* Microscope is moved to place of interest
+* Pipette is moved in
+
+Classes
+-------
+Device = the controller (low-level)
+* Absolute moves
+* Relative moves (saves a query)
+* Home
+* etc
+
+XYZUnit
+* Refers to a device, with 3 axes
+* Vector position
+* Move to a vector position
+* Relative moves
+* Save/load positions
+* Home
+
+Manipulator = XYZUnit (mounted on stage)
+or VirtualXYZUnit
+* Refers to the stage for calibration (XYZ unit)
+* Refers to a XYZUnit
+* Tip centered (recalculate x0)
+* Calibrated status
+* Go (to microscope position)
+* Relative and absolute movements in microscope system
+* Home
+
+DeviceFrame (microscope or manipulator)
+* Refers to XYZUnit
+* Displays 3 coordinates with up/down buttons
+* Save/load positions in dictionary
+
+MicroscopeFrame
+* Has Preparation and Calibration positions
+
+ManipulatorFrame
+* Go: manipulator Go
+* Tip centered: manipulator Tip centered
+* Change pipette: Manipulator Withdraw, Tip centered, etc
+* Calibrate: idem
+
+StatusFrame
+* Display status
+* Write last calibration date
+
+Change pipette and Calibrate could be in Manipulator, with
+link to function called after each step.
+
+Notes
+-----
+* GUI could be simplified by removing coordinates?
+* Do we want sequencing?
+* This would be somewhat simpler if manipulators were independent.
+Then only pipette length differs. Calibration here means moving the
+pipette to the center, then we actually only need to save the center position,
+except for the Z coordinate. No software necessary.
+* What would be nice is the ability to adjust the GUI for a particular experiment.
+* Maybe I just remove the lock

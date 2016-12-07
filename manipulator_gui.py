@@ -1,12 +1,7 @@
 '''
 Software to control SM-10 micromanipulator controller
-
-Tkinter:
-http://apprendre-python.com/page-tkinter-interface-graphique-python-tutoriel
-http://fsincere.free.fr/isn/python/cours_python_tkinter.php
 '''
 from Tkinter import *
-import tkFileDialog
 from devices import *
 from numpy import array, zeros
 import pickle
@@ -14,10 +9,10 @@ import pickle
 ndevices = 2
 #dev = LuigsNeumann_SM10()
 dev = Device()
-microscope = VirtualDevice(dev, [7,8,9])
-manip = [VirtualDevice(dev, [1,2,3]),
-         VirtualDevice(dev, [4,5,6])]
-transformed = [Manipulator(manip[i]) for i in range(2)]
+microscope = XYZUnit(dev, [7,8,9])
+manip = [XYZUnit(dev, [1,2,3]),
+         XYZUnit(dev, [4,5,6])]
+transformed = [VirtualXYZUnit(manip[i], microscope) for i in range(2)]
 
 print "Device initialized"
 
@@ -94,11 +89,11 @@ class TransformedFrame(LabelFrame):
 
 frame_microscope = DeviceFrame(window, text = 'Microscope', dev = microscope)
 #frame_microscope.pack(side=LEFT, padx=10, pady=10)
-frame_microscope.grid(row=1, column = 0, padx = 5, pady = 5)
+frame_microscope.grid(row=1, column = 0, padx = 5, pady = 5, sticky = N)
 def zero_microscope():
     pass
 
-Button(window, text="Zero", command=zero_microscope).grid(row=2, column = 0)
+Button(frame_microscope, text="Zero", command=zero_microscope).pack()
 
 def move_manip():
     x = array([microscope.position(i) for i in range(3)])
@@ -115,27 +110,6 @@ def lock_manip():
         transformed[0].update()
         x = array([microscope.position(i) for i in range(3)])
         locked_position = transformed[0].position() - x
-
-go_command = [move_manip, lambda: None]
-lock_command = [lock_manip, lambda: None]
-
-frame_manipulator = []
-frame_transformed = []
-go_button = []
-cancel_button = []
-locked = [IntVar(), IntVar()]
-for i in range(ndevices):
-    #frame_manipulator.append(DeviceFrame(window, text = device_name[i], dev = manip[i]))
-    #frame_manipulator[i].grid(row=0, column = i+1, padx = 5, pady = 5) #pack(side=LEFT, padx=10, pady=10)
-    frame_transformed.append(TransformedFrame(window, text = device_name[i], dev=transformed[i]))
-    frame_transformed[i].grid(row=1, column=i + 1, padx = 5, pady = 5)  # pack(side=LEFT, padx=10, pady=10)
-    Button(window, text="Calibrate", command=lambda: None).grid(row = 4, column = i+1)
-    go_button = Button(window, text="Go", command=go_command[i])
-    go_button.grid(row = 2, column = i+1)
-    cancel_button = Button(window, text="Change pipette", command=window.quit)
-    cancel_button.grid(row = 3, column = i+1)
-    lock_button = Checkbutton(window, text="Locked", variable = locked[i], command=lock_command[i])
-    lock_button.grid(row=0, column=i + 1)
 
 n = 0
 x = zeros((4,3))
@@ -160,11 +134,33 @@ def pipette_moved():
         cfg = {'x' : x, 'y' : y}
         pickle.dump(cfg, open("config.cfg","wb"))
 
+
+go_command = [move_manip, lambda: None]
+lock_command = [lock_manip, lambda: None]
+
+frame_manipulator = []
+frame_transformed = []
+go_button = []
+cancel_button = []
+locked = [IntVar(), IntVar()]
+tip_command = [pipette_moved, lambda: None]
+for i in range(ndevices):
+    #frame_manipulator.append(DeviceFrame(window, text = device_name[i], dev = manip[i]))
+    #frame_manipulator[i].grid(row=0, column = i+1, padx = 5, pady = 5) #pack(side=LEFT, padx=10, pady=10)
+
+    frame_transformed.append(TransformedFrame(window, text = device_name[i], dev=transformed[i]))
+    frame_transformed[i].grid(row=1, column=i + 1, padx = 5, pady = 5)  # pack(side=LEFT, padx=10, pady=10)
+    Checkbutton(frame_transformed[i], text="Locked", variable=locked[i], command=lock_command[i]).pack()
+    Button(frame_transformed[i], text="Go", command=go_command[i]).pack()
+    Button(frame_transformed[i], text="Tip centered", command=tip_command[i]).pack()
+    Button(frame_transformed[i], text="Change pipette", command=window.quit).pack()
+    Button(frame_transformed[i], text="Calibrate", command=lambda: None).pack()
+
 statusframe = LabelFrame(window, text='Status')
-statusframe.grid(row = 5, column = 0, columnspan = 3, padx = 5, pady = 30, sticky = W+E)
+statusframe.grid(row = 6, column = 0, columnspan = 3, padx = 5, pady = 30, sticky = W+E)
 Label(statusframe, text='Ready to patch!').pack(padx = 5, pady = 5)
-Button(statusframe, text="OK", command=pipette_moved).pack()
-#OK_button.grid(row = 8, column = 0, columnspan = 3, padx = 5, pady = 5)
+
+Button(window, text="STOP", command=lambda: None).grid(row = 7, column = 1, padx = 5, pady = 5)
 
 cfg = pickle.load(open("config.cfg","rb"))
 x = cfg['x']
