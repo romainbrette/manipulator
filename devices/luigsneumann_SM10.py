@@ -98,7 +98,7 @@ class LuigsNeumann_SM10(SerialDevice):
         """
         Stop current movements.
         """
-        pass
+        self.send_command('00FF', [axis], 0)
 
     def home(self, axis):
         """

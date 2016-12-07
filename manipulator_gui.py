@@ -2,7 +2,7 @@
 Software to control SM-10 micromanipulator controller
 
 TODO:
-* Stop unit (in LN SM 10)
+* Group moves (in LN SM 10)
 * Change pipette
 * Change move in UnitFrame (spinbox)
 * Safer moves

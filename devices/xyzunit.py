@@ -81,7 +81,12 @@ class XYZUnit(Device):
         """
         Stop current movements.
         """
-        pass
+        if axis is None:
+            # then we stop all axes
+            for i, axis in enumerate(self.axes):
+                self.dev.stop(axis)
+        else:
+            self.dev.stop(axis)
 
     def home(self, axis = 0):
         """
