@@ -22,6 +22,10 @@ import pickle
 from serial import SerialException
 import time
 
+from os.path import expanduser
+home = expanduser("~")
+config_filename = home+'/config_manipulator.cfg'
+
 class MemoryFrame(Frame):
     '''
     A frame for saving/load current position in memory
@@ -237,11 +241,11 @@ class ManipulatorApplication(Frame):
 
         self.load_configuration()
         '''
-        # Load configuration file
-        cfg = pickle.load(open("config.cfg", "rb"))
-        x = cfg['x']
-        y = cfg['y']
-        self.frame_manipulator[0].unit.primary_calibration(x, y)
+            # Load old configuration file
+            cfg = pickle.load(open("old_config.cfg", "rb"))
+            x = cfg['x']
+            y = cfg['y']
+            self.frame_manipulator[0].unit.primary_calibration(x, y)
         '''
 
         welcome_text =\
@@ -277,20 +281,24 @@ class ManipulatorApplication(Frame):
         cfg_all = {'manipulator' : manipulator_cfg,
                    'microscope' : microscope_cfg}
 
-        pickle.dump(cfg_all, open("config.cfg", "wb"))
+        pickle.dump(cfg_all, open(config_filename, "wb"))
 
     def load_configuration(self):
         '''
         Load memories and calibration
         '''
-        cfg_all = pickle.load(open("config.cfg", "rb"))
-        self.frame_microscope.unit.memory = cfg_all['microscope']['memory']
-        for frame, cfg in zip(self.frame_manipulator, cfg_all['manipulator']):
-            frame.unit.memory = cfg['memory']
-            frame.unit.M = cfg['M']
-            frame.unit.Minv = cfg['Minv']
-            frame.unit.x0 = cfg['x0']
-            frame.unit.is_calibrated = True
+        try:
+            cfg_all = pickle.load(open(config_filename, "rb"))
+            self.frame_microscope.unit.memory = cfg_all['microscope']['memory']
+            for frame, cfg in zip(self.frame_manipulator, cfg_all['manipulator']):
+                frame.unit.memory = cfg['memory']
+                frame.unit.M = cfg['M']
+                frame.unit.Minv = cfg['Minv']
+                frame.unit.x0 = cfg['x0']
+                frame.unit.is_calibrated = True
+        except IOError:
+            self.display_status("No configuration file.")
+            time.sleep(1)
 
     def refresh(self):
         '''
