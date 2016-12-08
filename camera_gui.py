@@ -17,15 +17,21 @@ def click(event, x, y, flags, param):
         print x,y
 
 cap = cv2.VideoCapture(0)
+cap.set(3, 1280)
+cap.set(4, 1024)
+
 width = int(cap.get(3))
 height = int(cap.get(4))
-print width,height
+fps = 20.
+print width,height,fps
 
 cv2.namedWindow('Camera')
 cv2.setMouseCallback("Camera", click)
 
-fourcc = cv2.cv.CV_FOURCC(*'mp4v')
-video = cv2.VideoWriter(filename,fourcc,20.,(width,height), True)
+#fourcc = cv2.cv.CV_FOURCC(*'mp4v') # on mac
+#fourcc = cv2.cv.CV_FOURCC(*'DIVX')
+fourcc = -1 # On Windows
+video = cv2.VideoWriter(filename,fourcc,fps,(width,height), True)
 
 save = False
 
