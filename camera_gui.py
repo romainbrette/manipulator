@@ -8,7 +8,13 @@ it seems that OpenCV sets it to 640x480 by default (maybe could be set)
 import numpy as np
 import cv2
 
+def click(event, x, y, flags, param):
+    if event == cv2.EVENT_LBUTTONDOWN:
+        print x,y
+
 cap = cv2.VideoCapture(0)
+cv2.namedWindow('Camera')
+cv2.setMouseCallback("Camera", click)
 
 while(True):
     # Capture frame-by-frame

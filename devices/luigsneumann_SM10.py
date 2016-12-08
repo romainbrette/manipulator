@@ -201,6 +201,7 @@ class LuigsNeumann_SM10(SerialDevice):
                 # Inquiry about home status
                 time.sleep(0.5)
                 status = self.send_command('0120', [axis], 8)[2]
+            self.send_command('013F', [axis], 0) # Home abort
 
         # Query position
         wait_until_home()

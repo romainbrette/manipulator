@@ -11,7 +11,8 @@ TODO:
 * Check motor bounds
 * Memories with editable names
 * Move up/down: continuous increase?
-
+* Calibrate camera wrt stage
+* Go to clicked position
 '''
 from Tkinter import *
 from devices import *
@@ -19,6 +20,7 @@ from numpy import array, zeros
 from numpy.linalg import LinAlgError
 import pickle
 from serial import SerialException
+import time
 
 class MemoryFrame(Frame):
     '''
@@ -231,12 +233,16 @@ class ManipulatorApplication(Frame):
         self.status = StringVar('')
         Label(self.statusframe, textvariable=self.status, justify=LEFT).pack(padx=5, pady=5)
         Button(self, text="STOP", command=self.stop).grid(row=2, column=1, padx=5, pady=5)
+        Button(self, text="TEST", command=self.test).grid(row=3, column=1, padx=5, pady=5)
 
+        self.load_configuration()
+        '''
         # Load configuration file
         cfg = pickle.load(open("config.cfg", "rb"))
         x = cfg['x']
         y = cfg['y']
         self.frame_manipulator[0].unit.primary_calibration(x, y)
+        '''
 
         welcome_text =\
 """Set-up:
@@ -284,6 +290,7 @@ class ManipulatorApplication(Frame):
             frame.unit.M = cfg['M']
             frame.unit.Minv = cfg['Minv']
             frame.unit.x0 = cfg['x0']
+            frame.unit.is_calibrated = True
 
     def refresh(self):
         '''
@@ -294,6 +301,29 @@ class ManipulatorApplication(Frame):
             self.frame_manipulator[i].refresh_coordinates()
 
         self.after(1000, self.refresh)
+
+    def test(self):
+        '''
+        We use this to test development functions.
+        '''
+        ## Here: go home and wait until done.
+
+        self.frame_manipulator[0].unit.home()
+        dev = self.frame_manipulator[0].unit.dev.dev
+        # Wait until position is reached
+        status = 0
+        while status != 0x03:
+            # Inquiry about home status
+            time.sleep(0.5)
+            status = dev.send_command('0120', [1], 8)[2]
+            print status
+        dev.send_command('013F', [1], 0) # Home abort
+
+        # Query position
+        print dev.position(1)
+
+    def destroy(self):
+        self.save_configuration()
 
 
 if __name__ == '__main__':
