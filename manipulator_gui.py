@@ -2,7 +2,6 @@
 Software to control SM-10 micromanipulator controller
 
 TODO:
-* Remove Home status after home
 * Precision does not seem correct
 * Test group moves (in LN SM 10)
 * Change pipette
@@ -132,7 +131,7 @@ class ManipulatorFrame(UnitFrame):
         UnitFrame.__init__(self, master, unit, cnf, **kw)
 
         Button(self, text="Go", command=self.go).pack()
-        Button(self, text="Tip centered", command=self.tip_centered).pack()
+        Button(self, text="Confirm position", command=self.confirm_position).pack()
         Button(self, text="Change pipette", command=self.change_pipette).pack()
         Button(self, text="Calibrate", command=self.calibrate).pack()
 
@@ -148,14 +147,19 @@ class ManipulatorFrame(UnitFrame):
         self.master.display_status("Moving pipette to microscope position.")
         self.unit.go()
 
-    def tip_centered(self):
+    def confirm_position(self):
         if self.calibration_step==-1:
             self.unit.secondary_calibration()  # unless in calibration
             self.master.display_status("Recalibrated.")
+        elif self.calibration_step==0:
+            self.unit.save_home()
+            self.master.display_status("Step 2"+
+                                       "\nCenter pipette tip in microscope view and press 'Confirm position'.")
+            self.calibration_step = 1
         else: # in calibration
-            self.calibration_x[self.calibration_step] = self.unit.stage.position()
-            self.calibration_y[self.calibration_step] = self.unit.dev.position()
-            if self.calibration_step == 3: # Done
+            self.calibration_x[self.calibration_step-1] = self.unit.stage.position()
+            self.calibration_y[self.calibration_step-1] = self.unit.dev.position()
+            if self.calibration_step == 4: # Done
                 self.master.display_status("Calibration done.")
                 try:
                     self.unit.primary_calibration(self.calibration_x,self.calibration_y)
@@ -167,30 +171,29 @@ class ManipulatorFrame(UnitFrame):
                 self.unit.stage.absolute_move(self.calibration_x[0])
                 # Withdraw pipette
                 self.unit.home()
-                #self.unit.dev.absolute_move(self.calibration_y[0]) # move pipette
             else: # move unit by 500 um along one axis
                 self.master.display_status("Step " + str(self.calibration_step+2) +
-                                           "\nMove stage to center pipette tip and press 'Tip centered'.")
-                self.unit.dev.relative_move(500., axis = self.calibration_step)
+                                           "\nMove stage to center pipette tip and press 'Confirm position'.")
+                self.unit.dev.relative_move(500., axis = self.calibration_step-1)
                 self.calibration_step+=1
 
     def change_pipette(self):
         # Move microscope to calibration position
         self.unit.stage.absolute_move(self.unit.stage.memory['Calibration'])
+        # Withdraw pipette
         self.unit.home()
         # TODO: move pipette in view, click "go"
-        self.master.display_status("Center pipette tip in microscope view and press 'Tip centered'.")
+        self.master.display_status("Center pipette tip in microscope view and press 'Confirm position'.")
         # TODO: move pipette back
         # TODO: move microscope back
 
     def calibrate(self):
         if self.calibration_step == -1:
-            # Withdraw pipette
-            self.unit.home()
             # Move microscope to calibration position
             self.unit.stage.absolute_move(self.unit.stage.memory['Calibration'])
-            self.master.display_status("Step "+str(self.calibration_step+2)+
-                                       "\nCenter pipette tip in microscope view and press 'Tip centered'.")
+            # Ask user to withdraw pipette
+            self.master.display_status("Step 1"+
+                                       "\nWithdraw the pipette and click 'Confirm position'.")
             self.calibration_step = 0
         else:
             self.master.display_status("Calibration aborted.")
@@ -240,13 +243,6 @@ class ManipulatorApplication(Frame):
         Button(self, text="TEST", command=self.test).grid(row=3, column=1, padx=5, pady=5)
 
         self.load_configuration()
-        '''
-            # Load old configuration file
-            cfg = pickle.load(open("old_config.cfg", "rb"))
-            x = cfg['x']
-            y = cfg['y']
-            self.frame_manipulator[0].unit.primary_calibration(x, y)
-        '''
 
         welcome_text =\
 """Set-up:

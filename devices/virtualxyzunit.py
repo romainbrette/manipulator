@@ -118,3 +118,16 @@ class VirtualXYZUnit(XYZUnit): # could be a device
         in each of the three directions of the stage/microscope.
         '''
         return [abs(1-(sum(self.Minv[:,i]**2))**.5) for i in range(3)]
+
+    def home(self):
+        """
+        Drives the motor to minimum position for axis X, previously saved.
+        """
+        self.dev.absolute_move(self.memory['Home'], axis=0)
+
+    def save_home(self):
+        """
+        Save Home position
+        Subtlety: here we use the position in the original reference system
+        """
+        self.memory['Home'] = self.dev.position(axis=0)

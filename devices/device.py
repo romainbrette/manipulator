@@ -91,9 +91,3 @@ class Device(object):
         Stops current movements.
         """
         pass
-
-    def home(self, axis):
-        """
-        Drives the motor to minimum position.
-        """
-        pass
