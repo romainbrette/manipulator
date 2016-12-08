@@ -1,8 +1,9 @@
 """
-Generic Device class for manipulators
+Generic Device class for manipulators.
 
-Notes:
-    It could be better to store the position, and have an update() function.
+To make a new device, one must implement at least:
+* position
+* absolute_move
 """
 from numpy import array
 
@@ -18,7 +19,7 @@ class Device(object):
 
         Parameters
         ----------
-        axis : axis number (starting at 1)
+        axis : axis number
 
         Returns
         -------
@@ -47,6 +48,43 @@ class Device(object):
         x : position shift in um.
         '''
         self.absolute_move(self.position(axis)+x, axis)
+
+    def position_group(self, axes):
+        '''
+        Current position along a group of axes.
+
+        Parameters
+        ----------
+        axes : list of axis numbers
+
+        Returns
+        -------
+        The current position of the device axis in um (vector).
+        '''
+        return array([self.position(axis) for axis in axes])
+
+    def absolute_move_group(self, x, axes):
+        '''
+        Moves the device group of axes to position x.
+
+        Parameters
+        ----------
+        axes : list of axis numbers
+        x : target position in um (vector or list).
+        '''
+        for xi,axis in zip(x,axes):
+            self.absolute_move(xi, axis)
+
+    def relative_move_group(self, x, axes):
+        '''
+        Moves the device group of axes by relative amount x in um.
+
+        Parameters
+        ----------
+        axes : list of axis numbers
+        x : position shift in um (vector or list).
+        '''
+        self.absolute_move_group(array(self.position_group(axes))+array(x), axes)
 
     def stop(self, axis):
         """

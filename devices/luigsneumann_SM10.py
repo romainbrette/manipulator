@@ -10,6 +10,7 @@ import serial
 import binascii
 import time
 import struct
+from numpy import zeros
 
 __all__ = ['LuigsNeumann_SM10']
 
@@ -93,6 +94,85 @@ class LuigsNeumann_SM10(SerialDevice):
         x_hex = binascii.hexlify(struct.pack('>f', x))
         data = [axis, int(x_hex[6:], 16), int(x_hex[4:6], 16), int(x_hex[2:4], 16), int(x_hex[:2], 16)]
         self.send_command('0048', data, 0)
+
+    def relative_move(self, x, axis):
+        '''
+        Moves the device axis by relative amount x in um.
+        It uses the fast command.
+
+        Parameters
+        ----------
+        axis: axis number
+        x : position shift in um.
+        '''
+        x_hex = binascii.hexlify(struct.pack('>f', x))
+        data = [axis, int(x_hex[6:], 16), int(x_hex[4:6], 16), int(x_hex[2:4], 16), int(x_hex[:2], 16)]
+        self.send_command('004A', data, 0)
+
+    def position_group_test(self, axes):
+        '''
+        Current position along a group of axes.
+
+        Parameters
+        ----------
+        axes : list of axis numbers
+
+        Returns
+        -------
+        The current position of the device axis in um (vector).
+        '''
+        # First fill in zeros to make 4 axes
+        axes4 = [0, 0, 0, 0]
+        axes4[:len(axes)] = axes
+
+        data = [0xA0] + axes4
+        res = self.send_command('A101', data, 0x14)[4:]
+        x = zeros(4)
+        for i in range(4):
+            x[i] = struct.unpack('f', res[i*4:(i+1)*4])[0]
+        return x[:len(axes)]
+
+    def absolute_move_group_test(self, x, axes):
+        '''
+        Moves the device group of axes to position x.
+
+        Parameters
+        ----------
+        axes : list of axis numbers
+        x : target position in um (vector or list).
+        '''
+        # First fill in zeros to make 4 axes
+        x4 = [0., 0., 0., 0.]
+        axes4 = [0, 0, 0, 0]
+        x4[:len(x)] = x
+        axes4[:len(x)] = axes
+
+        data = [0xA0]+axes4
+        for i in range(4):
+            x_hex = binascii.hexlify(struct.pack('>f', x))
+            data+= [int(x_hex[6:], 16), int(x_hex[4:6], 16), int(x_hex[2:4], 16), int(x_hex[:2], 16)]
+        self.send_command('A048', data, 0)
+
+    def relative_move_group_test(self, x, axes):
+        '''
+        Moves the device group of axes by relative amount x in um.
+
+        Parameters
+        ----------
+        axes : list of axis numbers
+        x : position shift in um (vector or list).
+        '''
+        # First fill in zeros to make 4 axes
+        x4 = [0., 0., 0., 0.]
+        axes4 = [0, 0, 0, 0]
+        x4[:len(x)] = x
+        axes4[:len(x)] = axes
+
+        data = [0xA0]+axes4
+        for i in range(4):
+            x_hex = binascii.hexlify(struct.pack('>f', x))
+            data+= [int(x_hex[6:], 16), int(x_hex[4:6], 16), int(x_hex[2:4], 16), int(x_hex[:2], 16)]
+        self.send_command('A04A', data, 0)
 
     def stop(self, axis):
         """

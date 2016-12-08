@@ -2,17 +2,19 @@
 Software to control SM-10 micromanipulator controller
 
 TODO:
-* Group moves (in LN SM 10)
-* Move up/down: continuous increase?
+* Test group moves (in LN SM 10)
 * Change pipette
 * Safer moves
+* Check motor bounds
 * Memories with editable names
+* Move up/down: continuous increase?
 '''
 from Tkinter import *
 from devices import *
 from numpy import array, zeros
 from numpy.linalg import LinAlgError
 import pickle
+from serial import SerialException
 
 class MemoryFrame(Frame):
     '''
@@ -294,8 +296,11 @@ if __name__ == '__main__':
     root = Tk()
     root.title('Manipulator')
     ndevices = 2
-    # dev = LuigsNeumann_SM10()
-    dev = Device()
+    try:
+        dev = LuigsNeumann_SM10()
+    except SerialException:
+        print "L&N SM-10 not found. Falling back on fake device."
+        dev = FakeDevice()
     microscope = XYZUnit(dev, [7, 8, 9])
     unit = [XYZUnit(dev, [1, 2, 3]),
             XYZUnit(dev, [4, 5, 6])]

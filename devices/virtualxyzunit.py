@@ -36,7 +36,7 @@ class VirtualXYZUnit(XYZUnit): # could be a device
 
         Parameters
         ----------
-        axis : axis number starting at 0
+        axis : axis number starting at 0; if None, all XYZ axes
 
         Returns
         -------
@@ -55,7 +55,7 @@ class VirtualXYZUnit(XYZUnit): # could be a device
 
         Parameters
         ----------
-        axis: axis number starting at 0
+        axis : axis number starting at 0; if None, all XYZ axes
         x : target position in um.
         '''
         if axis is not None:
@@ -70,7 +70,7 @@ class VirtualXYZUnit(XYZUnit): # could be a device
 
         Parameters
         ----------
-        axis: axis number
+        axis : axis number starting at 0; if None, all XYZ axes
         x : position shift in um.
         '''
         if axis is not None:

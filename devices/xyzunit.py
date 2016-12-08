@@ -28,14 +28,15 @@ class XYZUnit(Device):
 
         Parameters
         ----------
-        axis : axis number starting at 0
+        axis : axis number starting at 0; if None, all XYZ axes
 
         Returns
         -------
         The current position of the device axis in um.
         '''
         if axis is None: # all positions in a vector
-            return array([self.dev.position(self.axes[axis]) for axis in range(len(self.axes))])
+            #return array([self.dev.position(self.axes[axis]) for axis in range(len(self.axes))])
+            return self.dev.position_group(self.axes)
         else:
             return self.dev.position(self.axes[axis])
 
@@ -45,13 +46,14 @@ class XYZUnit(Device):
 
         Parameters
         ----------
-        axis: axis number starting at 0
+        axis : axis number starting at 0; if None, all XYZ axes
         x : target position in um.
         '''
         if axis is None:
             # then we move all axes
-            for i, axis in enumerate(self.axes):
-                self.dev.absolute_move(x[i], axis)
+            #for i, axis in enumerate(self.axes):
+            #    self.dev.absolute_move(x[i], axis)
+            self.dev.absolute_move_group(x, self.axes)
         else:
             self.dev.absolute_move(x, self.axes[axis])
 
@@ -61,13 +63,14 @@ class XYZUnit(Device):
 
         Parameters
         ----------
-        axis: axis number
+        axis : axis number starting at 0; if None, all XYZ axes
         x : position shift in um.
         '''
         if axis is None:
             # then we move all axes
-            for i, axis in enumerate(self.axes):
-                self.dev.relative_move(x[i], axis)
+            #for i, axis in enumerate(self.axes):
+            #    self.dev.relative_move(x[i], axis)
+            self.dev.relative_move_group(x, self.axes)
         else:
             self.dev.relative_move(x, self.axes[axis])
 
