@@ -1,6 +1,9 @@
 '''
 Camera window.
 Requires Opencv.
+
+Note: my infinity camera has variable resolution, but
+it seems that OpenCV sets it to 640x480 by default (maybe could be set)
 '''
 import numpy as np
 import cv2
@@ -14,13 +17,10 @@ while(True):
     width, height, _ = frame.shape
 
     # Our operations on the frame come here
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    #frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-    #print width, height
-    #cv2.line(frame, (height/2, width/2-10), (height/2, width/2+10), (0, 0, 255))
-    #cv2.line(frame, (height/2-10, width/2), (height/2+10, width/2), (0, 0, 255))
-
-    #print frame
+    cv2.line(frame, (height/2, width/2-10), (height/2, width/2+10), (0, 0, 255))
+    cv2.line(frame, (height/2-10, width/2), (height/2+10, width/2), (0, 0, 255))
 
     # Display the resulting frame
     cv2.imshow('Camera',frame)
