@@ -185,3 +185,33 @@ class LuigsNeumann_SM10(SerialDevice):
         Drives the motor to minimum position.
         """
         self.send_command('0104', [axis], 0)
+
+    def bounds(self, axis):
+        """
+        Determines the minimum and maximum positions of the axis.
+        """
+        # Minimum position
+        self.send_command('013C', [axis, 0], 1)
+        self.send_command('0104', [axis], 0)
+
+        def wait_until_home():
+            # Wait until position is reached
+            status = 0
+            while status != 0x03:
+                # Inquiry about home status
+                time.sleep(0.5)
+                status = self.send_command('0120', [axis], 8)[2]
+
+        # Query position
+        wait_until_home()
+        x_min = self.position(axis)
+
+        # Maximum position
+        self.send_command('013C', [axis, 0], 0)
+        self.send_command('0104', [axis], 0)  # Home
+
+        # Query position
+        wait_until_home()
+        x_max = self.position(axis)
+
+        return (x_min, x_max)
