@@ -2,12 +2,16 @@
 Software to control SM-10 micromanipulator controller
 
 TODO:
+* Remove Home status after home
+* Precision does not seem correct
 * Test group moves (in LN SM 10)
 * Change pipette
+    move pipette in axis, but withdrawn
 * Safer moves
 * Check motor bounds
 * Memories with editable names
 * Move up/down: continuous increase?
+
 '''
 from Tkinter import *
 from devices import *
