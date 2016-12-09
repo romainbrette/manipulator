@@ -37,6 +37,7 @@ class CameraFrame(Toplevel):
     def __init__(self, master=None, name = '', cnf={}, dev=None, **kw):
         Toplevel.__init__(self, master, cnf, **kw)
         self.main = Label(self)
+        self.main.bind("<Button-1>",self.click)
         self.main.pack()
         #width, height = 800, 600
         self.cap = cv2.VideoCapture(0)
@@ -58,6 +59,9 @@ class CameraFrame(Toplevel):
             self.main.imgtk = imgtk
             self.main.configure(image=self.main.imgtk)
             self.main.after(50, self.show_frame)
+
+    def click(self, e):
+        print e.x, e.y
 
     def destroy(self):
         self.cap.release()
