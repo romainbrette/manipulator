@@ -10,6 +10,9 @@ TODO:
 * Check motor bounds
 * Memories with editable names
 * Move up/down: continuous increase?
+
+Camera:
+* http://stackoverflow.com/questions/16366857/show-webcam-sequence-tkinter
 * Calibrate camera wrt stage
 * Go to clicked position
 '''
@@ -24,6 +27,10 @@ import time
 from os.path import expanduser
 home = expanduser("~")
 config_filename = home+'/config_manipulator.cfg'
+
+class CameraFrame(Toplevel):
+    def __init__(self, master=None, name = '', cnf={}, dev=None, **kw):
+        Toplevel.__init__(self, master, cnf, **kw)
 
 class MemoryFrame(Frame):
     '''
@@ -243,6 +250,10 @@ class ManipulatorApplication(Frame):
         Button(self, text="Motor ranges", command=self.motor_ranges).grid(row=2, column=0, padx=5, pady=5)
         Button(self, text="TEST", command=self.test).grid(row=2, column=2, padx=5, pady=5)
 
+        # Camera window
+        #t = Toplevel(self)
+        #t.wm_title("Camera")
+
         self.load_configuration()
 
         welcome_text =\
@@ -277,6 +288,7 @@ class ManipulatorApplication(Frame):
                    'x0' : frame.unit.x0,
                    'Minv' : frame.unit.Minv }
             manipulator_cfg.append(cfg)
+        motor_cfg = {}
         cfg_all = {'manipulator' : manipulator_cfg,
                    'microscope' : microscope_cfg}
 
@@ -309,6 +321,14 @@ class ManipulatorApplication(Frame):
 
         self.after(1000, self.refresh)
 
+    def minmax(self, p1, p2):
+        '''
+        Calculate min(p1.x, p2.x) for each XYZ coordinate,
+        and max(p1.x, p2.x) for each XYZ coordinate.
+        '''
+        return array([min(p1[i], p2[i]) for i in range(len(p1))]),\
+               array([max(p1[i], p2[i]) for i in range(len(p1))])
+
     def motor_ranges(self):
         '''
         Measure the range of all motors.
@@ -316,8 +336,34 @@ class ManipulatorApplication(Frame):
         if self.motor_ranges_status == -1:
             self.display_status("Move the stage and microscope to one corner and click 'Motor ranges'.")
             self.motor_ranges_status = 0
-        else:
-            self.display_status("Move the stage and microscope to the other corner and click 'Motor ranges'.")
+        elif self.motor_ranges_status == 0:
+            self.x1 = self.frame_microscope.unit.position()
+            self.display_status("Move the stage and microscope to the opposite corner and click 'Motor ranges'.")
+            self.motor_ranges_status = 1
+        elif self.motor_ranges_status == 1:
+            # Measure position and calculate min and max positions
+            self.x2 = self.frame_microscope.unit.position()
+            self.frame_microscope.unit.memory['min'], self.frame_microscope.unit.memory['max'] = self.minmax(self.x1, self.x2)
+            print self.minmax(self.x1, self.x2)
+            # Next device
+            self.display_status("Move manipulator 1 to one corner and click 'Motor ranges'.")
+            self.motor_ranges_status = 2
+        elif self.motor_ranges_status % 2 == 0: # first corner clicked
+            manipulator = self.frame_manipulator[self.motor_ranges_status/2-1].unit.dev
+            self.x1 = manipulator.position()
+            self.display_status("Move manipulator "+ str(self.motor_ranges_status/2)+" to the opposite corner and click 'Motor ranges'.")
+            self.motor_ranges_status+= 1
+        elif self.motor_ranges_status % 2 == 1: # opposite corner clicked
+            manipulator = self.frame_manipulator[self.motor_ranges_status/2-1].unit.dev
+            self.x2 = manipulator.position()
+            manipulator.memory['min'], manipulator.memory['max'] = self.minmax(self.x1,self.x2)
+            print self.minmax(self.x1, self.x2)
+            if self.motor_ranges_status/2<len(self.frame_manipulator):
+                self.display_status("Move manipulator "+ str(self.motor_ranges_status/2+1)+" to the first corner and click 'Motor ranges'.")
+                self.motor_ranges_status+= 1
+            else: # Done
+                self.display_status("Motor range calibration done.")
+                self.motor_ranges_status = -1
 
     def test(self):
         '''
@@ -346,4 +392,5 @@ if __name__ == '__main__':
     print "Device initialized"
 
     app = ManipulatorApplication(root, microscope, virtual_unit, ['Left','Right']).pack(side="top", fill="both", expand=True)
+
     root.mainloop()
