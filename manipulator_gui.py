@@ -240,7 +240,8 @@ class ManipulatorApplication(Frame):
         self.status = StringVar('')
         Label(self.statusframe, textvariable=self.status, justify=LEFT).pack(padx=5, pady=5)
         Button(self, text="STOP", command=self.stop).grid(row=2, column=1, padx=5, pady=5)
-        Button(self, text="TEST", command=self.test).grid(row=3, column=1, padx=5, pady=5)
+        Button(self, text="Motor ranges", command=self.motor_ranges).grid(row=2, column=0, padx=5, pady=5)
+        Button(self, text="TEST", command=self.test).grid(row=2, column=2, padx=5, pady=5)
 
         self.load_configuration()
 
@@ -251,6 +252,8 @@ class ManipulatorApplication(Frame):
 3) Click Change pipette or Calibrate.
 """
         self.display_status(welcome_text)
+
+        self.motor_ranges_status = -1 # -1 means not doing the calibration
 
         self.after(1000, self.refresh)
 
@@ -306,25 +309,21 @@ class ManipulatorApplication(Frame):
 
         self.after(1000, self.refresh)
 
+    def motor_ranges(self):
+        '''
+        Measure the range of all motors.
+        '''
+        if self.motor_ranges_status == -1:
+            self.display_status("Move the stage and microscope to one corner and click 'Motor ranges'.")
+            self.motor_ranges_status = 0
+        else:
+            self.display_status("Move the stage and microscope to the other corner and click 'Motor ranges'.")
+
     def test(self):
         '''
         We use this to test development functions.
         '''
-        ## Here: go home and wait until done.
-
-        self.frame_manipulator[0].unit.home()
-        dev = self.frame_manipulator[0].unit.dev.dev
-        # Wait until position is reached
-        status = 0
-        while status != 0x03:
-            # Inquiry about home status
-            time.sleep(0.5)
-            status = dev.send_command('0120', [1], 8)[2]
-            print status
-        dev.send_command('013F', [1], 0) # Home abort
-
-        # Query position
-        print dev.position(1)
+        pass
 
     def destroy(self):
         self.save_configuration()
