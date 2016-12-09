@@ -2,6 +2,7 @@
 Software to control SM-10 micromanipulator controller
 
 TODO:
+* Safe last calibration point, to make safe movements (for z? or x)
 * Precision does not seem correct
 * Test group moves (in LN SM 10)
 * Change pipette
@@ -24,6 +25,10 @@ import pickle
 from serial import SerialException
 import time
 
+# For the camera
+import cv2
+from PIL import Image, ImageTk
+
 from os.path import expanduser
 home = expanduser("~")
 config_filename = home+'/config_manipulator.cfg'
@@ -31,6 +36,32 @@ config_filename = home+'/config_manipulator.cfg'
 class CameraFrame(Toplevel):
     def __init__(self, master=None, name = '', cnf={}, dev=None, **kw):
         Toplevel.__init__(self, master, cnf, **kw)
+        self.main = Label(self)
+        self.main.pack()
+        #width, height = 800, 600
+        self.cap = cv2.VideoCapture(0)
+        #self.cap.set(3, width)
+        #self.cap.set(4, height)
+        self.width = int(self.cap.get(3))
+        self.height = int(self.cap.get(4))
+        self.show_frame()
+
+    def show_frame(self):
+        if self.cap.isOpened():
+            _, frame = self.cap.read()
+            width, height = self.width, self.height
+            cv2.line(frame, (width / 2, height / 2 - 10), (width / 2, height / 2 + 10), (0, 0, 255))
+            cv2.line(frame, (width / 2 - 10, height / 2), (width / 2 + 10, height / 2), (0, 0, 255))
+            #frame = cv2.flip(frame, 1)
+            cv2image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
+            imgtk = ImageTk.PhotoImage(image=Image.fromarray(cv2image))
+            self.main.imgtk = imgtk
+            self.main.configure(image=self.main.imgtk)
+            self.main.after(50, self.show_frame)
+
+    def destroy(self):
+        self.cap.release()
+        Toplevel.destroy(self)
 
 class MemoryFrame(Frame):
     '''
@@ -231,6 +262,9 @@ class ManipulatorApplication(Frame):
         '''
         Frame.__init__(self, master)
 
+        self.camera = CameraFrame(master)
+        self.camera.wm_title("Camera")
+
         self.frame_microscope = MicroscopeFrame(self, text='Microscope', unit=stage)
         self.frame_microscope.grid(row=0, column=0, padx=5, pady=5, sticky=N)
 
@@ -249,10 +283,6 @@ class ManipulatorApplication(Frame):
         Button(self, text="STOP", command=self.stop).grid(row=2, column=1, padx=5, pady=5)
         Button(self, text="Motor ranges", command=self.motor_ranges).grid(row=2, column=0, padx=5, pady=5)
         Button(self, text="TEST", command=self.test).grid(row=2, column=2, padx=5, pady=5)
-
-        # Camera window
-        #t = Toplevel(self)
-        #t.wm_title("Camera")
 
         self.load_configuration()
 
@@ -284,6 +314,7 @@ class ManipulatorApplication(Frame):
         manipulator_cfg = []
         for frame in self.frame_manipulator:
             cfg = {'memory' : frame.unit.memory,
+                   "dev.memory" : frame.unit.dev.memory,
                    'M' : frame.unit.M,
                    'x0' : frame.unit.x0,
                    'Minv' : frame.unit.Minv }
@@ -303,6 +334,10 @@ class ManipulatorApplication(Frame):
             self.frame_microscope.unit.memory = cfg_all['microscope']['memory']
             for frame, cfg in zip(self.frame_manipulator, cfg_all['manipulator']):
                 frame.unit.memory = cfg['memory']
+                try:
+                    frame.unit.dev.memory = cfg['dev.memory']
+                except KeyError:
+                    pass # not yet updated
                 frame.unit.M = cfg['M']
                 frame.unit.Minv = cfg['Minv']
                 frame.unit.x0 = cfg['x0']
