@@ -19,8 +19,8 @@ Camera:
 '''
 from Tkinter import *
 from devices import *
-from numpy import array, zeros
-from numpy.linalg import LinAlgError
+from numpy import array, zeros, eye, dot
+from numpy.linalg import LinAlgError, inv
 import pickle
 from serial import SerialException
 import time
@@ -34,7 +34,7 @@ home = expanduser("~")
 config_filename = home+'/config_manipulator.cfg'
 
 class CameraFrame(Toplevel):
-    def __init__(self, master=None, name = '', cnf={}, dev=None, **kw):
+    def __init__(self, master=None, cnf={}, dev=None, **kw):
         Toplevel.__init__(self, master, cnf, **kw)
         self.main = Label(self)
         self.main.bind("<Button-1>",self.click)
@@ -47,21 +47,35 @@ class CameraFrame(Toplevel):
         self.height = int(self.cap.get(4))
         self.show_frame()
 
+    def set_microscope(self, microscope):
+        self.microscope = microscope
+
     def show_frame(self):
         if self.cap.isOpened():
             _, frame = self.cap.read()
             width, height = self.width, self.height
+            # Center cross
             cv2.line(frame, (width / 2, height / 2 - 10), (width / 2, height / 2 + 10), (0, 0, 255))
             cv2.line(frame, (width / 2 - 10, height / 2), (width / 2 + 10, height / 2), (0, 0, 255))
+            # Top left
+            cv2.line(frame, (width / 3, height / 3 - 10), (width / 3, height / 3 + 10), (0, 0, 255))
+            cv2.line(frame, (width / 3 - 10, height / 3), (width / 3 + 10, height / 3), (0, 0, 255))
+            # Top right
+            cv2.line(frame, (2*width / 3, height / 3 - 10), (2*width / 3, height / 3 + 10), (0, 0, 255))
+            cv2.line(frame, (2*width / 3 - 10, height / 3), (2*width / 3 + 10, height / 3), (0, 0, 255))
+            # Bottom left
+            cv2.line(frame, (width / 3, 2*height / 3 - 10), (width / 3, 2*height / 3 + 10), (0, 0, 255))
+            cv2.line(frame, (width / 3 - 10, 2*height / 3), (width / 3 + 10, 2*height / 3), (0, 0, 255))
+
             #frame = cv2.flip(frame, 1)
             cv2image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
             imgtk = ImageTk.PhotoImage(image=Image.fromarray(cv2image))
             self.main.imgtk = imgtk
             self.main.configure(image=self.main.imgtk)
-            self.main.after(50, self.show_frame)
+            self.main.after(100, self.show_frame)
 
     def click(self, e):
-        print e.x, e.y
+        self.microscope.click(e.x, e.y)
 
     def destroy(self):
         self.cap.release()
@@ -159,8 +173,58 @@ class MicroscopeFrame(UnitFrame):
         '''
         UnitFrame.__init__(self, master, unit, cnf, **kw)
 
+        Button(self, text="Calibrate", command=self.calibrate).pack()
         MemoryFrame(self, name="Calibration", unit=unit).pack()
         MemoryFrame(self, name="Preparation", unit=unit).pack()
+
+        # Calibration variables
+        self.calibrate_step = -1
+        self.x = zeros((3,2)) # we ignore the z dimension
+        width, height = self.master.camera.width, self.master.camera.height
+        self.y = zeros((3,2))
+        self.y[0] = (width/3,height/3)
+        self.y[1] = (2*width / 3, height / 3)
+        self.y[2] = (width / 3, 2*height / 3)
+        self.M = eye(2)
+        self.Minv = eye(2)
+        self.x0 = zeros(2)
+
+    def click(self,xs,ys):
+        y = array([xs,ys]) # Camera position
+        x = dot(self.M,y)+self.x0
+        # Move manipulator 1
+        x3D = zeros(3)
+        x3D[:2] = x
+        x3D[2] = self.unit.position(2)
+        self.master.frame_manipulator[0].unit.absolute_move(x3D)
+
+    def calibrate(self):
+        if self.calibrate_step == -1:
+            self.master.display_status("Place point of interest in top left corner with the stage and click 'Calibrate'.")
+            self.calibrate_step = 0
+        elif self.calibrate_step == 0:
+            self.x[0] = self.unit.position()[:2]
+            self.master.display_status("Place point of interest in top right corner with the stage and click 'Calibrate'.")
+            self.calibrate_step = 1
+        elif self.calibrate_step == 1:
+            self.x[1] = self.unit.position()[:2]
+            self.master.display_status("Place point of interest in bottom left corner with the stage and click 'Calibrate'.")
+            self.calibrate_step = 2
+        else: # Done
+            self.x[2] = self.unit.position()[:2]
+            self.master.display_status("Calibration done.")
+            self.calculate_calibration()
+            self.calibrate_step = -1
+
+    def calculate_calibration(self):
+        dx = self.x.T
+        dx = dx[:,1:] - dx[:,0:-1] # we calculate shifts relative to first position
+        dy = self.y.T
+        dy = dy[:, 1:] - dy[:, 0:-1]
+        self.M = dot(dx, inv(dy))
+        self.Minv=inv(self.M)
+        self.x0 = self.x[0]-dot(self.M, self.y[0])
+
 
 class ManipulatorFrame(UnitFrame):
     '''
@@ -271,6 +335,8 @@ class ManipulatorApplication(Frame):
 
         self.frame_microscope = MicroscopeFrame(self, text='Microscope', unit=stage)
         self.frame_microscope.grid(row=0, column=0, padx=5, pady=5, sticky=N)
+
+        self.camera.set_microscope(self.frame_microscope)
 
         self.frame_manipulator = []
         i = 0
