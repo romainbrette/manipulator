@@ -10,12 +10,6 @@ TODO:
 * Safer moves
 * Check motor bounds
 * Memories with editable names
-* Move up/down: continuous increase?
-
-Camera:
-* http://stackoverflow.com/questions/16366857/show-webcam-sequence-tkinter
-* Calibrate camera wrt stage
-* Go to clicked position
 '''
 from Tkinter import *
 from devices import *
@@ -380,7 +374,10 @@ class ManipulatorApplication(Frame):
         '''
         Save memories and calibration.
         '''
-        microscope_cfg = {'memory' : self.frame_microscope.unit.memory}
+        microscope_cfg = {'memory' : self.frame_microscope.unit.memory,
+                          'M' : self.frame_microscope.M,
+                          'Minv' : self.frame_microscope.Minv,
+                          'x0' : self.frame_microscope.x0}
         manipulator_cfg = []
         for frame in self.frame_manipulator:
             cfg = {'memory' : frame.unit.memory,
@@ -402,6 +399,12 @@ class ManipulatorApplication(Frame):
         try:
             cfg_all = pickle.load(open(config_filename, "rb"))
             self.frame_microscope.unit.memory = cfg_all['microscope']['memory']
+            try:
+                self.frame_microscope.M = cfg_all['microscope']['M']
+                self.frame_microscope.Minv = cfg_all['microscope']['Minv']
+                self.frame_microscope.x0 = cfg_all['microscope']['x0']
+            except KeyError # not yet updated
+                pass
             for frame, cfg in zip(self.frame_manipulator, cfg_all['manipulator']):
                 frame.unit.memory = cfg['memory']
                 try:
