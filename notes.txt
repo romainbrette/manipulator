@@ -86,6 +86,28 @@ Then in both cases:
 * Microscope is moved to place of interest
 * Pipette is moved in
 
+Automatic calibration
+---------------------
+0) Motor range calibration
+* Motors are moved completely until the ends are reached.
+
+1) Primary calibration
+* We first need the user to put the pipette (or in fact any object held by the manipulator)
+  in microscope view.
+* We may locate the tip as the point of maximum local contrast (or a corner detection algorithm);
+  alternatively we use the method from Wu et al. (2016).
+* We take a photo, which we use as template.
+* We do a first calibration with small movements to stay in view.
+* Template is used to locate the pipette on screen + autofocus.
+* We do a second calibration with larger movements.
+* We move using the first calibration to put the pipette in view.
+* No need to move the pipette in center (only locating on screen).
+
+2) Secondary calibration
+* We move the pipette in axis.
+* We descend the pipette fast until in view (view changes).
+* We locate the pipette (template) (no need to center it).
+
 Classes
 -------
 Device = the controller (low-level)

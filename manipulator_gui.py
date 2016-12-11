@@ -2,6 +2,8 @@
 Software to control SM-10 micromanipulator controller
 
 TODO:
+* wait_until_still in device
+* Calibration: manual movements of microscope
 * Safe last calibration point, to make safe movements (for z? or x)
 * Precision does not seem correct
 * Test group moves (in LN SM 10)
@@ -9,7 +11,19 @@ TODO:
     move pipette in axis, but withdrawn
 * Safer moves
 * Check motor bounds
+* Add a scale bar
 * Memories with editable names
+
+Automatic calibration:
+* Find pipette tip
+* Template matching
+* Autofocus algorithm
+    blur measure (variance) + scipy.optimize?
+    xu et al 2011
+    std dev normalized by mean
+    get the z axis moving slowly; scan and measure variance;
+    go to best point; fine tune
+    Alternatively, use template match as focus function
 '''
 from Tkinter import *
 from devices import *
@@ -70,6 +84,18 @@ class CameraFrame(Toplevel):
 
     def click(self, e):
         self.microscope.click(e.x, e.y)
+
+    def autofocus(self):
+        '''
+        Autofocus algorithm.
+        Ideally, use Xu et al. 2011, Robust Automatic Focus Algorithm for Low Contrast Images Using a New Contrast Measure
+
+        Here we simply use normalized standard deviation of the image as focus function, and global search
+        (or Fibonacci search or other; eg from scipy.optimize).
+        '''
+        print "Autofocus (in development)"
+        timeout = 30. # Time out
+        # Do this in show_frame()?
 
     def destroy(self):
         self.cap.release()
@@ -168,6 +194,7 @@ class MicroscopeFrame(UnitFrame):
         UnitFrame.__init__(self, master, unit, cnf, **kw)
 
         Button(self, text="Calibrate", command=self.calibrate).pack()
+        Button(self, text="Autofocus", command=self.master.camera.autofocus()).pack()
         MemoryFrame(self, name="Calibration", unit=unit).pack()
         MemoryFrame(self, name="Preparation", unit=unit).pack()
 
@@ -403,7 +430,7 @@ class ManipulatorApplication(Frame):
                 self.frame_microscope.M = cfg_all['microscope']['M']
                 self.frame_microscope.Minv = cfg_all['microscope']['Minv']
                 self.frame_microscope.x0 = cfg_all['microscope']['x0']
-            except KeyError # not yet updated
+            except KeyError: # not yet updated
                 pass
             for frame, cfg in zip(self.frame_manipulator, cfg_all['manipulator']):
                 frame.unit.memory = cfg['memory']
