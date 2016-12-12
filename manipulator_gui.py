@@ -106,6 +106,7 @@ class CameraFrame(Toplevel):
             _, frame = self.cap.read()
             img.append(frame)
             self.microscope.unit.relative_move(1., axis = 2) # 1 um
+            self.microscope.unit.wait_until_still(axis = 2 )
         pickle.dump(img, open('pipette_stack.img', "wb"))
 
     def destroy(self):
