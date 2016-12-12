@@ -205,17 +205,18 @@ class MicroscopeFrame(UnitFrame):
         self.y[0] = (width/3,height/3)
         self.y[1] = (2*width / 3, height / 3)
         self.y[2] = (width / 3, 2*height / 3)
+        self.center = array([width / 2, height / 2])
         self.M = eye(2)
         self.Minv = eye(2)
         self.x0 = zeros(2)
 
     def click(self,xs,ys):
+        print xs, ys
         y = array([xs,ys]) # Camera position
         x = dot(self.M,y)+self.x0
         # Move manipulator 1
-        x3D = zeros(3)
-        x3D[:2] = x
-        x3D[2] = self.unit.position(2)
+        x3D = self.unit.position()
+        x3D[:2]+= x
         self.master.frame_manipulator[0].unit.absolute_move(x3D)
 
     def calibrate(self):
@@ -243,7 +244,8 @@ class MicroscopeFrame(UnitFrame):
         dy = dy[:, 1:] - dy[:, 0:-1]
         self.M = dot(dx, inv(dy))
         self.Minv=inv(self.M)
-        self.x0 = self.x[0]-dot(self.M, self.y[0])
+        # Clicking on the center means no movement
+        self.x0 = dot(self.M, self.center)
 
 
 class ManipulatorFrame(UnitFrame):

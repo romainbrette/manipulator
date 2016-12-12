@@ -17,8 +17,8 @@ def click(event, x, y, flags, param):
         print x,y
 
 cap = cv2.VideoCapture(0)
-cap.set(3, 1280)
-cap.set(4, 1024)
+cap.set(3, 640)
+cap.set(4, 480)
 
 width = int(cap.get(3))
 height = int(cap.get(4))
