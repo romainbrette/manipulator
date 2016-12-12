@@ -219,7 +219,6 @@ class MicroscopeFrame(UnitFrame):
         self.x0 = zeros(2)
 
     def click(self,xs,ys):
-        print xs,ys
         if self.calibrate_step == -1:
             y = array([xs,ys]) # Camera position
             x = dot(self.M,y)+self.x0
