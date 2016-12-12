@@ -211,41 +211,45 @@ class MicroscopeFrame(UnitFrame):
         self.x0 = zeros(2)
 
     def click(self,xs,ys):
-        print xs, ys
-        y = array([xs,ys]) # Camera position
-        x = dot(self.M,y)+self.x0
-        # Move manipulator 1
-        x3D = self.unit.position()
-        x3D[:2]+= x
-        self.master.frame_manipulator[0].unit.absolute_move(x3D)
-
-    def calibrate(self):
+        print xs,ys
         if self.calibrate_step == -1:
-            self.master.display_status("Place point of interest in top left corner with the stage and click 'Calibrate'.")
-            self.calibrate_step = 0
+            y = array([xs,ys]) # Camera position
+            x = dot(self.M,y)+self.x0
+            # Move manipulator 1
+            x3D = self.unit.position()
+            x3D[:2]+= x
+            self.master.frame_manipulator[0].unit.absolute_move(x3D)
         elif self.calibrate_step == 0:
             self.x[0] = self.unit.position()[:2]
-            self.master.display_status("Place point of interest in top right corner with the stage and click 'Calibrate'.")
+            self.y[0] = (xs, ys)
+            self.master.display_status("Place point of interest in top right corner with the stage and click on it.")
             self.calibrate_step = 1
         elif self.calibrate_step == 1:
             self.x[1] = self.unit.position()[:2]
-            self.master.display_status("Place point of interest in bottom left corner with the stage and click 'Calibrate'.")
+            self.y[1] = (xs, ys)
+            self.master.display_status("Place point of interest in bottom left corner with the stage and click on it.")
             self.calibrate_step = 2
-        else: # Done
+        else:  # Done
             self.x[2] = self.unit.position()[:2]
+            self.y[2] = (xs, ys)
             self.master.display_status("Calibration done.")
             self.calculate_calibration()
             self.calibrate_step = -1
+
+    def calibrate(self):
+        if self.calibrate_step == -1:
+            self.master.display_status("Place point of interest in top left corner with the stage and click on it.")
+            self.calibrate_step = 0
 
     def calculate_calibration(self):
         dx = self.x.T
         dx = dx[:,1:] - dx[:,0:-1] # we calculate shifts relative to first position
         dy = self.y.T
         dy = dy[:, 1:] - dy[:, 0:-1]
-        self.M = dot(dx, inv(dy))
+        self.M = -dot(dx, inv(dy))
         self.Minv=inv(self.M)
         # Clicking on the center means no movement
-        self.x0 = dot(self.M, self.center)
+        self.x0 = -dot(self.M, self.center)
 
 
 class ManipulatorFrame(UnitFrame):
