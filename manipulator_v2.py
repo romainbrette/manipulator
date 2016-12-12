@@ -174,7 +174,6 @@ class MicroscopeFrame(UnitFrame):
         self.master.frame_manipulator[button-1].unit.absolute_move(x3D)
 
     def calibrate(self): # Automatic calibration
-        # We assume there is pipette centered in view.
         self.x[0] = self.unit.position()[:2]
         self.y[0] = self.center
         _, template = self.master.camera.cap.read()
@@ -185,7 +184,7 @@ class MicroscopeFrame(UnitFrame):
         # Template matching
         _, img = self.master.camera.cap.read()
         self.x[1] = self.unit.position()[:2]
-        self.y[1] = find_template(img, template)[:2]
+        self.y[1] = find_template(img, template)[:2]  ## Actually we should shift to center point, since this is relative to (0,0)
         cv2.imwrite('pipette2.jpg', img)
         # Move Y axis
         self.unit.relative_move(50., axis=1)  # 50 um
