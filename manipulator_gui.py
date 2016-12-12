@@ -95,6 +95,14 @@ class CameraFrame(Toplevel):
         print "Autofocus (in development)"
         timeout = 30. # Time out
         # Do this in show_frame()?
+        # Capture 20 images
+        img = []
+        self.microscope.unit.relative_move(-10., axis=2)  # 1 um
+        for i in range(20):
+            _, frame = self.cap.read()
+            img.append(frame)
+            self.microscope.unit.relative_move(1., axis = 2) # 1 um
+        pickle.dump(img, open('pipette_stack.img', "wb"))
 
     def destroy(self):
         self.cap.release()
@@ -193,7 +201,7 @@ class MicroscopeFrame(UnitFrame):
         UnitFrame.__init__(self, master, unit, cnf, **kw)
 
         Button(self, text="Calibrate", command=self.calibrate).pack()
-        Button(self, text="Autofocus", command=self.master.camera.autofocus()).pack()
+        Button(self, text="Autofocus", command=self.master.camera.autofocus).pack()
         MemoryFrame(self, name="Calibration", unit=unit).pack()
         MemoryFrame(self, name="Preparation", unit=unit).pack()
 
