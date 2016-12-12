@@ -2,8 +2,8 @@
 Software to control SM-10 micromanipulator controller
 
 TODO:
-* wait_until_still in device
-* Calibration: manual movements of microscope
+* Make a list of technical issues (camera handling, serial port etc)
+* wait_until_still in SM10
 * Safe last calibration point, to make safe movements (for z? or x)
 * Precision does not seem correct
 * Test group moves (in LN SM 10)
@@ -15,8 +15,6 @@ TODO:
 * Memories with editable names
 
 Automatic calibration:
-* Find pipette tip
-* Template matching
 * Autofocus algorithm
     blur measure (variance) + scipy.optimize?
     xu et al 2011
@@ -27,6 +25,7 @@ Automatic calibration:
 '''
 from Tkinter import *
 from devices import *
+from vision import *
 from numpy import array, zeros, eye, dot
 from numpy.linalg import LinAlgError, inv
 import pickle
@@ -299,9 +298,10 @@ class ManipulatorFrame(UnitFrame):
                 # Withdraw pipette
                 self.unit.home()
             else: # move unit by 500 um along one axis
+                axis_name = ['X', 'Y', 'Z']
                 self.master.display_status("Step " + str(self.calibration_step+2) +
-                                           "\nMove stage to center pipette tip and press 'Confirm position'.")
-                self.unit.dev.relative_move(500., axis = self.calibration_step-1)
+                                           "\nMove pipette along the "+axis_name[self.calibration_step-1]+"axis, move stage to center pipette tip and press 'Confirm position'.")
+                #self.unit.dev.relative_move(500., axis = self.calibration_step-1)
                 self.calibration_step+=1
 
     def change_pipette(self):

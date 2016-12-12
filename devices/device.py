@@ -6,6 +6,7 @@ To make a new device, one must implement at least:
 * absolute_move
 """
 from numpy import array
+from time import time
 
 __all__ = ['Device']
 
@@ -91,3 +92,17 @@ class Device(object):
         Stops current movements.
         """
         pass
+
+    def wait_until_still(self, axes):
+        """
+        Waits until motors have stopped.
+
+        Parameters
+        ----------
+        axes : list of axis numbers
+        """
+        previous_position = self.position(axes)
+        new_position = None
+        while (previous_position != new_position):
+            new_position = self.position(axes)
+            time.sleep(0.1) # 100 us

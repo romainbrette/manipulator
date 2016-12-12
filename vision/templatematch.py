@@ -5,9 +5,9 @@ Typically used to locate a pipette in an image, using a previous photo.
 import cv2
 import time
 
-__all__ = ['template_match']
+__all__ = ['find_template']
 
-def template_match(img, template):
+def find_template(img, template):
     '''
     Finds the template in the image.
 
@@ -25,6 +25,6 @@ if __name__ == '__main__': # test
     img = cv2.imread('pipette.jpg', 0)
     img2 = img[20:100,10:100]
     t1 = time.time()
-    print template_match(img, img2)
+    print find_template(img, img2)
     t2 = time.time()
     print t2-t1

@@ -5,13 +5,14 @@ Adapted from Wu et al. (2011). Robust Automatic Focus Algorithm for Low Contrast
 Using a New Contrast Measure
 
 Maybe equalize with cv2.createCLAHE
+and denoise
 '''
 import cv2
 import numpy as np
 import copy
 import math
 
-__all__ = ['']
+__all__ = ['tip_detection']
 
 def tip_detection(img):
     '''
@@ -22,22 +23,16 @@ def tip_detection(img):
     Returns
     -------
     x,y : position of tip on image in pixels.
+    criterion : maximum value of Corner-Harris algorithm.
     '''
-    # Here I try corner detection - not great
 
-    height, width = img.shape
     dst = cv2.cornerHarris(img, 2, 3, 0.04)
 
-        # Threshold for an optimal value, it may vary depending on the image.
     n = dst.argmax()
-    x, y = n % width, n / width
-    cv2.circle(img, (x, y), 2, (155, 0, 25))
+    y, x = np.unravel_index(n, img.shape)
+    criterion = dst.flatten()[n]
 
-    cv2.imshow('dst', img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-
-    return x,y
+    return x,y,criterion
 
 ### From Autopatcher_IG
 def genericFourtyXPipetteDetection(img):
@@ -146,5 +141,9 @@ def genericFourtyXPipetteDetection(img):
 
 if __name__ == '__main__': # test
     img = cv2.imread('pipette.jpg', 0)
-    x,y = tip_detection(img)
+    x,y,_ = tip_detection(img)
     #genericFourtyXPipetteDetection(img)
+    cv2.circle(img, (x, y), 2, (155, 0, 25))
+    cv2.imshow('dst', img)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
