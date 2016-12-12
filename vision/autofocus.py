@@ -27,11 +27,19 @@ def tip_autofocus(focus, min = None, max = None):
 if __name__ == '__main__': # test
     img = pickle.load(open('../pipette_stack.img', "rb"))
     for i in range(20):
-        cv2.imshow('Camera',img[i])
+        # First corner detection
+        gray = cv2.cvtColor(img[i], cv2.COLOR_BGR2GRAY)
+        gray = np.float32(gray)
+        x, y, c = tip_detection(gray)
+
+        # Then local variance
+        little_one = gray[y-20:y+20,x-20:x+20]
+
+        print c, np.var(little_one/np.mean(little_one))
+
+        image = img[i]
+        cv2.circle(image, (x, y), 2, (155, 0, 25))
+        cv2.imshow('Camera',image)
         key = cv2.waitKey()
     cv2.destroyAllWindows()
-    '''
-    for i in range(20):
-        x,y,c = tip_detection(np.float32(img[i]))
-        print c
-    '''
+
