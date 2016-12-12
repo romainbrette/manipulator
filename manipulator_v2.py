@@ -170,31 +170,36 @@ class MicroscopeFrame(UnitFrame):
         # Move manipulator 1
         x3D = self.unit.position()
         x3D[:2]+= x
+        print button
         self.master.frame_manipulator[button-1].unit.absolute_move(x3D)
 
     def calibrate(self): # Automatic calibration
         # We assume there is pipette centered in view.
         self.x[0] = self.unit.position()[:2]
         self.y[0] = self.center
-        _, template = self.cap.read()
+        _, template = self.master.camera.cap.read()
+        cv2.imwrite('pipette1.jpg', template)
         # Move X axis
         self.unit.relative_move(50., axis = 0) # 50 um
         self.unit.wait_until_still(axis = 0)
         # Template matching
-        _, img = self.cap.read()
+        _, img = self.master.camera.cap.read()
         self.x[1] = self.unit.position()[:2]
         self.y[1] = find_template(img, template)[:2]
+        cv2.imwrite('pipette2.jpg', template)
         # Move Y axis
-        self.unit.relative_move(50., axis=0)  # 50 um
-        self.unit.wait_until_still(axis=0)
+        self.unit.relative_move(50., axis=1)  # 50 um
+        self.unit.wait_until_still(axis=1)
         # Template matching
-        _, img = self.cap.read()
+        _, img = self.master.camera.cap.read()
         self.x[2] = self.unit.position()[:2]
         self.y[2] = find_template(img, template)[:2]
+        cv2.imwrite('pipette3.jpg', template)
+        print self.y[2]
         self.master.display_status("Calibration done.")
         self.calculate_calibration()
 
-def calculate_calibration(self):
+    def calculate_calibration(self):
         dx = self.x.T
         dx = dx[:,1:] - dx[:,0:-1] # we calculate shifts relative to first position
         dy = self.y.T
