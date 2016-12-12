@@ -12,7 +12,7 @@ import numpy as np
 import copy
 import math
 
-__all__ = ['tip_detection']
+__all__ = ['tip_detection','genericFourtyXPipetteDetection']
 
 def tip_detection(img):
     '''
@@ -35,6 +35,7 @@ def tip_detection(img):
     return x,y,criterion
 
 ### From Autopatcher_IG
+## Really slow!
 def genericFourtyXPipetteDetection(img):
     '''
     Returns
@@ -42,7 +43,7 @@ def genericFourtyXPipetteDetection(img):
     y, x : tip position in pixels
     distance : minimum distance of tip to detected lines
     '''
-    height, width = img.shape
+    #height, width = img.shape
     edges = cv2.Canny(img, 30, 100)
     minimum_length = 15;
 
@@ -78,9 +79,6 @@ def genericFourtyXPipetteDetection(img):
             c = c / b;
             cartesian_line[index] = [a, c]
 
-        print "fitting line length is ", minimum_length
-
-        print lines_unsorted
         # cv2.imshow('edges', edges)
         # cv2.waitKey(0)
         # cv2.destroyAllWindows()
@@ -97,9 +95,7 @@ def genericFourtyXPipetteDetection(img):
             y1 = int(y0 + 1000 * (a))
             x2 = int(x0 - 1000 * (-b))
             y2 = int(y0 - 1000 * (a))
-            cv2.line(img, (x1, y1), (x2, y2), (0, 0, 255), 2)
             temp = np.zeros((img.shape[0], img.shape[1]), np.uint8)
-            cv2.line(temp, (x1, y1), (x2, y2), (50, 50, 50), 2)
             black_board = black_board + temp;
         # aftermath = aftermath + 1
 
@@ -127,11 +123,11 @@ def genericFourtyXPipetteDetection(img):
                         minimum_distance = cumulative_distance;
             # print "the minimum distance is ", minimum_distance
             coordinate = (tip_y, tip_x);
-        cv2.circle(edges, coordinate, 2, (255, 255, 255), 2)
+        #cv2.circle(edges, coordinate, 2, (255, 255, 255), 2)
 
-        cv2.imshow('edges', edges)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        #cv2.imshow('edges', edges)
+        #cv2.waitKey(0)
+        #cv2.destroyAllWindows()
 
         return [tip_y, tip_x, minimum_distance]
         break
