@@ -186,7 +186,7 @@ class MicroscopeFrame(UnitFrame):
         _, img = self.master.camera.cap.read()
         self.x[1] = self.unit.position()[:2]
         self.y[1] = find_template(img, template)[:2]
-        cv2.imwrite('pipette2.jpg', template)
+        cv2.imwrite('pipette2.jpg', img)
         # Move Y axis
         self.unit.relative_move(50., axis=1)  # 50 um
         self.unit.wait_until_still(axis=1)
@@ -194,7 +194,7 @@ class MicroscopeFrame(UnitFrame):
         _, img = self.master.camera.cap.read()
         self.x[2] = self.unit.position()[:2]
         self.y[2] = find_template(img, template)[:2]
-        cv2.imwrite('pipette3.jpg', template)
+        cv2.imwrite('pipette3.jpg', img)
         print self.y[2]
         self.master.display_status("Calibration done.")
         self.calculate_calibration()
