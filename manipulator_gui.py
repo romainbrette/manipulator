@@ -44,7 +44,8 @@ class CameraFrame(Toplevel):
     def __init__(self, master=None, cnf={}, dev=None, **kw):
         Toplevel.__init__(self, master, cnf, **kw)
         self.main = Label(self)
-        self.main.bind("<Button-1>",self.click)
+        self.main.bind("<Button-1>",self.click_left)
+        self.main.bind("<Button-2>",self.click_right)
         self.main.pack()
         #width, height = 800, 600
         self.cap = cv2.VideoCapture(0)
@@ -81,8 +82,11 @@ class CameraFrame(Toplevel):
             self.main.configure(image=self.main.imgtk)
             self.main.after(100, self.show_frame)
 
-    def click(self, e):
-        self.microscope.click(e.x, e.y)
+    def click_left(self, e):
+        self.microscope.click(e.x, e.y, button = 1)
+
+    def click_right(self, e):
+        self.microscope.click(e.x, e.y, button = 2)
 
     def autofocus(self):
         '''
@@ -218,15 +222,14 @@ class MicroscopeFrame(UnitFrame):
         self.Minv = eye(2)
         self.x0 = zeros(2)
 
-    def click(self,xs,ys):
-        print xs,ys
+    def click(self,xs,ys, button = None):
         if self.calibrate_step == -1:
             y = array([xs,ys]) # Camera position
             x = dot(self.M,y)+self.x0
             # Move manipulator 1
             x3D = self.unit.position()
             x3D[:2]+= x
-            self.master.frame_manipulator[0].unit.absolute_move(x3D)
+            self.master.frame_manipulator[button-1].unit.absolute_move(x3D)
         elif self.calibrate_step == 0:
             self.x[0] = self.unit.position()[:2]
             self.y[0] = (xs, ys)
