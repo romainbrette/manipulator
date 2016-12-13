@@ -44,9 +44,9 @@ class MemoryFrame(Frame):
     def go(self):
         self.unit.absolute_move(self.unit.memory[self.name.get()])
 
-class MicroscopeFrame(LabelFrame):
+class MicroscopeFrame(Frame):
     '''
-    A frame for the microscope and stage.
+    A frame for the stage positions.
     '''
     def __init__(self, master = None, unit = None, cnf = {}, **kw):
         '''
@@ -55,7 +55,7 @@ class MicroscopeFrame(LabelFrame):
         master : parent window
         unit : XYZ unit
         '''
-        LabelFrame.__init__(self, master, cnf, **kw)
+        Frame.__init__(self, master, cnf, **kw)
 
         self.master = master
         self.unit = unit # XYZ unit
@@ -97,7 +97,7 @@ class ManipulatorApplication(Frame):
         '''
         Frame.__init__(self, master)
 
-        self.frame_microscope = MicroscopeFrame(self, text='Microscope', unit=stage)
+        self.frame_microscope = MicroscopeFrame(self, unit=stage)
         self.frame_microscope.grid(row=0, column=0, padx=5, pady=5, sticky=N)
 
         self.frame_manipulator = []
