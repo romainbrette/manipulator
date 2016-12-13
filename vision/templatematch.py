@@ -24,11 +24,15 @@ def find_template(img, template):
 
 if __name__ == '__main__': # test
     img = cv2.imread('pipette1.jpg', 0)
-    #img2 = img[20:100,10:100]
-    img2 = np.zeros(img.shape)
+    height, width = img.shape
+    cv2.imshow('Pipette',img)
+
+    img2 = img[height*3/8:height*5/8,width*3/8:width*5/8]
+    cv2.imshow('Template',img2)
+    #img2 = np.zeros(img.shape)
     #img2[200:,300:] = img[:-200,:-300]
 
-    t1 = time.time()
     print find_template(img, img2)
-    t2 = time.time()
-    print t2-t1
+
+    key = cv2.waitKey(0)
+    cv2.destroyAllWindows()
