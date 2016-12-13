@@ -4,6 +4,7 @@ Manual calibration of manipulators with no camera feed.
 TODO:
 * Save configuration: only update the configuration dictionary
 * Precision seems incorrect.
+* Motor ranges (currently not saved).
 '''
 from Tkinter import *
 from devices import *
@@ -11,7 +12,6 @@ from numpy import array, zeros
 from numpy.linalg import LinAlgError
 import pickle
 from serial import SerialException
-import time
 
 from os.path import expanduser
 home = expanduser("~")

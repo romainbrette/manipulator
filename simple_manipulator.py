@@ -16,11 +16,8 @@ TODO:
 '''
 from Tkinter import *
 from devices import *
-from numpy import array, zeros, eye, dot
-from numpy.linalg import LinAlgError, inv
 import pickle
 from serial import SerialException
-import time
 
 from os.path import expanduser
 home = expanduser("~")
