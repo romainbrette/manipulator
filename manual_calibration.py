@@ -15,7 +15,7 @@ import time
 
 from os.path import expanduser
 home = expanduser("~")
-config_filename = home+'/config_manipulator.cfg'
+config_filename = home+'/config_manipulator2.cfg'
 
 
 class ManipulatorFrame(LabelFrame):
@@ -117,12 +117,12 @@ class ManipulatorApplication(Frame):
         for i,frame in enumerate(self.frame_manipulator):
             try:
                 self.configuration['manipulator'][i]['M'] = frame.unit.M
-                self.configuration['manipulator'][i]['x0'] = frame.unit.x0,
+                self.configuration['manipulator'][i]['x0'] = frame.unit.x0
                 self.configuration['manipulator'][i]['Minv'] = frame.unit.Minv
             except KeyError: # not calibrated yet
                 print "Manipulator",i,"is not calibrated yet"
 
-        pickle.dump(self.configuration, open(config_filename+'2', "wb"))
+        pickle.dump(self.configuration, open(config_filename, "wb"))
 
     def load_configuration(self):
         '''
