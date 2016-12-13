@@ -128,7 +128,9 @@ class MicroscopeFrame(LabelFrame):
         template = template[height*3/8:height*5/8,width*3/8:width*5/8]
         # Move X axis
         self.unit.relative_move(50., axis = 0) # 50 um
+        self.master.camera.cap.release() # works but not ideal!
         self.unit.wait_until_still(axis = 0)
+        self.master.camera.cap = cv2.VideoCapture(0)
         # Template matching
         _, img = self.master.camera.cap.read()
         self.x[1] = self.unit.position()[:2]
@@ -137,14 +139,17 @@ class MicroscopeFrame(LabelFrame):
         cv2.imwrite('pipette2.jpg', img)
         # Move Y axis
         self.unit.relative_move(50., axis=1)  # 50 um
-        self.unit.wait_until_still(axis=1)
+        self.master.camera.cap.release()
+        self.unit.wait_until_still(axis = 1)
+        self.master.camera.cap = cv2.VideoCapture(0)
         # Template matching
         _, img = self.master.camera.cap.read()
         self.x[2] = self.unit.position()[:2]
         x, y = find_template(img, template)[:2]
         self.y[2] = [x + width / 8, y + height / 8]
         cv2.imwrite('pipette3.jpg', img)
-        print self.y[1],self.y[2]
+        print self.y[0],self.y[1],self.y[2]
+        print self.x[0],self.x[1],self.x[2]
         self.master.display_status("Calibration done.")
         self.calculate_calibration()
 
