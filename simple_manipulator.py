@@ -122,7 +122,6 @@ class ManipulatorApplication(Frame):
             frame.unit.M = cfg['M']
             frame.unit.Minv = cfg['Minv']
             frame.unit.x0 = cfg['x0']
-            frame.unit.is_calibrated = True
 
 if __name__ == '__main__':
     root = Tk()

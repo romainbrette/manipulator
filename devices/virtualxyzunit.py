@@ -27,7 +27,6 @@ class VirtualXYZUnit(XYZUnit): # could be a device
         self.M = eye(3) # Matrix transform
         self.Minv = eye(3) # Inverse of M
         self.x0 = zeros(3) # Offset
-        self.is_calibrated = False # calibration status
         self.axes=[0,1,2]
 
     def position(self, axis = None):
@@ -103,7 +102,6 @@ class VirtualXYZUnit(XYZUnit): # could be a device
         self.M = dot(dx, inv(dy))
         self.Minv=inv(self.M)
         self.x0 = x[0]-dot(self.M, y[0])
-        self.is_calibrated = True
 
     def calibration_precision(self):
         '''

@@ -402,7 +402,6 @@ class ManipulatorApplication(Frame):
                 frame.unit.M = cfg['M']
                 frame.unit.Minv = cfg['Minv']
                 frame.unit.x0 = cfg['x0']
-                frame.unit.is_calibrated = True
         except IOError:
             self.display_status("No configuration file.")
             time.sleep(1)
