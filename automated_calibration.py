@@ -119,17 +119,21 @@ class MicroscopeFrame(LabelFrame):
         self.master.frame_manipulator[button-1].unit.absolute_move(x3D)
 
     def calibrate(self): # Automatic calibration
+        width, height = self.master.camera.width, self.master.camera.height
         self.x[0] = self.unit.position()[:2]
         self.y[0] = self.center
         _, template = self.master.camera.cap.read()
         cv2.imwrite('pipette1.jpg', template)
+        # Extract a small template in the center
+        template = template[height*3/8:height*5/8,width*3/8:width*5/8]
         # Move X axis
         self.unit.relative_move(50., axis = 0) # 50 um
         self.unit.wait_until_still(axis = 0)
         # Template matching
         _, img = self.master.camera.cap.read()
         self.x[1] = self.unit.position()[:2]
-        self.y[1] = find_template(img, template)[:2]  ## Actually we should shift to center point, since this is relative to (0,0)
+        x,y = find_template(img, template)[:2]
+        self.y[1] = [x+width/8, y+height/8]
         cv2.imwrite('pipette2.jpg', img)
         # Move Y axis
         self.unit.relative_move(50., axis=1)  # 50 um
@@ -137,9 +141,10 @@ class MicroscopeFrame(LabelFrame):
         # Template matching
         _, img = self.master.camera.cap.read()
         self.x[2] = self.unit.position()[:2]
-        self.y[2] = find_template(img, template)[:2]
+        x, y = find_template(img, template)[:2]
+        self.y[2] = [x + width / 8, y + height / 8]
         cv2.imwrite('pipette3.jpg', img)
-        print self.y[2]
+        print self.y[1],self.y[2]
         self.master.display_status("Calibration done.")
         self.calculate_calibration()
 
