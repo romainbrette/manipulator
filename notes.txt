@@ -8,9 +8,9 @@ http://fsincere.free.fr/isn/python/cours_python_tkinter.php
 Reorganization
 --------------
 It could make sense to have several programs instead of a big one:
-0) Simple camera program with pointer (plus)
+0) Simple camera program with pointer (plus) [DONE: camera_gui]
 1) Manual calibration program, no camera.
-2) Basic manipulation program without camera.
+2) Basic manipulation program without camera. [DONE: simple_manipulator]
    A simple program with no camera.
    * Microscope: positions
    * Manipulators: Go, calibrate (secondary)
