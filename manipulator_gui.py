@@ -160,9 +160,6 @@ class CoordinateFrame(Frame):
 class UnitFrame(LabelFrame):
     '''
     A named frame that displays unit coordinates.
-
-    TODO:
-    * change the move command
     '''
     def __init__(self, master = None, unit = None, cnf = {}, dev = None, **kw):
         '''
