@@ -1,5 +1,8 @@
 '''
 Automated calibration of manipulators using computer vision.
+
+TODO:
+* Autofocus using template match and/or corner detection, with a measured Z-correlation function (ie no search)
 '''
 from Tkinter import *
 from devices import *

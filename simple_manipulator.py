@@ -11,6 +11,7 @@ Calibration is done in a separate program.
 
 
 TODO:
+* Safe movements: first on focal plane, then along X axis
 * Configuration data should include device information.
 * Error catching
 '''
