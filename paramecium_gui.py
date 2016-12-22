@@ -38,7 +38,37 @@ class ManipulatorApplication(ManipulatorApplication):
         Button(self, text='Grip', command=self.grip).grid(row = 2, column = 0, padx=5, pady=5)
         Button(self, text='Ungrip', command=self.ungrip).grid(row = 3, column = 0, padx=5, pady=5)
 
+        self.focus_set()
+        self.bind("<Key>", self.key)
+
         self.load_configuration()
+
+    def key(self, event):
+        shift = 3
+        if event.keysym == 'Left':
+            self.synchronous_move(shift, 0)
+        elif event.keysym == 'Right':
+            self.synchronous_move(-shift, 0)
+        elif event.keysym == 'Up':
+            self.synchronous_move(0, shift)
+        elif event.keysym == 'Down':
+            self.synchronous_move(0, -shift)
+        elif event.keysym == 'Next':
+            self.synchronous_move(0, 0, shift)
+        elif event.keysym == 'Prior':
+            self.synchronous_move(0, 0, -shift)
+        elif event.keysym == 'space':
+            self.grip()
+        elif event.keysym == 'Escape':
+            self.ungrip()
+        else:
+            print "pressed", event.keycode, event.keysym
+
+    def synchronous_move(self, dx=0, dy=0, dz=0):
+        for frame in self.frame_manipulator:
+            frame.unit.relative_move(dx, axis=0)
+            frame.unit.relative_move(dy, axis=1)
+            frame.unit.relative_move(dz, axis=2)
 
     def go(self): # synchronous go (not truly necessary)
         for frame in self.frame_manipulator:
@@ -46,11 +76,11 @@ class ManipulatorApplication(ManipulatorApplication):
 
     def grip(self): # 5 um grip
         for frame in self.frame_manipulator:
-            frame.unit.dev.relative_move(5., axis=0)
+            frame.unit.dev.relative_move(-5., axis=0)
 
     def ungrip(self):
         for frame in self.frame_manipulator:
-            frame.unit.dev.relative_move(-5., axis=0)
+            frame.unit.dev.relative_move(5., axis=0)
 
 
 if __name__ == '__main__':
