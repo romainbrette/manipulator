@@ -14,6 +14,7 @@ TODO:
 * Safe movements: first on focal plane, then along X axis
 * Configuration data should include device information.
 * Error catching
+* Refactoring: move virtualxyzunit into xyz unit
 '''
 from Tkinter import *
 from devices import *
