@@ -45,3 +45,12 @@ Automatic calibration
 * We descend the pipette fast until in view (view changes).
   This works for pipette changes, but not for larger drifts/shifts.
 * We locate the pipette (template) (no need to center it).
+
+Paramecium GUI
+--------------
+The grip: we want to grip the cell with two electrodes:
+* Go makes the two electrodes reach the focal plane with, say, 20 um separation,
+  minus 10 um on the X-axes. This could simply be a synchronous go.
+* Grip advances by 10 um (or say a step), both electrodes. This is basically a simultaneous
+  step.
+* Maybe ungrip.

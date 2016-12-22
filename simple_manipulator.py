@@ -24,6 +24,8 @@ from os.path import expanduser
 home = expanduser("~")
 config_filename = home+'/config_manipulator.cfg'
 
+__all__ = ['MemoryFrame', 'MicroscopeFrame', 'ManipulatorFrame', 'ManipulatorApplication']
+
 class MemoryFrame(Frame):
     '''
     A frame for saving/load current position in memory
@@ -49,7 +51,7 @@ class MicroscopeFrame(Frame):
     '''
     A frame for the stage positions.
     '''
-    def __init__(self, master = None, unit = None, cnf = {}, **kw):
+    def __init__(self, master = None, unit = None, nmemories = 5, cnf = {}, **kw):
         '''
         Parameters
         ----------
@@ -61,7 +63,7 @@ class MicroscopeFrame(Frame):
         self.master = master
         self.unit = unit # XYZ unit
 
-        for i in range(5):
+        for i in range(nmemories):
             MemoryFrame(self, name="Position "+str(i+1), unit=unit).pack()
 
 class ManipulatorFrame(LabelFrame):
@@ -124,7 +126,6 @@ class ManipulatorApplication(Frame):
 if __name__ == '__main__':
     root = Tk()
     root.title('Manipulator')
-    ndevices = 2
     try:
         dev = LuigsNeumann_SM10()
     except SerialException:
@@ -133,7 +134,7 @@ if __name__ == '__main__':
     microscope = XYZUnit(dev, [7, 8, 9])
     unit = [XYZUnit(dev, [1, 2, 3]),
             XYZUnit(dev, [4, 5, 6])]
-    virtual_unit = [VirtualXYZUnit(unit[i], microscope) for i in range(ndevices)]
+    virtual_unit = [VirtualXYZUnit(unit[i], microscope) for i in range(len(unit))]
 
     print "Device initialized"
 
