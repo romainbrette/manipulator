@@ -141,4 +141,7 @@ if __name__ == '__main__':
 
     app = ManipulatorApplication(root, microscope, virtual_unit, ['Left','Right']).pack(side="top", fill="both", expand=True)
 
-    root.mainloop()
+    try:
+        root.mainloop()
+    except SerialException:
+        del(dev)

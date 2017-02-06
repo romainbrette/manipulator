@@ -58,6 +58,7 @@ class VirtualXYZUnit(XYZUnit): # could be a device
         x : target position in um.
         '''
         if axis is not None:
+            print x
             x_target = x
             x = self.position()
             x[axis] = x_target

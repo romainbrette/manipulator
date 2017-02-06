@@ -24,7 +24,7 @@ class LuigsNeumann_SM10(SerialDevice):
         self.port.bytesize = serial.EIGHTBITS
         self.port.parity=serial.PARITY_NONE
         self.port.stopbits=serial.STOPBITS_ONE
-        self.port.timeout=None # blocking
+        self.port.timeout=1. #None # blocking
 
         self.port.open()
 
@@ -59,7 +59,8 @@ class LuigsNeumann_SM10(SerialDevice):
         answer = self.port.read(nbytes_answer+6)
 
         if answer[:len(expected)] != expected :
-            raise serial.SerialException # TODO: something a bit more explicit!
+            pass
+            #raise serial.SerialException # TODO: something a bit more explicit!
         # We should also check the CRC + the number of bytes
         # Do several reads; 3 bytes, n bytes, CRC
 
@@ -132,7 +133,7 @@ class LuigsNeumann_SM10(SerialDevice):
             x[i] = struct.unpack('f', res[i*4:(i+1)*4])[0]
         return x[:len(axes)]
 
-    def absolute_move_group_test(self, x, axes):
+    def absolute_move_group(self, x, axes):
         '''
         Moves the device group of axes to position x.
 
@@ -149,7 +150,7 @@ class LuigsNeumann_SM10(SerialDevice):
 
         data = [0xA0]+axes4
         for i in range(4):
-            x_hex = binascii.hexlify(struct.pack('>f', x))
+            x_hex = binascii.hexlify(struct.pack('>f', x4[i]))
             data+= [int(x_hex[6:], 16), int(x_hex[4:6], 16), int(x_hex[2:4], 16), int(x_hex[:2], 16)]
         self.send_command('A048', data, 0)
 
