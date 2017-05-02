@@ -1,12 +1,12 @@
 '''
-Camera window.
+Autofocusing the tip of the pipette.
+Use the tip_detection function (work but cannot be used to focus ?)
+Show the camera window for debugging.
 Requires Opencv.
 Quit with key 'q'
-
-Note: my infinity camera has variable resolution, but
-it seems that OpenCV sets it to 640x480 by default (maybe could be set)
 '''
 import cv2
+from vision import *
 
 cap = cv2.VideoCapture(0)
 
@@ -15,21 +15,31 @@ height = int(cap.get(4))
 
 cv2.namedWindow('Camera')
 
-
 while(True):
+
+    key = cv2.waitKey(1)
+    if key & 0xFF == ord('q'):
+        break
+
     # Capture frame-by-frame
     ret, frame = cap.read()
+
+    # Detection of the tip, frame has to be encoded to an usable image
+    retval, img = cv2.imencode('.jpg', frame)
+    x, y, _ = tip_detection(cv2.imdecode(img, 0))
+
+    # Display a circle around the detected tip
+
+    cv2.rectangle(frame, (x-10, y-10), (x+10, y+10), (0, 0, 255))
 
     # Our operations on the frame come here
 
     frame = cv2.flip(frame, 1)
 
     # Display the resulting frame
-    cv2.imshow('Camera',frame)
+    cv2.imshow('Camera', frame)
 
-    key = cv2.waitKey(1)
-    if key & 0xFF == ord('q'):
-        break
+
 
 # When everything done, release the capture
 cap.release()
