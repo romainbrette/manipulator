@@ -1,6 +1,6 @@
 '''
 Autofocusing the tip of the pipette.
-Use the tip_detection function (work but cannot be used to focus ?)
+Use the tip_detection function
 Show the camera window for debugging.
 Requires Opencv.
 Quit with key 'q'
