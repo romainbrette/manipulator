@@ -25,15 +25,15 @@ def focus_track(device, relative_move, axis, microscope):
 
     # Making the move step-by-step
 
-    step = relative_move/10
+    step = relative_move/fabs(relative_move) * 10
 
     while fabs(disp) < fabs(relative_move):
         device.relative_move(step, axis)
         disp = device.position(axis) - init
+        # for testing
+        print disp
         tipfocus(microscope)
 
-    # for testing
-    print disp
     pass
 
 if __name__ == '__main__':

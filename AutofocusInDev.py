@@ -26,7 +26,8 @@ while(True):
 
     # Detection of the tip, frame has to be encoded to an usable image
     retval, img = cv2.imencode('.jpg', frame)
-    x, y, _ = tip_detection(cv2.imdecode(img, 0))
+    x, y, c = tip_detection(cv2.imdecode(img, 0))
+    print c
 
     # Display a circle around the detected tip
 
