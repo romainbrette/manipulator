@@ -6,17 +6,20 @@ Work only if the tip is well detected at first
 from devices import *
 from tipdetect import *
 import cv2
-from scipy.optimize import minimize_scalar
+from scipy.optimize import minimize_scalar, minimize
+from math import fabs
 
+__all__ = ['getImg', 'tipfocus']
 
-def getImg(z, microscope):
+def getImg(z=None, microscope=None):
     '''
     get an image from the microscope at given height z
     '''
 
     cap = cv2.VideoCapture(0)
 
-    microscope.absolute_move(z, 2)
+    if z:
+        microscope.absolute_move(z, 2)
 
     # Capture frame
     ret, frame = cap.read()
@@ -25,7 +28,7 @@ def getImg(z, microscope):
     _, img = cv2.imencode('.jpg', frame)
 
     cap.release()
-    return cv2.imdecode(img, 0)
+    return frame, cv2.imdecode(img, 0)
 
 def tipfocus(microscope):
     '''
@@ -34,12 +37,19 @@ def tipfocus(microscope):
     '''
 
     current_z = microscope.position(2)
-    mini = current_z - 10
-    maxi = current_z + 10
 
-    #  Using the maximum value of Corner-Harris algorithm
-    minimize_scalar(lambda x : -tip_detect(getImg(x, microscope))[2], bounds=(mini, maxi),
-                    method='Bounded')
+    fun = lambda x: -tip_detect(getImg(x, microscope)[1])[2]
+
+    #  Using the maximum value of Corner-Harris algorithm (minimize_scalar too long)
+    #mini = current_z - 10
+    #maxi = current_z + 10
+
+    #minimize_scalar(fun, bounds=(mini, maxi), method='Bounded')
+
+    cons = ({'type': 'ineq', 'fun': lambda x: 10 - fabs(x - current_z)})
+
+    minimize(fun, current_z, method='COBYLA', constraints=cons, tol=1e-4, options={'maxiter': 100})
+
     pass
 
 if __name__ == '__main__':

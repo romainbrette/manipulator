@@ -4,7 +4,9 @@ Tracking algorithm to keep the tip in focus during a move
 
 from focus import *
 from math import fabs
+from devices import *
 
+__all__ = ['focus_track']
 
 def focus_track(device, relative_move, axis, microscope):
     '''
