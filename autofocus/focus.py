@@ -31,7 +31,7 @@ def tipfocus(microscope, cap):
     current_z = microscope.position(2)
     cons = ({'type': 'ineq', 'fun': lambda x: 5 - fabs(x - current_z)})
 
-    minimize(fun, current_z, method='COBYLA', constraints=cons, tol=1e-4, options={'maxiter': 20})
+    minimize(fun, current_z, method='COBYLA', constraints=cons, tol=1, options={'maxiter': 11})
 
     pass
 
