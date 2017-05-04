@@ -5,29 +5,12 @@ Work only if the tip is well detected at first
 
 from devices import *
 from tipdetect import *
-import cv2
+from get_img import *
 from scipy.optimize import minimize_scalar, minimize
 from math import fabs
 
-__all__ = ['getImg', 'tipfocus']
+__all__ = ['tipfocus']
 
-
-def getImg(cap, z=None, microscope=None):
-
-    '''
-    get an image from the microscope at given height z
-    '''
-
-    if z:
-        microscope.absolute_move(z, 2)
-
-    # Capture frame
-    ret, frame = cap.read()
-
-    # frame has to be encoded to an usable image to use tipdetect
-    _, img = cv2.imencode('.jpg', frame)
-
-    return frame, cv2.imdecode(img, 0)
 
 def tipfocus(microscope, cap):
     '''
@@ -37,7 +20,7 @@ def tipfocus(microscope, cap):
 
     current_z = microscope.position(2)
 
-    fun = lambda x: -tip_detect(getImg(cap, x, microscope)[1])[2]
+    fun = lambda x: -tip_detect(getImg(cap, microscope, x)[1])[2]
 
     #  Using the maximum value of Corner-Harris algorithm (minimize_scalar too long)
     #mini = current_z - 10
@@ -53,6 +36,7 @@ def tipfocus(microscope, cap):
 
 if __name__ == '__main__':
     from serial import SerialException
+    import cv2
 
     try:
         dev = LuigsNeumann_SM10()

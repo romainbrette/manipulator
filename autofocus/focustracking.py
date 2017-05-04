@@ -5,7 +5,7 @@ Tracking algorithm to keep the tip in focus during a move
 from focus import *
 from math import fabs
 from devices import *
-import cv2
+
 
 __all__ = ['focus_track']
 
@@ -41,6 +41,7 @@ def focus_track(device, relative_move, axis, microscope, cap):
 
 if __name__ == '__main__':
     from serial import SerialException
+    import cv2
 
     try:
         dev = LuigsNeumann_SM10()
