@@ -10,7 +10,7 @@ from autofocus import *
 from devices import *
 from serial import SerialException
 
-#cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(0)
 
 #width = int(cap.get(3))
 #height = int(cap.get(4))
@@ -36,13 +36,13 @@ while(True):
     if key & 0xFF == ord('f'):
         focus ^= 1
 
-    frame, img = getImg()
+    frame, img = getImg(cap)
 
     # Detection of the tip, frame has to be encoded to an usable image
     x, y, c = tip_detect(img)
     print c
     if focus == 1:
-        tipfocus(microscope)
+        tipfocus(microscope, cap)
 
     # Display a circle around the detected tip
 
@@ -58,6 +58,6 @@ while(True):
 
 
 # When everything done, release the capture
-#cap.release()
+cap.release()
 cv2.destroyAllWindows()
 del dev

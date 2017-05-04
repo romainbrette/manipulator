@@ -5,10 +5,11 @@ Tracking algorithm to keep the tip in focus during a move
 from focus import *
 from math import fabs
 from devices import *
+import cv2
 
 __all__ = ['focus_track']
 
-def focus_track(device, relative_move, axis, microscope):
+def focus_track(device, relative_move, axis, microscope, cap):
     '''
     continuously focusing the tip during a move
     :param device: device type to be moved
@@ -34,20 +35,23 @@ def focus_track(device, relative_move, axis, microscope):
         disp = device.position(axis) - init
         # for testing
         print disp
-        tipfocus(microscope)
+        tipfocus(microscope, cap)
 
     pass
 
 if __name__ == '__main__':
     from serial import SerialException
+
     try:
         dev = LuigsNeumann_SM10()
     except SerialException:
         print "L&N SM-10 not found. Falling back on fake device."
         dev = FakeDevice()
 
+    cap = cv2.VideoCapture(0)
     microscope = XYZUnit(dev, [7, 8, 9])
     device = XYZUnit(dev, [1, 2, 3])
-    tipfocus(microscope)
+    tipfocus(microscope, cap)
     focus_track(device, 50, 0, microscope)
+    cap.release()
     del dev
