@@ -1,24 +1,21 @@
-'''
-Autofocusing the tip of the pipette.
-Use the tip_detection function
-Show the camera window for debugging.
-Requires Opencv.
+"""
+Camera GUI
+Requires OpenCV
+Display a rectangle around the detected tip
+Press 'f' to focus on the tip
 Quit with key 'q'
-'''
+"""
+
 import cv2
 from autofocus import *
 from devices import *
 from serial import SerialException
 
+# Capture Video input
 cap = cv2.VideoCapture(0)
-
-#width = int(cap.get(3))
-#height = int(cap.get(4))
-
 cv2.namedWindow('Camera')
 
-focus = 0
-
+# Devices to control
 try:
     dev = LuigsNeumann_SM10()
 except SerialException:
@@ -27,8 +24,13 @@ except SerialException:
 
 microscope = XYZUnit(dev, [7, 8, 9])
 
+# 'Autofocus' boolean, begin disabled
+focus = 0
+
+# GUI loop with image processing
 while(True):
 
+    # keyboards controls: 'q' to quit, 'f' to enable/disable autofocus
     key = cv2.waitKey(1)
     if key & 0xFF == ord('q'):
         break
@@ -36,25 +38,27 @@ while(True):
     if key & 0xFF == ord('f'):
         focus ^= 1
 
+    # Capture a frame from video with usable image for tipdetect()
     frame, img = getImg(cap)
 
-    # Detection of the tip, frame has to be encoded to an usable image
+    # Detection of the tip
     x, y, c = tip_detect(img)
-    print c
+
+    # If autofocus enable, focus on the tip
     if focus == 1:
         tipfocus(microscope, cap)
 
-    # Display a circle around the detected tip
-
+    # Display a rectangle around the detected tip
     cv2.rectangle(frame, (x-10, y-10), (x+10, y+10), (0, 0, 255))
 
     # Our operations on the frame come here
-
     frame = cv2.flip(frame, 2)
 
     # Display the resulting frame
     cv2.imshow('Camera', frame)
 
+    # Debugging
+    print c
 
 
 # When everything done, release the capture

@@ -17,13 +17,14 @@ def getImg(cap, microscope=None, z=None):
     :param microscope: device instance
     '''
 
+    # Move the microscope if an height has been specify
     if z:
         microscope.absolute_move(z, 2)
 
     # Capture frame
     ret, frame = cap.read()
 
-    # frame has to be encoded to an usable image to use tipdetect
+    # frame has to be encoded to an usable image to use tipdetect()
     _, img = cv2.imencode('.jpg', frame)
 
     return frame, cv2.imdecode(img, 0)
