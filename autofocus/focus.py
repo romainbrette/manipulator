@@ -20,7 +20,7 @@ def tipfocus(microscope, cap):
 
     # Optimizing the cornerHarris criterion from tip detection around +- 5um of the current microscope height
     # shall indicate focus on the tip
-    fun = lambda x: -tip_detect(getImg(cap, microscope, x)[1])[2]
+    fun = lambda x: -2.5*tip_detect(getImg(cap, microscope, x)[1])[2]**2
 
     #  Using the maximum value of Corner-Harris algorithm (minimize_scalar too long)
     #mini = current_z - 10
@@ -29,9 +29,9 @@ def tipfocus(microscope, cap):
     #minimize_scalar(fun, bounds=(mini, maxi), method='Bounded')
 
     current_z = microscope.position(2)
-    cons = ({'type': 'ineq', 'fun': lambda x: 5 - fabs(x - current_z)})
+    cons = ({'type': 'ineq', 'fun': lambda x: 2 - fabs(x - current_z)})
 
-    minimize(fun, current_z, method='COBYLA', constraints=cons, tol=1, options={'maxiter': 11})
+    minimize(fun, current_z, method='COBYLA', constraints=cons, tol=0.8, options={'maxiter': 25, 'rhobeg':2})
 
     pass
 
