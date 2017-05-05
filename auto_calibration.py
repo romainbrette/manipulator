@@ -59,7 +59,7 @@ while 1:
         step += 1
     else:
         pass
-    
+
 
     frame, img = cap.read()
 

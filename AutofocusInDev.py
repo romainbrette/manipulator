@@ -24,29 +24,23 @@ except SerialException:
 
 microscope = XYZUnit(dev, [7, 8, 9])
 
-# 'Autofocus' boolean, begin disabled
-focus = 0
-
 # GUI loop with image processing
 while(True):
 
-    # keyboards controls: 'q' to quit, 'f' to enable/disable autofocus
+    # keyboards controls: 'q' to quit, 'f' for autofocus
     key = cv2.waitKey(1)
     if key & 0xFF == ord('q'):
         break
 
     if key & 0xFF == ord('f'):
-        focus ^= 1
+        tipfocus(microscope, cap)
+        print 'Autofocus done.'
 
     # Capture a frame from video with usable image for tipdetect()
     frame, img = getImg(cap)
 
     # Detection of the tip
     x, y, c = tip_detect(img)
-
-    # If autofocus enable, focus on the tip
-    if focus == 1:
-        tipfocus(microscope, cap)
 
     # Display a rectangle around the detected tip
     cv2.rectangle(frame, (x-10, y-10), (x+10, y+10), (0, 0, 255))
