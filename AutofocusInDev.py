@@ -25,6 +25,8 @@ except SerialException:
 microscope = XYZUnit(dev, [7, 8, 9])
 arm = XYZUnit(dev, [1, 2, 3])
 
+track = 0
+
 # GUI loop with image processing
 while(True):
 
@@ -38,13 +40,14 @@ while(True):
         print 'Autofocus done.'
 
     if key & 0xFF == ord('d'):
-        ini = microscope.position(2)
-        for i in range(10):
-            arm.relative_move(2, 0)
-            tipfocus(microscope, cap)
-            print i
-        end = microscope.position(2) - ini
-        print end
+        track ^= 1
+
+    if track != 0:
+        arm.relative_move(2, 0)
+        tipfocus(microscope, cap)
+        track += 1
+    if track == 10:
+        track = 0
 
     # Capture a frame from video with usable image for tipdetect()
     frame, img = getImg(cap)
@@ -53,7 +56,7 @@ while(True):
     x, y, c = tip_detect(img)
 
     # Display a rectangle around the detected tip
-    cv2.rectangle(frame, (x-10, y-10), (x+10, y+10), (0, 0, 255))
+    #cv2.rectangle(frame, (x-10, y-10), (x+10, y+10), (0, 0, 255))
 
     # Our operations on the frame come here
     frame = cv2.flip(frame, 2)
@@ -62,7 +65,7 @@ while(True):
     cv2.imshow('Camera', frame)
 
     # Debugging
-    print c
+    #print str((1e4*c)**5)+', '+str(microscope.position(2))+', '
 
 
 # When everything done, release the capture
