@@ -33,9 +33,9 @@ def tipfocus(microscope, cap):
 
     #minimize(fun, current_z, method='COBYLA', constraints=cons, tol=0.9, options={'maxiter': 25, 'rhobeg':2})
 
-    z = [tip_detect(getImg(cap, microscope, x + current_z - 5)[1])[2] for x in range(7)]
-    focus = current_z + z.index(max(z)) - 5
-    microscope.relative_move(focus, 2)
+    z = [tip_detect(getImg(cap, microscope, x + current_z - 3)[1])[2] for x in range(7)]
+    focus = current_z + z.index(max(z)) - 3
+    microscope.absolut_move(focus, 2)
 
     pass
 

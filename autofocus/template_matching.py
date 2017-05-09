@@ -19,20 +19,18 @@ def templatematching(img, template):
     else:
         is_in = 0
 
-    x, y = maxloc[:2]
-
-    return is_in, x, y
+    return is_in, maxval, maxloc
 
 
 if __name__ == '__main__':
-    img = cv2.imread('pipette.jpg')
-    template = cv2.imread('template.jpg')
-    res, x, y = templatematching(img, template)
-    print res
+    img = cv2.imread('pipette.jpg', 0)
+    template = cv2.imread('template.jpg', 0)
+    res, val, loc = templatematching(img, template)
+    x, y = loc[:2]
     if res:
         h = template.shape[1]
         w = template.shape[0]
         cv2.rectangle(img, (x,y), (x+w, y+h), (0,0,255))
     cv2.imshow("camera", img)
-
+    cv2.waitKey(0)
     cv2.destroyAllWindows()
