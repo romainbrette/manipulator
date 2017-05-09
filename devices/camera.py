@@ -29,7 +29,7 @@ mmc.initializeDevice('FocusDrive')
 print "done"
 
 # To get the properties you can set on the camera:
-print mmc.getDevicePropertyNames('Camera')
+# print mmc.getDevicePropertyNames('Camera')
 
 
 mmc.setCameraDevice('Camera')

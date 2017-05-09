@@ -21,19 +21,19 @@
 #
 #   Various functions from the manual are implemented such as
 #       - goSteps()
-#       - stepSlowDistance(...)
-#	- goVariableFastToAbsolutePosition(...)
-#	- goVariableSlowToAbsolutePosition(...)
-# 	- goVariableFastToRelativePosition(...)
-#	- stepIncrement(...)
+# - stepSlowDistance(...)
+# - goVariableFastToAbsolutePosition(...)
+# - goVariableSlowToAbsolutePosition(...)
+# - goVariableFastToRelativePosition(...)
+# - stepIncrement(...)
 # 	- stepDecrement(...)
 # 	- switchOffAxis(...)
-#	- switchOnAxis(...)
-#	- setAxisToZero(...)
+# 	- switchOnAxis(...)
+#  - setAxisToZero(...)
 #	- getPosition(...)
 #
-#	See below for required input arguments. 
-#	Futher functions can be easily implemented from the manual following the 
+# See below for required input arguments.
+#	Futher functions can be easily implemented from the manual following the
 #	structure of the class fuctions. 
 #
 # Properties:
@@ -74,7 +74,7 @@ import serial
 import struct
 import time 
 import sys
-from numpy import * 
+from numpy import *
 import binascii
 import ctypes
 
@@ -84,16 +84,16 @@ class LandNSM5 :
 	#################################################################
 	# constructor
 	def __init__(self):
-		self.verbose = 0 # level of messages
-		self.timeOut = 1 # timeout in sec
+		self.verbose = 1 # level of messages
+		self.timeOut = 5 # timeout in sec
 		self.establishConnectionHold = 3. # time in seconds a connection remains established
-		self.sleepTime = 0.1
+		self.sleepTime = 0.01
 		self.maxLoops = 10
 		# make sure connection is established at the first call
 		self.timeWhenEstablished = time.time() - self.establishConnectionHold
 		# initialize serial connection to controller
 		try:
-			self.ser = serial.Serial(port='COM5',baudrate=38400,bytesize=serial.EIGHTBITS,parity=serial.PARITY_NONE,stopbits=serial.STOPBITS_ONE,timeout=self.timeOut)
+			self.ser = serial.Serial(port='COM3',baudrate=38400,bytesize=serial.EIGHTBITS,parity=serial.PARITY_NONE,stopbits=serial.STOPBITS_ONE,timeout=self.timeOut)
 			#self.ser = 
 			self.connected = 1
 			if self.verbose:
@@ -116,61 +116,58 @@ class LandNSM5 :
 			print 'Connection to Luigs and Neumann SM5 closed'
 	#################################################################
 	# send command to controller
-	def sendCommand(self,ID,nBytes,deviceData,response,nBytesRes):
-		#
-		# establish connection before each command (connection is lost after 3 sec)
+	def sendCommand(self,ID,nBytes,deviceData,response,nBytesRes):	# establish connection before each command (connection is lost after 3 sec)
 		self.timePassed = time.time()
 		if (self.timePassed-self.timeWhenEstablished)>self.establishConnectionHold:
                         self.establishConnection()
-		# calcuate CRC checksum and extract MSB and LSB 
-		(high,low) = self.serialCalculateCRC(deviceData,len(deviceData))
-		# consistency check between number of bytes sent and data array length
-		if not nBytes == len(deviceData):
+
+		(high,low) = self.serialCalculateCRC(deviceData,len(deviceData))		# calcuate CRC checksum and extract MSB and LSB
+
+		if not nBytes == len(deviceData):		# consistency check between number of bytes sent and data array length
 			print 'The number of bytes sent does not match the data array!'
 			sys.exit(1)
-		# create hex-string to be sent
-		send = '16' + ID + '%0.2X' % nBytes
-		# loop over length of data to be sent
-		for i in range(len(deviceData)):
+
+		send = '16' + ID + '%0.2X' % nBytes			# create hex-string to be sent
+
+		for i in range(len(deviceData)):			# loop over length of data to be sent
 			send += '%0.2X' % deviceData[i]
-		send += '%0.2X%0.2X' % (high,low)
-		# convert hex string to bytes
+		send += '%0.2X%0.2X' % (high,low)			# convert hex string to bytes
 		sendbytes = binascii.unhexlify(send)
-		#
+
 		if self.verbose:
 		    print 'send', str(ID) , send, high, low
-		nLoops = 0
-		while True:
+		#nLoops = 0
+		#while True:
 			# write bytes to interface
-			self.timeWhenEstablished = time.time()
-			self.ser.write(sendbytes)
+		self.timeWhenEstablished = time.time()
+		self.ser.write(sendbytes)
 			# wait
-			time.sleep(self.sleepTime)
+			#time.sleep(self.sleepTime)
 			# read answer from connection
-			ansb = self.ser.read(nBytesRes)
-			# compare answer with answer mask, if true: break, if false : redo
-			if ansb[:len(response)] == response :
-				if self.verbose:
-                                        #print 'answer :', binascii.hexlify(ansb), len(ansb),
-					print 'done'
-				break
-			if nLoops >= self.maxLoops:
-				print 'Command was not successful!'
-				break
+		ansb = self.ser.read(nBytesRes)					# compare answer with answer mask, if true: break, if false : redo
+		if ansb[:len(response)] == response :
+			#print ('yes')
 			if self.verbose:
-				print 'insufficient answer :', ansb, len(ansb),
-			print '.',
-			nLoops += 1
+				print 'done'
+		#if nLoops >= self.maxLoops:
+		#	print 'Command was not successful!'
+		#if self.verbose:
+		#	print ('nothing')
+			#print 'insufficient answer :', ansb, len(ansb),response
+		#print '.',
+		#nLoops += 1
 		return ansb
 	##################################################################
 	# initiates connection to SM5, note that the connection is lost after 3 sec
 	def establishConnection(self):
 		# establish connection before each command
-		if self.verbose : 
+		if self.verbose :
 			print 'Establish connection to SM5 . ',
-		send = '16040000000000'
+		send = '160400000000'
 		sendbytes = binascii.unhexlify(send)
 		while True:
+
+
 			self.ser.write(sendbytes)
 			time.sleep(self.sleepTime)
 			ansConb = self.ser.read(6)
@@ -218,7 +215,7 @@ class LandNSM5 :
 		deviceData = ([axisNumber,int(dist_4hex[6:],16),int(dist_4hex[4:6],16),int(dist_4hex[2:4],16),int(dist_4hex[:2],16)])
 		res = self.sendCommand(IDcode,nBytes,deviceData,response,len(response))
 	def goVariableFastToRelativePosition(self,device,axis,relPosition):
-		IDcode = '004a'
+		IDcode = '004b'
 		nBytes = 5
 		response = '\x06\x04\x0b\x00\x00\x00'
 		axisNumber = self.chooseAxis(device,axis)
@@ -262,9 +259,26 @@ class LandNSM5 :
 		axisNumber = self.chooseAxis(device,axis)
 		deviceData = ([axisNumber])
 		res = self.sendCommand(IDcode,nBytes,deviceData,response,len(response))
-	# zeros counter on specified axis
+
 	def setAxisToZero(self,device,axis):
 		IDcode = '00f0'
+		nBytes = 1
+		response = '\x06\x04\x0b\x00\x00\x00'
+		axisNumber = self.chooseAxis(device,axis)
+		deviceData = ([axisNumber])
+		res = self.sendCommand(IDcode,nBytes,deviceData,response,len(response))
+
+	def gotoposition(self,device,number):
+		IDcode = '0110'
+		nBytes = 2
+		# deviceNumber = self.chooseDevice(device)
+		response = '\x06\x04\x0b\x00\x00\x00'
+		deviceData = ([device,number])
+		res = self.sendCommand(IDcode,nBytes,deviceData,response,len(response))
+
+	# zeros counter on specified axis
+	def stop(self,device,axis):
+		IDcode = '00ff'
 		nBytes = 1
 		response = '\x06\x04\x0b\x00\x00\x00'
 		axisNumber = self.chooseAxis(device,axis)
@@ -315,6 +329,13 @@ class LandNSM5 :
                 speed_2hex = binascii.hexlify(struct.pack('>H',speed))
                 deviceData = ([axisNumber,int(speed_2hex[2:],16),int(speed_2hex[:2],16)])
                 res = self.sendCommand(IDcode,nBytes,deviceData,response,len(response))
+		def savePosition(self,device,axis,number):
+				IDcode = '010a'
+				nBytes = 2
+				response = '\x06\x04\x0b\x00\x00\x00'
+				axisNumber = self.chooseAxis(device, axis)
+				deviceData = ([axisNumber, number])
+				res = self.sendCommand(IDcode, nBytes, deviceData, response, len(response))
         #########################################################
 	# selects device and axis
 	def chooseAxis(self,device,axis):
@@ -334,12 +355,22 @@ class LandNSM5 :
 				deviceNumber = 5
 			elif axis=='z':
 				deviceNumber = 6
+
+		elif (device == 3):
+			if axis == 'x':
+				deviceNumber = 10
+			elif axis == 'y':
+				deviceNumber = 11
+			elif axis == 'z':
+				deviceNumber = 12
 			else:
 				print 'Wrong axis for device', str(device), 'specified'
 		else:
 			print 'Device number does not exist. Should be 1 or 2.'
-		# 
+		#
 		return deviceNumber
+
+
 	#################################################
 	# calculate CRC cecksum based on the data sent
 	def serialCalculateCRC(self,butter,length):
@@ -365,6 +396,3 @@ class LandNSM5 :
 		crcHigh = ctypes.c_ubyte(crc>>8)
 		crcLow  = ctypes.c_ubyte(crc)
 		return (crcHigh.value,crcLow.value)
-
-
-	
