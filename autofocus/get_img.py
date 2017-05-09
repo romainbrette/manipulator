@@ -1,5 +1,5 @@
 """
-Read the frame of a video capture at given height of the microscope
+Read the frame of a video capture at given ABSOLUTE height of the microscope
 Encode the frame to make it usable for some functions (cornerHarris)
 """
 
@@ -13,7 +13,7 @@ def getImg(cap, microscope=None, z=None):
     '''
     get an image from the microscope at given height z
     :param cap: capture from a cv2.VideoCapture
-    :param z: desired height of the microscope
+    :param z: desired ABSOLUTE height of the microscope
     :param microscope: device instance
     '''
 

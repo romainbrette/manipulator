@@ -1,5 +1,5 @@
 """
-Camera GUI for LuigsNeumann_SM10
+Camera GUI for LuigsNeumann_SM5
 Requires OpenCV
 Display a rectangle around the detected tip
 Press 'f' to focus on the tip
@@ -11,15 +11,34 @@ from autofocus import *
 from devices import *
 from serial import SerialException
 
-# Capture Video input
-cap = cv2.VideoCapture(0)
-cv2.namedWindow('Camera')
+# For the camera
+sys.path.append('C:\\Program Files\\Micro-Manager-1.4')
+import MMCorePy
+
+# initializing camera
+mmc = MMCorePy.CMMCore()
+mmc.loadDevice('Camera', 'HamamatsuHam', 'HamamatsuHam_DCAM')
+mmc.loadDevice('COM1', 'SerialManager', 'COM1')
+mmc.setProperty('COM1', 'AnswerTimeout', 500.0)
+mmc.setProperty('COM1', 'BaudRate', 19200)
+mmc.setProperty('COM1','DelayBetweenCharsMs',0.0)
+mmc.setProperty('COM1','Handshaking','Off')
+mmc.setProperty('COM1','Parity','None')
+mmc.setProperty('COM1','StopBits',1)
+mmc.setProperty('COM1','Verbose',1)
+mmc.loadDevice('Scope', 'LeicaDMI', 'Scope')
+mmc.loadDevice('FocusDrive', 'LeicaDMI', 'FocusDrive')
+mmc.setProperty('Scope', 'Port', 'COM1')
+mmc.initializeDevice('Camera')
+mmc.initializeDevice('COM1')
+mmc.initializeDevice('Scope')
+mmc.initializeDevice('FocusDrive')
 
 # Devices to control
 try:
-    dev = LuigsNeumann_SM10()
+    dev = LuigsNeumann_SM5('COM3')
 except SerialException:
-    print "L&N SM-10 not found. Falling back on fake device."
+    print "L&N SM-5 not found. Falling back on fake device."
     dev = FakeDevice()
 
 microscope = XYZUnit(dev, [7, 8, 9])
@@ -33,7 +52,6 @@ while(True):
 
     # Capture a frame from video with usable image for tipdetect()
     frame, img = getImg(cap)
-    width, height = frame.shape[:2]
     ##img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     ##img = cv2.Canny(img, 50, 200)
 
