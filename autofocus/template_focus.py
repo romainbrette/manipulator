@@ -6,7 +6,6 @@ Template matching is not scale nor rotation invariant
 
 __all__ = ['focus']
 
-import cv2
 from devices import *
 from template_matching import *
 from get_img import *
@@ -35,4 +34,4 @@ def focus(cap, template, microscope):
     else:
         raise ValueError('The template image has not been detected.')
 
-    return x, y
+    return maxval, x, y
