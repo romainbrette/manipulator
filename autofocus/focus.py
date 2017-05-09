@@ -35,7 +35,7 @@ def tipfocus(microscope, cap):
 
     z = [tip_detect(getImg(cap, microscope, x + current_z - 5)[1])[2] for x in range(7)]
     focus = current_z + z.index(max(z)) - 5
-    getImg(cap, microscope, focus)
+    microscope.relative_move(focus, 2)
 
     pass
 
