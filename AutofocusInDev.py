@@ -55,13 +55,17 @@ while(True):
     if key & 0xFF == ord('f'):
         #tipfocus(microscope, cap)
         maxval, x, y = focus(cap, template, microscope)
+        print maxval
         print 'Autofocus done.'
 
     if key & 0xFF == ord('t'):
-        template = img[width / 2 - 10:width / 2 + 10, height / 2 - 10:height / 2 + 10]
-        ##template = cv2.cvtColor(template, cv2.COLOR_BGR2GRAY)
-        ##template = cv2.Canny(template, 50, 200)
-        cv2.imshow('template', template)
+        if template == None:
+            template = img[width / 2 - 10:width / 2 + 10, height / 2 - 10:height / 2 + 10]
+            ##template = cv2.cvtColor(template, cv2.COLOR_BGR2GRAY)
+            ##template = cv2.Canny(template, 50, 200)
+            cv2.imshow('template', template)
+        else:
+            template = None
 
     if key & 0xFF == ord('d'):
         track ^= 1
