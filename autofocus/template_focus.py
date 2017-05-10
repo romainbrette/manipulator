@@ -14,7 +14,7 @@ from math import fabs
 
 def focus(devtype, microscope, template, cv2cap=None):
     """
-    Autofocus by searching the best template match in the image
+    Autofocus by searching the best template match in the image around the current height
     :param devtype: type of used controller
     :param microscope: device controlling the microscope
     :param template: template image to look for

@@ -1,5 +1,6 @@
 '''
 Tracking algorithm to keep the tip in focus during a move
+CAN NOT DISPLAY THE TRACKING IN REAL USE
 '''
 
 from focus import *

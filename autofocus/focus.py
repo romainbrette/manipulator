@@ -1,6 +1,7 @@
 """
 Focusing the tip using tipdetect
-Work only if the tip is well detected at first
+Works only if the tip is well detected at first
+NOT RELIABLE
 """
 
 from devices import *

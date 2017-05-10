@@ -11,7 +11,7 @@ __all__ = ['getImg']
 
 def getImg(devtype, microscope, z=None, cv2cap=None):
 
-    '''
+    """
     get an image from the microscope at given height z
     :param devtype: type of device controller, either 'SM5' or 'SM10'.
     :param microscope: class instance controlling the microscope
@@ -19,7 +19,7 @@ def getImg(devtype, microscope, z=None, cv2cap=None):
     :param cv2cap: video capture from cv2, used when devtype='SM10'
     :return frame: image taken directly from the video capture
             img: frame encoded in 8bits, necessary for some functions as cornerHarris()
-    '''
+    """
 
     frame, img = 0, 0
     if devtype == 'SM5':

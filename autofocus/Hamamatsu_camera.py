@@ -1,3 +1,8 @@
+"""
+Functions for HAMAMATSU camera
+Use Micro Manager Py
+"""
+
 import time
 import sys
 
@@ -8,6 +13,10 @@ __all__ = ['camera_init', 'camera_unload']
 
 
 def camera_init():
+    """
+    Initializing the camera/microscope
+    :return: mmc: microscope device, can be controlled using micro manager methods (see HAMAMATSU_CAMERA_METHODS.txt)
+    """
 
     print "Setting up camera and microscope...",
     mmc = MMCorePy.CMMCore()
@@ -43,6 +52,9 @@ def camera_init():
 
 
 def camera_unload(mmc):
+    """
+    release the microscope
+    """
     mmc.unloadDevice('FocusDrive')
     mmc.unloadDevice('Scope')
     mmc.unloadDevice('Camera')
