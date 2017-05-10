@@ -19,7 +19,7 @@ def getImg(devtype, microscope, z=None, cv2cap=None):
     :param cv2cap: video capture from cv2, used when devtype='SM10'
     '''
 
-
+    frame, img = 0, 0
     if devtype == 'SM5':
 
         # Move the microscope if an height has been specify
@@ -28,10 +28,10 @@ def getImg(devtype, microscope, z=None, cv2cap=None):
 
         # Capture frame
 
-        if microscope.getgetRemainingImageCount() > 0:
+        if microscope.getRemainingImageCount() > 0:
             cam = microscope.getLastImage()
             # Conversion so the frame can be used with openCV imshow()
-            frame = cam.view(dtype=np.uint8).reshape(cam.shape[0], cam.shape[1], 4)[..., :3]
+            frame = cam.view(dtype=np.uint8)
             img = frame
 
     elif devtype == 'SM10':

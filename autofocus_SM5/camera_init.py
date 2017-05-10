@@ -36,7 +36,7 @@ def camera_init():
 
     mmc.setCameraDevice('Camera')
     mmc.setFocusDevice('FocusDrive')
-    mmc.setExposure(100)
+    mmc.setExposure(50)
 
     time.sleep(1)  # the microscope gives a wrong position in the very beginning, so wait a bit
 

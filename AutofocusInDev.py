@@ -12,21 +12,24 @@ from devices import *
 from serial import SerialException
 from autofocus_SM5 import *
 
-# Capture Video input
-#cap = cv2.VideoCapture(0)
-cv2.namedWindow('Camera')
-
-# Devices to control
+# Devices to control and video capture
 try:
     dev = LuigsNeumann_SM5('COM3')
     devtype = 'SM5'
+    cap = None
+    microscope = camera_init()
+    microscope.startContinuousSequenceAcquisition(1)
 except SerialException:
-    print "L&N SM-5 not found. Falling back on fake device."
-    dev = FakeDevice()
+    try:
+        dev = LuigsNeumann_SM10()
+        devtype = 'SM10'
+        cap = cv2.VideoCapture(0)
+        microscope = XYZUnit(dev, [7, 8, 9])
+    except SerialException:
+        raise SerialException("L&N SM-5 or SM-10 not found.")
 
-#microscope = XYZUnit(dev, [7, 8, 9])
-microscope = camera_init()
-microscope.startContinuousSequenceAcquisition(1) 
+cv2.namedWindow('Camera')
+
 arm = XYZUnit(dev, [1, 2, 3])
 
 track = 0
@@ -36,8 +39,13 @@ template = None
 while(True):
 
     # Capture a frame from video with usable image for tipdetect()
+    if devtype == 'SM5':
+        buffer = microscope.getLastImage()
+        height, width = buffer.shape[:2]
+    else:
+        height, width = cap.shape[:2]
     frame, img = getImg(devtype, microscope)
-    width, height = frame.shape[:2]
+
     ##img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     ##img = cv2.Canny(img, 50, 200)
 
@@ -89,9 +97,10 @@ while(True):
         cv2.rectangle(frame, (width/2-10, height/2-10), (width/2+10, height/2+10), (0,0,255))
     else:
         # Display a rectangle at the template matched location
-        cv2.rectangle(frame, (x,y), (x+20,y+20), (0,0,255))
+        #cv2.rectangle(frame, (x,y), (x+20,y+20), (0,0,255))
+        pass
 
-    frame = cv2.flip(frame, 2)
+    #frame = cv2.flip(frame, 2)
 
     # Display the resulting frame
     cv2.imshow('Camera', frame)
