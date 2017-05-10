@@ -24,7 +24,7 @@ def getImg(devtype, microscope, z=None, cv2cap=None):
 
         # Move the microscope if an height has been specify
         if z:
-            microscope.setAbsolutePosition(z)
+            microscope.setPosition(z)
 
         # Capture frame
 

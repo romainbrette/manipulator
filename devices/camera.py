@@ -47,7 +47,10 @@ time.sleep(1)  # the microscope gives a wrong position in the very beginning, so
 
 frames = []
 
+
 print mmc.getPosition()
+#pos = mmc.getPosition()
+#mmc.setPosition(pos+10)
 mmc.setRelativePosition(-50)
 time.sleep(1)
 print mmc.getPosition()
