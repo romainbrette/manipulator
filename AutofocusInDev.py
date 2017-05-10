@@ -12,7 +12,11 @@ from serial import SerialException
 from autofocus import *
 
 # Devices to control and video capture
+
+# Type of used controller, either 'SM5' or 'SM10 for L&N SM-5 or L&N SM-10
 devtype = 'SM10'
+
+# Initializing the device, camera and microscope according to the used controller
 if devtype == 'SM5':
     try:
         dev = LuigsNeumann_SM5('COM3')
@@ -21,7 +25,6 @@ if devtype == 'SM5':
         microscope.startContinuousSequenceAcquisition(1)
     except Warning:
         raise SerialException("L&N SM-5 not found.")
-
 elif devtype == 'SM10':
     try:
         dev = LuigsNeumann_SM10()
@@ -32,17 +35,20 @@ elif devtype == 'SM10':
 else:
     raise SerialException("No supported device detected")
 
-cv2.namedWindow('Camera')
-
+# Device controlling the used arm
 arm = XYZUnit(dev, [1, 2, 3])
 
+# Naming the live camera window
+cv2.namedWindow('Camera')
+
+# Booleans for tracking mode and existence of the template image for autofocus
 track = 0
 template = None
 
 # GUI loop with image processing
 while(True):
 
-    # Capture a frame from video with usable image for tipdetect()
+    # Capture a frame from video
     if devtype == 'SM5':
         buffer = microscope.getLastImage()
         height, width = buffer.shape[:2]
@@ -60,11 +66,11 @@ while(True):
     # Display a rectangle around the detected tip
     #cv2.rectangle(frame, (x-10, y-10), (x+10, y+10), (0, 0, 255))
 
-    # keyboards controls:
+    # Keyboards controls:
     # 'q' to quit,
     # 'f' for autofocus,
     # 't' to take the template image,
-    # 'd' to make a move with focus tracking
+    # 'd' to make/stop a move with focus tracking
     key = cv2.waitKey(1)
     if key & 0xFF == ord('q'):
         break
@@ -86,6 +92,7 @@ while(True):
     if key & 0xFF == ord('d'):
         track ^= 1
 
+    # Tracking while moving
     if track != 0:
         arm.relative_move(-2, 0)
         #tipfocus(microscope, cap)
@@ -106,9 +113,8 @@ while(True):
         x, y = maxloc[:2]
         cv2.rectangle(frame, (x, y), (x + 20, y + 20), (0, 0, 255))
 
-
-
-    #frame = cv2.flip(frame, 2)
+    # Reversing the frame
+    frame = cv2.flip(frame, 2)
 
     # Display the resulting frame
     cv2.imshow('Camera', frame)
@@ -125,5 +131,6 @@ if devtype == 'SM5':
     microscope.reset()
 elif devtype == 'SM10':
     cap.release()
+
 cv2.destroyAllWindows()
 del dev

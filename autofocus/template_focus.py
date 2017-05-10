@@ -12,8 +12,18 @@ from get_img import *
 from scipy.optimize import minimize_scalar, minimize
 from math import fabs
 
-def focus(devtype, microscope, template, cap=None):
+def focus(devtype, microscope, template, cv2cap=None):
+    """
+    Autofocus by searching the best template match in the image
+    :param devtype: type of used controller
+    :param microscope: device controlling the microscope
+    :param template: template image to look for
+    :param cv2cap: video capture from cv2, unnecessary if devtype='SM5' 
+    :return: maxval: maximum value where the image match the template the best
+             x, y: location of maxval in the image
+    """
 
+    # Getting the microscope height according to the used controller
     if devtype == 'SM5':
         current_z = microscope.getPosition()
     elif devtype== 'SM10':
@@ -29,25 +39,33 @@ def focus(devtype, microscope, template, cap=None):
     x, y = maxloc[:2]
     """
 
+    # Tabs of maxval and their locations during the process
     vals = []
     location = []
 
+    # Getting the maxval and their locations at +-4um, 1um steps, around the current height
     for i in range(9):
-        _, img = getImg(devtype, microscope, current_z - i + 4, cap)
+        _, img = getImg(devtype, microscope, current_z - i + 4, cv2cap)
         res, val, loc = templatematching(img, template)
         location += [loc]
         if res:
+            # Template has been detected
             vals += [val]
         else:
+            # Template has not been detected, maxval set at 0
             vals += [0]
 
+    # Search of the highest value, indicating that focus has been achieved
     maxval = max(vals)
+
     if maxval != 0:
+        # Template has been detected at least once, setting the microscope at corresponding height
         index = vals.index(maxval)
         locate = location[index]
-        _, img = getImg(devtype, microscope, current_z - index + 4, cap)
+        _, img = getImg(devtype, microscope, current_z - index + 4, cv2cap)
         x, y = locate[:2]
     else:
+        # Template has never been detected, focus can not be achieved
         raise ValueError('The template image has not been detected.')
 
     return maxval, x, y

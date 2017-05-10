@@ -17,6 +17,8 @@ def getImg(devtype, microscope, z=None, cv2cap=None):
     :param microscope: class instance controlling the microscope
     :param z: desired absolute height of the microscope
     :param cv2cap: video capture from cv2, used when devtype='SM10'
+    :return frame: image taken directly from the video capture
+            img: frame encoded in 8bits, necessary for some functions as cornerHarris()
     '''
 
     frame, img = 0, 0
@@ -56,7 +58,7 @@ def getImg(devtype, microscope, z=None, cv2cap=None):
 if __name__ == '__main__':
     from serial import SerialException
     from devices import *
-    from camera_init import *
+    from Hamamatsu_camera import *
 
     try:
         dev = LuigsNeumann_SM5('COM3')
