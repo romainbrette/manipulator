@@ -26,7 +26,7 @@ except SerialException:
 
 #microscope = XYZUnit(dev, [7, 8, 9])
 microscope = camera_init()
-microscope.startContinuousSequenceAcquisition(1)
+microscope.startContinuousSequenceAcquisition(1) 
 arm = XYZUnit(dev, [1, 2, 3])
 
 track = 0
