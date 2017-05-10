@@ -101,6 +101,20 @@ class LuigsNeumann_SM5(SerialDevice):
         # TODO: always goes fast (use 0049 for slow)
         self.send_command('0048', data, 0)
 
+    def relative_move(self, x, axis):
+        '''
+        Moves the device axis by relative amount x in um.
+        It uses the fast command.
+
+        Parameters
+        ----------
+        axis: axis number
+        x : position shift in um.
+        '''
+        x_hex = binascii.hexlify(struct.pack('>f', x))
+        data = [axis, int(x_hex[6:], 16), int(x_hex[4:6], 16), int(x_hex[2:4], 16), int(x_hex[:2], 16)]
+        self.send_command('004A', data, 0)
+
 
     def stop(self, axis):
         """

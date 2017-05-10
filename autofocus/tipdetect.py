@@ -34,7 +34,7 @@ def tip_detect(img):
 
 
 if __name__ == '__main__': # test
-    img = cv2.imread('pipette.jpg', 0)
+    img = cv2.imread('template.jpg', 0)
     x,y,_ = tip_detect(img)
     cv2.rectangle(img, (x-10, y-10), (x+10, y+10), (0, 0, 255))
     cv2.imshow('dst', img)

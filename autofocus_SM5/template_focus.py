@@ -10,15 +10,20 @@ from camera_init import *
 from template_matching import *
 from get_img import *
 
-def focus(mmc, template):
+def focus(devtype, microscope, template, cap=None):
 
-    current_z = mmc.getPosition()
+    if devtype == 'SM5':
+        current_z = microscope.getPosition()
+    elif devtype== 'SM10':
+        current_z = microscope.position(2)
+    else:
+        raise TypeError('Unknown device. Should be either "SM5" or "SM10".')
+
     vals = []
     location = []
 
     for i in range(7):
-        microscope.absolute_move(current_z - i + 3, 2)
-        _, img = getImg(cap)
+        _, img = getImg(devtype, microscope, current_z - i + 3, cap)
         res, val, loc = templatematching(img, template)
         location += [loc]
         if res:

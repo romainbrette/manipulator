@@ -1,43 +1,62 @@
 """
-Read the frame of a video capture at given RELATIVE height of the microscope
+Read the frame of a video capture at given absolute height of the microscope
 Encode the frame to make it usable for some functions (cornerHarris)
 """
 
 import cv2
-import matplotlib.pyplot as plt
-from camera_init import *
-import time
+import numpy as np
 
 __all__ = ['getImg']
 
 
-def getImg(mmc, z=None):
+def getImg(devtype, microscope, z=None, cv2cap=None):
 
     '''
     get an image from the microscope at given height z
-    :param mmc: micro manager camera, see "camera" in "devices"
-    :param z: desired RELATIVE height of the microscope
-    :param microscope: device instance
+    :param devtype: type of device controller, either 'SM5' or 'SM10'.
+    :param microscope: class instance controlling the microscope
+    :param z: desired absolute height of the microscope
+    :param cv2cap: video capture from cv2, used when devtype='SM10'
     '''
 
-    # Move the microscope if an height has been specify
-    if z:
-        mmc.setRelativePosition(z)
 
-    # Capture frame
-    mmc.snapImage()
-    frame = mmc.getImage()
-    #time.sleep(1)
+    if devtype == 'SM5':
 
-    # frame has to be encoded to an usable image to use tipdetect()
-    _, img = cv2.imencode('.jpg', frame)
+        # Move the microscope if an height has been specify
+        if z:
+            microscope.setAbsolutePosition(z)
 
-    return frame, cv2.imdecode(img, 0)
+        # Capture frame
+
+        if microscope.getgetRemainingImageCount() > 0:
+            cam = microscope.getLastImage()
+            # Conversion so the frame can be used with openCV imshow()
+            frame = cam.view(dtype=np.uint8).reshape(cam.shape[0], cam.shape[1], 4)[..., :3]
+            img = frame
+
+    elif devtype == 'SM10':
+
+        # Move the microscope if an height has been specify
+        if z:
+            microscope.absolute_move(z, 2)
+
+        # Capture frame
+        ret, frame = cv2cap.read()
+
+        # frame has to be encoded to an usable image to use tipdetect()
+        _, img = cv2.imencode('.jpg', frame)
+        img = cv2.imdecode(img, 0)
+
+    else:
+        raise TypeError('Unknown device. Should be either "SM5" or "SM10".')
+
+    return frame, img
 
 
 if __name__ == '__main__':
     from serial import SerialException
     from devices import *
+    from camera_init import *
 
     try:
         dev = LuigsNeumann_SM5('COM3')
@@ -46,15 +65,18 @@ if __name__ == '__main__':
         dev = FakeDevice()
 
     mmc = camera_init()
-    plt.ion()
+    mmc.startContinuousSequenceAcquisition(1)
+    cv2.namedWindow('Camera')
     while 1:
-        frame, img = getImg(mmc)
-        #img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        plt.imshow(frame, cmap='gray')
-        plt.pause(0.05)
+        buffer = mmc.getLastImage()
+        frame, img = getImg('SM5', mmc)
+        cv2.imshow("Camera", frame)
         key = cv2.waitKey(1)
         if key & 0xFF == ord('q'):
             break
+
+    mmc.stopSequenceAcquisition()
     camera_unload(mmc)
+    mmc.reset()
     cv2.destroyAllWindows()
     del dev
