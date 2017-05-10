@@ -12,7 +12,7 @@ def templatematching(img, template):
     res = cv2.matchTemplate(img, template, cv2.TM_CCOEFF_NORMED)
     _, maxval, _, maxloc = cv2.minMaxLoc(res)
 
-    threshold = 0.8
+    threshold = 0.75
 
     if maxval >= threshold:
         is_in = 1
