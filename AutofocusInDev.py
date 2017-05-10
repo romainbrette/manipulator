@@ -7,22 +7,26 @@ Quit with key 'q'
 """
 
 import cv2
-from autofocus import *
+#from autofocus import *
 from devices import *
 from serial import SerialException
+from autofocus_SM5 import *
 
 # Capture Video input
-cap = cv2.VideoCapture(0)
+#cap = cv2.VideoCapture(0)
 cv2.namedWindow('Camera')
 
 # Devices to control
 try:
-    dev = LuigsNeumann_SM10()
+    dev = LuigsNeumann_SM5('COM3')
+    devtype = 'SM5'
 except SerialException:
-    print "L&N SM-10 not found. Falling back on fake device."
+    print "L&N SM-5 not found. Falling back on fake device."
     dev = FakeDevice()
 
-microscope = XYZUnit(dev, [7, 8, 9])
+#microscope = XYZUnit(dev, [7, 8, 9])
+microscope = camera_init()
+microscope.startContinuousSequenceAcquisition(1)
 arm = XYZUnit(dev, [1, 2, 3])
 
 track = 0
@@ -32,7 +36,7 @@ template = None
 while(True):
 
     # Capture a frame from video with usable image for tipdetect()
-    frame, img = getImg(cap)
+    frame, img = getImg(devtype, microscope)
     width, height = frame.shape[:2]
     ##img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     ##img = cv2.Canny(img, 50, 200)
@@ -54,7 +58,7 @@ while(True):
 
     if key & 0xFF == ord('f'):
         #tipfocus(microscope, cap)
-        maxval, x, y = focus(cap, template, microscope)
+        maxval, x, y = focus(devtype, microscope, template)
         print maxval
         print 'Autofocus done.'
 
@@ -73,7 +77,7 @@ while(True):
     if track != 0:
         arm.relative_move(2, 0)
         #tipfocus(microscope, cap)
-        maxval, x, y = focus(cap, template, microscope)
+        maxval, x, y = focus(devtype, microscope, template)
         track += 1
     if track == 10:
         track = 0
@@ -97,6 +101,9 @@ while(True):
 
 
 # When everything done, release the capture
-cap.release()
+#cap.release()
+microscope.stopSequenceAcquisition()
+camera_unload(microscope)
+microscope.reset()
 cv2.destroyAllWindows()
 del dev
