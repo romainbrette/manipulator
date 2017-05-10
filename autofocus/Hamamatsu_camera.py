@@ -12,7 +12,6 @@ def camera_init():
     print "Setting up camera and microscope...",
     mmc = MMCorePy.CMMCore()
     mmc.loadDevice('Camera', 'HamamatsuHam', 'HamamatsuHam_DCAM')
-    #mmc.loadDevice('Camera', 'OpenCVgrabber', 'OpenCVgrabber')
     mmc.loadDevice('COM1', 'SerialManager', 'COM1')
     mmc.setProperty('COM1', 'AnswerTimeout', 500.0)
     mmc.setProperty('COM1', 'BaudRate', 19200)
