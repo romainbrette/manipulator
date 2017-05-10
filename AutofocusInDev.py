@@ -1,8 +1,9 @@
 """
-Camera GUI for LuigsNeumann_SM10
+Camera GUI for LuigsNeumann_SM10 and SM5
 Requires OpenCV
+To use autofocus, the user shall put the tip on focus in the displayed rectangle and press 't'
+Autofocus using template matching by pressing 'f'
 Display a rectangle around the detected tip
-Press 'f' to focus on the tip
 Quit with key 'q'
 """
 
