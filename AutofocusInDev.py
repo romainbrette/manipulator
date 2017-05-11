@@ -85,12 +85,6 @@ while(True):
     if key & 0xFF == ord('t'):
         if type(template) == int:
             template = img[height / 2 - 20:height / 2 + 20, width / 2 - 20:width / 2 + 20]
-            '''
-            xtemp, ytemp, _ = tip_detect(template)
-            disptemplate = template
-            cv2.rectangle(disptemplate, (xtemp-10, ytemp-10), (xtemp+10, ytemp+10), (0, 0, 255))
-            cv2.imshow('template', disptemplate)
-            '''
             cv2.imshow('template', template)
         else:
             template = 0
@@ -112,20 +106,17 @@ while(True):
     if type(template) == int:
         # Display a rectangle where the template will be taken
         cv2.rectangle(frame, (width / 2 - 20, height / 2 - 20), (width / 2 + 20, height / 2 + 20), (0, 0, 255))
+        cv2.line(frame, (width/2+10, height/2), (width/2-10, height/2), (0,0,255))
+        cv2.line(frame, (width/2, height/2+10), (width/2, height/2-10), (0,0,255))
     else:
         # Display a rectangle at the template matched location
         res, maxval, maxloc = templatematching(img, template)
         # print maxval
         if res:
             x, y = maxloc[:2]
-            cv2.rectangle(frame, (x, y), (x + 40, y + 40), (0, 0, 255))
-            #xtip, ytip, _ = tip_detect(img[x:x + 40, y:y + 40])
-            #cv2.circle(frame, (x + xtip, y + ytip), 5, (0, 0, 255))
+            cv2.rectangle(frame, (x, y), (x + 40, y + 40), (0, 255, 0))
 
-
-
-
-    # Reversing the frame
+    # Reversing the frame, FIND SOMETHING SO IT WORKS WITH TEMPLATE (REVERSE TEMPLATE ?)
     #frame = cv2.flip(frame, 2)
 
     # Display the resulting frame
