@@ -44,7 +44,9 @@ cv2.namedWindow('Camera')
 
 # Booleans for tracking mode and existence of the template image for autofocus
 track = 0
-template = None
+template = 0
+
+step = 5
 
 # GUI loop with image processing
 while(True):
@@ -58,8 +60,6 @@ while(True):
 
     if devtype == 'SM10':
         height, width = frame.shape[:2]
-
-    ##img = cv2.Canny(img, 50, 200)
 
     # Detection of the tip
     #x, y, c = tip_detect(img)
@@ -78,49 +78,55 @@ while(True):
 
     if key & 0xFF == ord('f'):
         #tipfocus(microscope, cap)
-        focus(devtype, microscope, template, cap)
+        maxval = focus(devtype, microscope, template, cap)
+        print maxval
         print 'Autofocus done.'
 
     if key & 0xFF == ord('t'):
-        if template == None:
+        if type(template) == int:
             template = img[height / 2 - 20:height / 2 + 20, width / 2 - 20:width / 2 + 20]
-            ##template = cv2.Canny(template, 50, 200)
+            '''
             xtemp, ytemp, _ = tip_detect(template)
-            cv2.rectangle(template, (xtemp-10, ytemp-10), (xtemp+10, ytemp+10), (0, 0, 255))
+            disptemplate = template
+            cv2.rectangle(disptemplate, (xtemp-10, ytemp-10), (xtemp+10, ytemp+10), (0, 0, 255))
+            cv2.imshow('template', disptemplate)
+            '''
             cv2.imshow('template', template)
         else:
-            template = None
+            template = 0
 
     if key & 0xFF == ord('d'):
         track ^= 1
 
     # Tracking while moving
     if track != 0:
-        arm.relative_move(-2, 0)
+        arm.relative_move(step, 0)
         #tipfocus(microscope, cap)
-        focus(devtype, microscope, template, cap)
+        maxval = focus(devtype, microscope, template, cap, step)
         track += 1
     if track == 10:
         track = 0
         print 'Tracking finished'
 
     # Our operations on the frame come here
-    if template == None:
+    if type(template) == int:
         # Display a rectangle where the template will be taken
-        cv2.rectangle(frame, (width/2-20, height/2-20), (width/2+20, height/2+20), (0,0,255))
+        cv2.rectangle(frame, (width / 2 - 20, height / 2 - 20), (width / 2 + 20, height / 2 + 20), (0, 0, 255))
     else:
         # Display a rectangle at the template matched location
         res, maxval, maxloc = templatematching(img, template)
-        #print maxval
+        # print maxval
         if res:
             x, y = maxloc[:2]
             cv2.rectangle(frame, (x, y), (x + 40, y + 40), (0, 0, 255))
-            xtip, ytip, _ = tip_detect(img[x:x+40, y:y+40])
-            cv2.circle(frame, (xtip, ytip), 5, (0,0,255))
+            #xtip, ytip, _ = tip_detect(img[x:x + 40, y:y + 40])
+            #cv2.circle(frame, (x + xtip, y + ytip), 5, (0, 0, 255))
+
+
 
 
     # Reversing the frame
-    frame = cv2.flip(frame, 2)
+    #frame = cv2.flip(frame, 2)
 
     # Display the resulting frame
     cv2.imshow('Camera', frame)

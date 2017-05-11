@@ -9,10 +9,11 @@ __all__ = ['focus']
 from Hamamatsu_camera import *
 from template_matching import *
 from get_img import *
+import cv2
 from scipy.optimize import minimize_scalar, minimize
 from math import fabs
 
-def focus(devtype, microscope, template, cv2cap=None):
+def focus(devtype, microscope, template, cv2cap=None, step = 0):
     """
     Autofocus by searching the best template match in the image around the current height
     :param devtype: type of used controller
@@ -28,14 +29,6 @@ def focus(devtype, microscope, template, cv2cap=None):
         current_z = microscope.position(2)
     else:
         raise TypeError('Unknown device. Should be either "SM5" or "SM10".')
-    """
-    # minimize() quicker but less performant 
-    fun = lambda x: -templatematching(getImg(devtype, microscope, x, cap)[1], template)[1]
-    cons = ({'type': 'ineq', 'fun': lambda x: 4 - fabs(x - current_z)})
-    minimize(fun, current_z, method='COBYLA', constraints=cons, tol=0.9, options={'maxiter': 20, 'rhobeg':3})
-    res, maxval, maxloc = templatematching(getImg(devtype, microscope, cv2cap=cap)[1], template)
-    x, y = maxloc[:2]
-    """
 
     # Tabs of maxval and their locations during the process
     vals = []
@@ -43,7 +36,10 @@ def focus(devtype, microscope, template, cv2cap=None):
 
     # Getting the maxval and their locations at +-4um, 1um steps, around the current height
     for i in range(9):
-        _, img = getImg(devtype, microscope, current_z - i + 4, cv2cap)
+        if step <= 0:
+            _, img = getImg(devtype, microscope, current_z - i + 4, cv2cap)
+        else:
+            _, img = getImg(devtype, microscope, current_z + i - 4, cv2cap)
         res, val, loc = templatematching(img, template)
         location += [loc]
         if res:
@@ -52,6 +48,13 @@ def focus(devtype, microscope, template, cv2cap=None):
         else:
             # Template has not been detected, maxval set at 0
             vals += [0]
+
+        if val > 0.95:
+            maxval = val
+            x, y = loc[:2]
+            return maxval
+
+
 
     # Search of the highest value, indicating that focus has been achieved
     maxval = max(vals)
@@ -66,4 +69,4 @@ def focus(devtype, microscope, template, cv2cap=None):
         # Template has never been detected, focus can not be achieved
         raise ValueError('The template image has not been detected.')
 
-    pass
+    return maxval
