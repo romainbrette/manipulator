@@ -14,7 +14,7 @@ def templatematching(img, template):
     :param img: image to look in
     :param template: image to look for
     :return: is_in: 1 if the template has been detected, 0 otherwise
-             maxval: maximum value where the image match the template the best
+             maxval: maximum value corresponding to the best matching ratio
              maxloc: location (x,y) in the image of maxval
     """
 

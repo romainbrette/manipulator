@@ -31,31 +31,26 @@ def focus(devtype, microscope, template, cv2cap=None, step = 0):
     else:
         raise TypeError('Unknown device. Should be either "SM5" or "SM10".')
 
-    # Tabs of maxval and their locations during the process
+    # Tabs of maxval during the process
     vals = []
-    location = []
 
-    # Getting the maxval and their locations at +-4um, 1um steps, around the current height
+    # Getting the maxvals and their locations at +-4um, 1um steps, around the current height
     for i in range(9):
         if step <= 0:
             _, img = getImg(devtype, microscope, current_z - i + 4, cv2cap)
         else:
             _, img = getImg(devtype, microscope, current_z + i - 4, cv2cap)
-        res, val, loc = templatematching(img, template)
-        location += [loc]
+        res, val, _ = templatematching(img, template)
         if res:
             # Template has been detected
             vals += [val]
         else:
-            # Template has not been detected, maxval set at 0
+            # Template has not been detected, val set at 0
             vals += [0]
 
         if val > 0.95:
             maxval = val
-            x, y = loc[:2]
             return maxval
-
-
 
     # Search of the highest value, indicating that focus has been achieved
     maxval = max(vals)
@@ -63,9 +58,7 @@ def focus(devtype, microscope, template, cv2cap=None, step = 0):
     if maxval != 0:
         # Template has been detected at least once, setting the microscope at corresponding height
         index = vals.index(maxval)
-        locate = location[index]
         _, img = getImg(devtype, microscope, current_z - index + 4, cv2cap)
-        x, y = locate[:2]
     else:
         # Template has never been detected, focus can not be achieved
         raise ValueError('The template image has not been detected.')
