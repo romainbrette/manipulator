@@ -86,6 +86,8 @@ while(True):
         if template == None:
             template = img[height / 2 - 20:height / 2 + 20, width / 2 - 20:width / 2 + 20]
             ##template = cv2.Canny(template, 50, 200)
+            xtip, ytip, _ = tip_detect(template)
+            cv2.rectangle(template, (xtip-10, ytip-10), (xtip+10, ytip+10), (0, 0, 255))
             cv2.imshow('template', template)
         else:
             template = None
@@ -111,8 +113,9 @@ while(True):
         # Display a rectangle at the template matched location
         res, maxval, maxloc = templatematching(getImg(devtype, microscope, cv2cap=cap)[1], template)
         #print maxval
-        x, y = maxloc[:2]
-        cv2.rectangle(frame, (x, y), (x + 20, y + 20), (0, 0, 255))
+        if res:
+            x, y = maxloc[:2]
+            cv2.rectangle(frame, (x, y), (x + 20, y + 20), (0, 0, 255))
 
     # Reversing the frame
     frame = cv2.flip(frame, 2)
