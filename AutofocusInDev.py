@@ -96,7 +96,7 @@ while(True):
     if track != 0:
         arm.relative_move(step, 0)
         #tipfocus(microscope, cap)
-        maxval = focus(devtype, microscope, template, cap, step)
+        #maxval = focus(devtype, microscope, template, cap, step)
         track += 1
     if track == 10:
         track = 0
