@@ -20,6 +20,7 @@ def focus(devtype, microscope, template, cv2cap=None, step = 0):
     :param microscope: device controlling the microscope
     :param template: template image to look for
     :param cv2cap: video capture from cv2, unnecessary if devtype='SM5' 
+    :param step: step length made if the arm is moving (for quicker tracking)
     """
 
     # Getting the microscope height according to the used controller
