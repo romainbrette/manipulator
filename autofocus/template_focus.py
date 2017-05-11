@@ -50,6 +50,7 @@ def focus(devtype, microscope, template, cv2cap=None, step = 0):
 
         if val > 0.95:
             maxval = val
+            print len(vals)
             return maxval
 
     # Search of the highest value, indicating that focus has been achieved
@@ -63,4 +64,5 @@ def focus(devtype, microscope, template, cv2cap=None, step = 0):
         # Template has never been detected, focus can not be achieved
         raise ValueError('The template image has not been detected.')
 
+    print len(vals)
     return maxval

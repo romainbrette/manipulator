@@ -78,7 +78,7 @@ while(True):
 
     if key & 0xFF == ord('f'):
         #tipfocus(microscope, cap)
-        maxval = focus(devtype, microscope, template, cap)
+        #maxval = focus(devtype, microscope, template, cap)
         print maxval
         print 'Autofocus done.'
 
