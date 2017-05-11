@@ -19,8 +19,6 @@ def focus(devtype, microscope, template, cv2cap=None):
     :param microscope: device controlling the microscope
     :param template: template image to look for
     :param cv2cap: video capture from cv2, unnecessary if devtype='SM5' 
-    :return: maxval: maximum value where the image match the template the best
-             x, y: location of maxval in the image
     """
 
     # Getting the microscope height according to the used controller
@@ -68,4 +66,4 @@ def focus(devtype, microscope, template, cv2cap=None):
         # Template has never been detected, focus can not be achieved
         raise ValueError('The template image has not been detected.')
 
-    return maxval, x, y
+    pass

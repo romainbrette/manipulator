@@ -78,16 +78,15 @@ while(True):
 
     if key & 0xFF == ord('f'):
         #tipfocus(microscope, cap)
-        maxval, x, y = focus(devtype, microscope, template, cap)
-        print maxval
+        focus(devtype, microscope, template, cap)
         print 'Autofocus done.'
 
     if key & 0xFF == ord('t'):
         if template == None:
             template = img[height / 2 - 20:height / 2 + 20, width / 2 - 20:width / 2 + 20]
             ##template = cv2.Canny(template, 50, 200)
-            xtip, ytip, _ = tip_detect(template)
-            cv2.rectangle(template, (xtip-10, ytip-10), (xtip+10, ytip+10), (0, 0, 255))
+            xtemp, ytemp, _ = tip_detect(template)
+            cv2.rectangle(template, (xtemp-10, ytemp-10), (xtemp+10, ytemp+10), (0, 0, 255))
             cv2.imshow('template', template)
         else:
             template = None
@@ -99,7 +98,7 @@ while(True):
     if track != 0:
         arm.relative_move(-2, 0)
         #tipfocus(microscope, cap)
-        maxval, x, y = focus(devtype, microscope, template, cap)
+        focus(devtype, microscope, template, cap)
         track += 1
     if track == 10:
         track = 0
@@ -111,11 +110,14 @@ while(True):
         cv2.rectangle(frame, (width/2-20, height/2-20), (width/2+20, height/2+20), (0,0,255))
     else:
         # Display a rectangle at the template matched location
-        res, maxval, maxloc = templatematching(getImg(devtype, microscope, cv2cap=cap)[1], template)
+        res, maxval, maxloc = templatematching(img, template)
         #print maxval
         if res:
             x, y = maxloc[:2]
-            cv2.rectangle(frame, (x, y), (x + 20, y + 20), (0, 0, 255))
+            cv2.rectangle(frame, (x, y), (x + 40, y + 40), (0, 0, 255))
+            xtip, ytip, _ = tip_detect(img[x:x+40, y:y+40])
+            cv2.circle(frame, (xtip, ytip), 5, (0,0,255))
+
 
     # Reversing the frame
     frame = cv2.flip(frame, 2)
