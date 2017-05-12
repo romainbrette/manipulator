@@ -7,9 +7,6 @@ Display a rectangle around the detected tip
 Quit with key 'q'
 """
 
-import cv2
-from devices import *
-from serial import SerialException
 from autofocus import *
 
 # Type of used controller, either 'SM5' or 'SM10 for L&N SM-5 or L&N SM-10
