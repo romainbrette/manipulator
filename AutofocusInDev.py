@@ -12,8 +12,6 @@ from devices import *
 from serial import SerialException
 from autofocus import *
 
-# Devices to control and video capture
-
 # Type of used controller, either 'SM5' or 'SM10 for L&N SM-5 or L&N SM-10
 devtype = 'SM10'
 
@@ -46,7 +44,9 @@ cv2.namedWindow('Camera')
 track = 0
 template = 0
 
+# Step displacement for tracking an nuber of steps to make
 step = 5
+nsteps = 10
 
 # GUI loop with image processing
 while(True):
@@ -54,18 +54,9 @@ while(True):
     # Capture a frame from video
     if devtype == 'SM5':
         buffer = microscope.getLastImage()
-        height, width = buffer.shape[:2]
 
     frame, img = getImg(devtype, microscope, cv2cap=cap)
-
-    if devtype == 'SM10':
-        height, width = frame.shape[:2]
-
-    # Detection of the tip
-    #x, y, c = tip_detect(img)
-
-    # Display a rectangle around the detected tip
-    #cv2.rectangle(frame, (x-10, y-10), (x+10, y+10), (0, 0, 255))
+    height, width = img.shape[:2]
 
     # Keyboards controls:
     # 'q' to quit,
@@ -77,17 +68,21 @@ while(True):
         break
 
     if key & 0xFF == ord('f'):
-        #tipfocus(microscope, cap)
-        maxval = focus(devtype, microscope, template, cap)
-        print maxval
-        print 'Autofocus done.'
+        try:
+            maxval = focus(devtype, microscope, template, cap)
+            print maxval
+            print 'Autofocus done.'
+        except TypeError:
+            print 'Template image has not been taken yet.'
 
     if key & 0xFF == ord('t'):
         if type(template) == int:
-            template = img[height / 2 - 20:height / 2 + 20, width / 2 - 20:width / 2 + 20]
+            #template = img[height / 2 - 20:height / 2 + 20, width / 2 - 20:width / 2 + 20]
+            template = get_template(img)
             cv2.imshow('template', template)
         else:
             template = 0
+            cv2.destroyWindow('template')
 
     if key & 0xFF == ord('d'):
         track ^= 1
@@ -95,9 +90,9 @@ while(True):
     # Tracking while moving
     if track != 0:
         arm.relative_move(step, 0)
-        #maxval = focus(devtype, microscope, template, cap, step)
+        maxval = focus(devtype, microscope, template, cap, step)
         track += 1
-    if track == 10:
+    if track == nsteps:
         track = 0
         print 'Tracking finished'
 
@@ -120,10 +115,6 @@ while(True):
 
     # Display the resulting frame
     cv2.imshow('Camera', frame)
-
-    # Debugging
-    #print str((1e4*c)**5)+', '+str(microscope.position(2))+', '
-
 
 # When everything done, release the capture
 

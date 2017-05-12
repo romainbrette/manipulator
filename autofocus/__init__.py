@@ -5,3 +5,4 @@ from get_img import *
 from template_focus import *
 from template_matching import *
 from Hamamatsu_camera import *
+from get_template import *
