@@ -11,3 +11,4 @@ def stop_device(devtype, dev, microscope, cap):
 
     cv2.destroyAllWindows()
     del dev
+    pass
