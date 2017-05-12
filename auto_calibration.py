@@ -17,6 +17,7 @@ dev, microscope, cap = init_device(devtype)
 
 # Device controlling the used arm
 arm = XYZUnit(dev, [1, 2, 3])
+platform = XYZUnit(dev, [7, 8, 9])
 
 # Naming the live camera window
 cv2.namedWindow('Camera')
@@ -58,11 +59,25 @@ while 1:
     if calibrate:
         if step == 0:
             #template = img[height / 2 - 20:height / 2 + 20, width / 2 - 20:width / 2 + 20]
+            init_pos_a = [arm.position(0), arm.position(1), arm.position(2)]
+            if devtype == 'SM5':
+                init_pos_m = [platform.position(0), platform.position(1), microscope.getPosition]
+            else:
+                init_pos_m = [platform.position(0), platform.position(1), platform.position(2)]
             template = get_template(img)
             cv2.imshow('template', template)
+            _, _, loc = templatematching(img, template)
+            y_init = loc[1]
+            platform.relative_move(50, 0)
+            _, img = getImg(devtype, microscope, cv2cap=cap)
+            _, _, loc = templatematching(img, template)
+            dy = loc[1] - y_init
+            um_px = 50./dy
+            platform.relative_move(-50, 0)
             step += 1
         elif step == 1:
             # algo romain
+
             step += 1
         elif step == 2:
             # move XY platform
