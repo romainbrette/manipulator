@@ -99,16 +99,14 @@ while(True):
     # Our operations on the frame come here
     if type(template) == int:
         # Display a rectangle where the template will be taken
-        cv2.rectangle(frame, (width / 2 - 20, height / 2 - 20), (width / 2 + 20, height / 2 + 20), (0, 0, 255))
-        cv2.line(frame, (width/2+10, height/2), (width/2-10, height/2), (0,0,255))
-        cv2.line(frame, (width/2, height/2+10), (width/2, height/2-10), (0,0,255))
+        frame = disp_template_zone(frame)
     else:
         # Display a rectangle at the template matched location
         res, maxval, maxloc = templatematching(img, template)
         # print maxval
         if res:
             x, y = maxloc[:2]
-            cv2.rectangle(frame, (x, y), (x + 40, y + 40), (0, 255, 0))
+            cv2.rectangle(frame, (x, y), (x + template.shape[0], y + template.shape[1]), (0, 255, 0))
 
     # Reversing the frame, FIND SOMETHING SO IT WORKS WITH TEMPLATE (REVERSE TEMPLATE ?)
     #frame = cv2.flip(frame, 2)
