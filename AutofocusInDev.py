@@ -16,23 +16,7 @@ from autofocus import *
 devtype = 'SM10'
 
 # Initializing the device, camera and microscope according to the used controller
-if devtype == 'SM5':
-    try:
-        dev = LuigsNeumann_SM5('COM3')
-        cap = None
-        microscope = camera_init()
-        microscope.startContinuousSequenceAcquisition(1)
-    except Warning:
-        raise SerialException("L&N SM-5 not found.")
-elif devtype == 'SM10':
-    try:
-        dev = LuigsNeumann_SM10()
-        cap = cv2.VideoCapture(0)
-        microscope = XYZUnit(dev, [7, 8, 9])
-    except SerialException:
-        raise SerialException("L&N SM-10 not found.")
-else:
-    raise SerialException("No supported device detected")
+dev, microscope, cap = init_device(devtype)
 
 # Device controlling the used arm
 arm = XYZUnit(dev, [1, 2, 3])
@@ -56,7 +40,6 @@ while(True):
         buffer = microscope.getLastImage()
 
     frame, img = getImg(devtype, microscope, cv2cap=cap)
-    height, width = img.shape[:2]
 
     # Keyboards controls:
     # 'q' to quit,
@@ -115,13 +98,4 @@ while(True):
     cv2.imshow('Camera', frame)
 
 # When everything done, release the capture
-
-if devtype == 'SM5':
-    microscope.stopSequenceAcquisition()
-    camera_unload(microscope)
-    microscope.reset()
-elif devtype == 'SM10':
-    cap.release()
-
-cv2.destroyAllWindows()
-del dev
+stop_device(devtype, dev, microscope, cap)
