@@ -17,8 +17,9 @@ def get_template(img):
     for i in range(3):
         for j in range(3):
             temp = cv2.Canny(template[j*width/4:width/2+j*width/4, i*height/4:height/2+i*height/4], 100, 200)
-            histo = np.histogram(temp.flatten)
-            weight += [histo.max()]
+            _, bin_edge = np.histogram(temp.flatten)
+            #weight += [img.argmax()] ?
+            weight += [bin_edge.max()]
 
     index = weight.index(max(weight))
     j = index%3
@@ -26,3 +27,16 @@ def get_template(img):
     template = template[j*width/4:width/2+j*width/4, i*height/4:height/2+i*height/4]
 
     return template
+
+if __name__ == '__main__':
+    from matplotlib import pyplot as plt
+
+    img = cv2.imread('template.jpg', 0)
+    img = cv2.Canny(img[0:43,0:43], 100, 200)
+    histo, _ = np.histogram(img.flatten())
+    print img.argmax()
+    cv2.imshow('test', img)
+    plt.plot(histo)
+    plt.show()
+    cv2.destroyAllWindows()
+
