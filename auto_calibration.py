@@ -61,12 +61,24 @@ while 1:
     if key & 0xFF == ord('b'):
         calibrate ^= 1
 
+    if key & 0xFF == ord('p'):
+        pos = matrix('0; 0; 0')
+        pos[0, 0] = microscope.position(0) - init_pos_m[0]
+        pos[1, 0] = microscope.position(1) - init_pos_m[1]
+        if devtype == 'SM5':
+            pos[2, 0] = microscope.getPosition() - init_pos_m[2]
+        else:
+            pos[2, 0] = microscope.position(2) - init_pos_m[2]
+        X = M_inv*pos
+        arm.absolute_move_group([X[0], X[1], X[2]], [0, 1, 2])
+
+
     if calibrate:
         if step == 0:
             #template = img[height / 2 - 20:height / 2 + 20, width / 2 - 20:width / 2 + 20]
             init_pos_a = [arm.position(0), arm.position(1), arm.position(2)]
             if devtype == 'SM5':
-                init_pos_m = [platform.position(0), platform.position(1), microscope.getPosition]
+                init_pos_m = [platform.position(0), platform.position(1), microscope.getPosition()]
             else:
                 init_pos_m = [platform.position(0), platform.position(1), platform.position(2)]
             template = get_template(img)
