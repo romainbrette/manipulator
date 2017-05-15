@@ -27,6 +27,7 @@ cv2.namedWindow('Camera')
 # Booleans for tracking mode and existence of the template image for autofocus
 template = 0
 calibrate = 0
+calibrate_succeded = 0
 step = 0
 track_step = 1
 estim = 0
@@ -60,17 +61,21 @@ while 1:
 
     if key & 0xFF == ord('b'):
         calibrate ^= 1
+        step = 0
 
     if key & 0xFF == ord('p'):
-        pos = matrix('0; 0; 0')
-        pos[0, 0] = microscope.position(0) - init_pos_m[0]
-        pos[1, 0] = microscope.position(1) - init_pos_m[1]
-        if devtype == 'SM5':
-            pos[2, 0] = microscope.getPosition() - init_pos_m[2]
+        if calibrate_succeded:
+            pos = matrix('0; 0; 0')
+            pos[0, 0] = microscope.position(0) - init_pos_m[0]
+            pos[1, 0] = microscope.position(1) - init_pos_m[1]
+            if devtype == 'SM5':
+                pos[2, 0] = microscope.getPosition() - init_pos_m[2]
+            else:
+                pos[2, 0] = microscope.position(2) - init_pos_m[2]
+            X = M_inv*pos
+            arm.absolute_move_group([X[0], X[1], X[2]], [0, 1, 2])
         else:
-            pos[2, 0] = microscope.position(2) - init_pos_m[2]
-        X = M_inv*pos
-        arm.absolute_move_group([X[0], X[1], X[2]], [0, 1, 2])
+            print 'Calibration must be done beforehand.'
 
 
     if calibrate:
@@ -137,6 +142,7 @@ while 1:
         elif step == 4:
             M_inv = inv(M)
             calibrate = 0
+            calibrate_succeded = 1
             print 'Calibration finished'
             pass
 
