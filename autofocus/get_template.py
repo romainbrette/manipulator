@@ -18,7 +18,7 @@ def get_template(img):
         for j in range(3):
             temp = cv2.Canny(template[j*width/4:width/2+j*width/4, i*height/4:height/2+i*height/4], 100, 200)
             _, bin_edge = np.histogram(temp.flatten)
-            #weight += [img.argmax()] ?
+            #weight += [temp.argmax()]
             weight += [bin_edge.max()]
 
     index = weight.index(max(weight))

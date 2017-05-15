@@ -13,7 +13,7 @@ import cv2
 from scipy.optimize import minimize_scalar, minimize
 from math import fabs
 
-def focus(devtype, microscope, template, cv2cap=None, step = 0):
+def focus(devtype, microscope, template, cv2cap=None, rng = 1):
     """
     Autofocus by searching the best template match in the image around the current height
     :param devtype: type of used controller
@@ -31,38 +31,42 @@ def focus(devtype, microscope, template, cv2cap=None, step = 0):
     else:
         raise TypeError('Unknown device. Should be either "SM5" or "SM10".')
 
-    # Tabs of maxval during the process
+    # Tabs of maxval and their location during the process
     vals = []
+    locs = []
 
     # Getting the maxvals and their locations at +-4um, 1um steps, around the current height
-    for i in range(9):
-        if step <= 0:
-            _, img = getImg(devtype, microscope, current_z - i + 4, cv2cap)
-        else:
-            _, img = getImg(devtype, microscope, current_z + i - 4, cv2cap)
-        res, val, _ = templatematching(img, template)
+    for i in range(rng*2+1):
+        #if step <= 0:
+        _, img = getImg(devtype, microscope, current_z + (rng - i)/10., cv2cap)
+        #else:
+        #    _, img = getImg(devtype, microscope, current_z + i - rng/2-1, cv2cap)
+        res, val, loc = templatematching(img, template)
+        locs += [loc]
         if res:
             # Template has been detected
             vals += [val]
         else:
             # Template has not been detected, val set at 0
             vals += [0]
-
+        '''
         if val > 0.95:
             maxval = val
             #print len(vals)
             return maxval
-
+        '''
     # Search of the highest value, indicating that focus has been achieved
     maxval = max(vals)
 
     if maxval != 0:
         # Template has been detected at least once, setting the microscope at corresponding height
         index = vals.index(maxval)
-        _, img = getImg(devtype, microscope, current_z - index + 4, cv2cap)
+        loc = locs[index]
+        _, img = getImg(devtype, microscope, current_z + (rng - index)/10. , cv2cap)
+        dep = (rng - index)/10.
     else:
         # Template has never been detected, focus can not be achieved
         raise ValueError('The template image has not been detected.')
 
     #print len(vals)
-    return maxval
+    return maxval, dep, loc

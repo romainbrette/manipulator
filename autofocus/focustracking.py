@@ -1,60 +1,34 @@
 '''
 Tracking algorithm to keep the tip in focus during a move
-CAN NOT DISPLAY THE TRACKING IN REAL USE
+Use the template matching method to focus
 '''
 
-from focus import *
-from math import fabs
-from devices import *
+from template_focus import *
+from template_matching import *
+from get_img import *
 
 
 __all__ = ['focus_track']
 
-def focus_track(device, relative_move, axis, microscope, cap):
-    '''
-    continuously focusing the tip during a move
-    :param device: device type to be moved
-    :param relative_move: relative displacement to be made by device 
-    :param axis: device's axis for the movement
-    :param microscope: microscope device
-    '''
+def focus_track(devtype, microscope, arm, template, step, axis, estim=0, cv2cap=None):
+    """
+    Focus after a move of the arm
+    """
+    _, img = getImg(devtype, microscope, cv2cap=cv2cap)
+    _, _, initloc = templatematching(img, template)
 
-    # Initial position of the device
+    if step == 1:
+        arm.relative_move(step, axis)
+        _, estim_temp, estim_loc = focus(devtype, microscope, template, cv2cap, 5)
+    else:
+        arm.relative_move(step, axis)
+        if devtype == 'SM5':
+            microscope.setRelativePosition(estim*step)
+        else:
+            microscope.relative_move(estim*step, 2)
+        _, estim_temp, estim_loc = focus(devtype, microscope, template, cv2cap, 1)
 
-    init = device.position(axis)
+    estim += estim_temp/step
+    estim_loc = [(i - initloc[i])/step for i in estim_loc]
 
-    # total distance traveled
-
-    disp = 0
-
-    # Making the move step-by-step
-
-    step = relative_move/fabs(relative_move) * 10
-
-    while fabs(disp) < fabs(relative_move):
-        device.relative_move(step, axis)
-        disp = device.position(axis) - init
-        tipfocus(microscope, cap)
-        # for testing
-        print disp
-
-
-    pass
-
-if __name__ == '__main__':
-    from serial import SerialException
-    import cv2
-
-    try:
-        dev = LuigsNeumann_SM10()
-    except SerialException:
-        print "L&N SM-10 not found. Falling back on fake device."
-        dev = FakeDevice()
-
-    cap = cv2.VideoCapture(0)
-    microscope = XYZUnit(dev, [7, 8, 9])
-    device = XYZUnit(dev, [1, 2, 3])
-    tipfocus(microscope, cap)
-    focus_track(device, 50, 0, microscope)
-    cap.release()
-    del dev
+    return estim, estim_loc
