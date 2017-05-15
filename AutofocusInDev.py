@@ -26,7 +26,7 @@ track = 0
 template = 0
 
 # Step displacement for tracking an nuber of steps to make
-step = 5
+step = 4
 nsteps = 10
 
 # GUI loop with image processing
@@ -49,7 +49,7 @@ while(True):
 
     if key & 0xFF == ord('f'):
         try:
-            maxval, _, _ = focus(devtype, microscope, template, cap, 10)
+            maxval, _, _ = focus(devtype, microscope, template, cap, 4)
             print maxval
             print 'Autofocus done.'
         except TypeError:
@@ -70,7 +70,7 @@ while(True):
     # Tracking while moving
     if track != 0:
         arm.relative_move(step, 0)
-        maxval, _, _ = focus(devtype, microscope, template, cap, 10)
+        maxval, _, _ = focus(devtype, microscope, template, cap, 4)
         track += 1
     if track == nsteps:
         track = 0
@@ -83,10 +83,10 @@ while(True):
     else:
         # Display a rectangle at the template matched location
         res, maxval, maxloc = templatematching(img, template)
-        # print maxval
+        #print maxval
         if res:
             x, y = maxloc[:2]
-            cv2.rectangle(frame, (x, y), (x + template.shape[0], y + template.shape[1]), (0, 255, 0))
+            cv2.rectangle(frame, (x, y), (x + template.shape[1], y + template.shape[0]), (0, 255, 0))
 
     # Reversing the frame, FIND SOMETHING SO IT WORKS WITH TEMPLATE (REVERSE TEMPLATE ?)
     #frame = cv2.flip(frame, 2)

@@ -29,7 +29,7 @@ template = 0
 calibrate = 0
 calibrate_succeded = 0
 step = 0
-track_step = 1
+track_step = 2
 estim = 0
 M = matrix('0 0 0; 0 0 0,; 0 0 0')
 
@@ -92,42 +92,52 @@ while 1:
             x_init, y_init = loc[:2]
             platform.relative_move(50, 0)
             _, img = getImg(devtype, microscope, cv2cap=cap)
-            _, _, loc = templatematching(img, template)
-            dy = loc[1] - y_init
-            um_px = 50./dy
-            platform.relative_move(-50, 0)
             step += 1
         elif step == 1:
+            _, _, loc = templatematching(img, template)
+            dx = loc[1] - x_init
+            um_px = 50./dx
+            platform.relative_move(-50, 0)
+            _, img = getImg(devtype, microscope, cv2cap=cap)
+            step += 1
+            print 'step 0 done'
+        elif step == 2:
             # calibrate arm x axis
-            estim, loc = focus_track(devtype, microscope, arm, track_step, 0, estim, cap)
-            track_step *= 2
+            estim, loc = focus_track(devtype, microscope, arm, template, track_step, 0, estim, cap)
+            _, img = getImg(devtype, microscope, cv2cap=cap)
             if track_step == 32:
                 x, y = loc[:2]
                 M[0, 0] = x*um_px
                 M[1, 0] = y*um_px
                 M[2, 0] = estim
                 estim = 0
-                track_step = 1
+                track_step = 2
                 arm.absolute_move(init_pos_a[0], 0)
                 _, _ = getImg(devtype, microscope, init_pos_m[2], cap)
                 step += 1
-        elif step == 2:
+                print 'step 1 done'
+            else:
+                track_step *= 2
+        elif step == 3:
             # calibrate arm y axis
-            estim, loc = focus_track(devtype, microscope, arm, track_step, 1, estim, cap)
-            track_step *= 2
+            estim, loc = focus_track(devtype, microscope, arm, template, track_step, 1, estim, cap)
             if track_step == 32:
                 x, y = loc[:2]
                 M[0, 1] = x*um_px
                 M[1, 1] = y*um_px
                 M[2, 1] = estim
                 estim = 0
-                track_step = 1
+                track_step = 2
                 arm.absolute_move(init_pos_a[1], 1)
                 _, _ = getImg(devtype, microscope, init_pos_m[2], cap)
                 step += 1
-        elif step == 3:
+                print 'step 2 done'
+            else:
+                track_step *= 2
+        elif step == 4:
             # calibrate arm z axis
-            estim, loc = focus_track(devtype, microscope, arm, track_step, 2, estim, cap)
+            '''
+            estim, loc = focus_track(devtype, microscope, arm, template, track_step, 2, estim, cap)
             track_step *= 2
             if track_step == 32:
                 x, y = loc[:2]
@@ -139,7 +149,13 @@ while 1:
                 arm.absolute_move(init_pos_a[2], 2)
                 _, _ = getImg(devtype, microscope, init_pos_m[2], cap)
                 step += 1
+                print 'step 3 done'
+            '''
+            M[0, 2] = 0
+            M[1, 2] = 0
+            M[2, 2] = 1
         elif step == 4:
+            print M
             M_inv = inv(M)
             calibrate = 0
             calibrate_succeded = 1
@@ -156,7 +172,7 @@ while 1:
         # print maxval
         if res:
             x, y = maxloc[:2]
-            cv2.rectangle(frame, (x, y), (x + template.shape[0], y + template.shape[1]), (0, 255, 0))
+            cv2.rectangle(frame, (x, y), (x + template.shape[1], y + template.shape[0]), (0, 255, 0))
 
     # Reversing the frame, FIND SOMETHING SO IT WORKS WITH TEMPLATE (REVERSE TEMPLATE ?)
     #frame = cv2.flip(frame, 2)

@@ -7,24 +7,24 @@ def get_template(img):
     Get a template image of the tip around the center of an image for any angle of the tip.
     """
 
-    width, height = img.shape[:2]
-    ratio = 64
+    height, width = img.shape[:2]
+    ratio = 16
 
-    template = img[width/2-width/ratio:width/2+width/ratio, height/2-height/ratio:height/2+height/ratio]
-
-    width, height = template.shape[:2]
+    template = img[height/2-height/ratio:height/2+height/ratio, width/2-width/ratio:width/2+width/ratio]
+    height, width = template.shape[:2]
     weight = []
     for i in range(3):
         for j in range(3):
-            temp = cv2.Canny(template[j*width/4:width/2+j*width/4, i*height/4:height/2+i*height/4], 100, 200)
-            _, bin_edge = np.histogram(temp.flatten)
+            temp = template[i*height/4:height/2+i*height/4, j*width/4:width/2+j*width/4]
+            bin_edge, _ = np.histogram(temp.flatten())
             #weight += [temp.argmax()]
             weight += [bin_edge.max()]
 
     index = weight.index(max(weight))
+    index = 2
     j = index%3
     i = index//3
-    template = template[j*width/4:width/2+j*width/4, i*height/4:height/2+i*height/4]
+    template = template[i*height/4:height/2+i*height/4, j*width/4:width/2+j*width/4]
 
     return template
 
@@ -34,8 +34,8 @@ def disp_template_zone(img):
     :param img: image
     :return: img: image with a red rectangle and a red centered cross
     """
-    width, height = img.shape[:2]
-    ratio = 64
+    height, width = img.shape[:2]
+    ratio = 16
     pt1 = (width/2 - width/ratio, height/2 - height/ratio)
     pt2 = (width/2 + width/ratio, height/2 + height/ratio)
     cv2.rectangle(img, pt1, pt2, (0, 0, 255))

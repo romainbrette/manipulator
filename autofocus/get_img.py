@@ -5,6 +5,7 @@ Encode the frame to make it usable for some functions (cornerHarris)
 
 import cv2
 import numpy as np
+import time
 
 __all__ = ['getImg']
 
@@ -41,6 +42,7 @@ def getImg(devtype, microscope, z=None, cv2cap=None):
         # Move the microscope if an height has been specify
         if z:
             microscope.absolute_move(z, 2)
+            time.sleep(1)
 
         # Capture frame
         ret, frame = cv2cap.read()
