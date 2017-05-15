@@ -192,7 +192,8 @@ if __name__ == '__main__':
     root.title('Manipulator')
     ndevices = 2
     try:
-        dev = LuigsNeumann_SM10()
+        #dev = LuigsNeumann_SM5('COM3')
+        dev = LuigsNeumann_SM10(
     except SerialException:
         print "L&N SM-10 not found. Falling back on fake device."
         dev = FakeDevice()

@@ -49,3 +49,6 @@ class SerialDevice(Device):
         crc_low = ctypes.c_ubyte(crc)
         return (crc_high.value, crc_low.value)
 
+if __name__ == '__main__':
+    for port in list_ports.comports():
+        print port
