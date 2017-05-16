@@ -18,17 +18,16 @@ def focus_track(devtype, microscope, arm, img, template, step, axis, estim=0, ca
 
     if step == 2:
         arm.relative_move(step, axis)
-        _, estim_temp, estim_loc, frame = focus(devtype, microscope, template, cap, 2)
+        _, estim_temp, estim_loc, frame, cap = focus(devtype, microscope, template, cap, 3)
     else:
         arm.relative_move(step, axis)
         if devtype == 'SM5':
             microscope.setRelativePosition(estim*step)
         else:
             microscope.relative_move(estim*step, 2)
-        _, estim_temp, estim_loc, frame = focus(devtype, microscope, template, cap, 1)
-    print float(estim_temp)
-    estim += float(estim_temp)/step
-    print estim
-    estim_loc = [float(estim_loc[i] - initloc[i])/step for i in range(2)]
+        _, estim_temp, estim_loc, frame, cap = focus(devtype, microscope, template, cap, 3)
 
-    return estim, estim_loc, frame
+    estim += float(estim_temp)/float(step)
+    estim_loc = [float(estim_loc[i] - initloc[i])/float(step) for i in range(2)]
+
+    return estim, estim_loc, frame, cap

@@ -13,6 +13,7 @@ import cv2
 from scipy.optimize import minimize_scalar, minimize
 from math import fabs
 
+
 def focus(devtype, microscope, template, cv2cap=None, rng = 1):
     """
     Autofocus by searching the best template match in the image around the current height
@@ -31,7 +32,7 @@ def focus(devtype, microscope, template, cv2cap=None, rng = 1):
     else:
         raise TypeError('Unknown device. Should be either "SM5" or "SM10".')
 
-    _, _ = getImg(devtype, microscope, current_z + rng, cv2cap)
+    #_, _ = getImg(devtype, microscope, current_z + rng, cv2cap)
 
     # Tabs of maxval and their location during the process
     vals = []
@@ -42,8 +43,7 @@ def focus(devtype, microscope, template, cv2cap=None, rng = 1):
         #if step <= 0:
         height = current_z + (rng - i)
 
-        frame, img = getImg(devtype, microscope, height, cv2cap)
-
+        frame, img, cv2cap = getImg(devtype, microscope, height, cv2cap)
         #else:
         #    _, img = getImg(devtype, microscope, current_z + i - rng/2-1, cv2cap)
         res, val, loc = templatematching(img, template)
@@ -72,10 +72,10 @@ def focus(devtype, microscope, template, cv2cap=None, rng = 1):
         #print index
         loc = locs[index]
         focus_height = current_z + (rng - index)
-        frame , _ = getImg(devtype, microscope, focus_height , cv2cap)
+        frame , _, cv2cap = getImg(devtype, microscope, focus_height , cv2cap)
         dep = (rng - index)
     else:
         # Template has never been detected, focus can not be achieved
         raise ValueError('The template image has not been detected.')
 
-    return maxval, dep, loc, frame
+    return maxval, dep, loc, frame, cv2cap

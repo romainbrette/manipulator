@@ -41,8 +41,10 @@ def getImg(devtype, microscope, z=None, cv2cap=None):
 
         # Move the microscope if an height has been specify
         if z:
+            cv2cap.release()
             microscope.absolute_move(z, 2)
             #time.sleep(1)
+            cv2cap = cv2.VideoCapture(0)
 
         # Capture frame
         ret, frame = cv2cap.read()
@@ -54,7 +56,7 @@ def getImg(devtype, microscope, z=None, cv2cap=None):
     else:
         raise TypeError('Unknown device. Should be either "SM5" or "SM10".')
 
-    return frame, img
+    return frame, img, cv2cap
 
 
 if __name__ == '__main__':
