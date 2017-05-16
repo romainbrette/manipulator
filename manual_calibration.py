@@ -15,7 +15,7 @@ from serial import SerialException
 
 from os.path import expanduser
 home = expanduser("~")
-config_filename = home+'/config_manipulator2.cfg'
+config_filename = home+'/config_manipulator.cfg'
 
 
 class ManipulatorFrame(LabelFrame):
@@ -191,15 +191,28 @@ if __name__ == '__main__':
     root = Tk()
     root.title('Manipulator')
     ndevices = 2
+
+    SM5 = True
+
     try:
-        #dev = LuigsNeumann_SM5('COM3')
-        dev = LuigsNeumann_SM10(
+        if SM5:
+            dev = LuigsNeumann_SM5('COM3')
+        else:
+            dev = LuigsNeumann_SM10()
     except SerialException:
-        print "L&N SM-10 not found. Falling back on fake device."
+        print "L&N not found. Falling back on fake device."
         dev = FakeDevice()
-    microscope = XYZUnit(dev, [7, 8, 9])
-    unit = [XYZUnit(dev, [1, 2, 3]),
-            XYZUnit(dev, [4, 5, 6])]
+
+    if SM5:
+        microscope_Z = Leica('COM1')
+        microscope = XYMicUnit(dev, microscope_Z, [7, 8])
+        unit = [XYZUnit(dev, [4, 5, 6]),
+                XYZUnit(dev, [1, 2, 3])]
+    else:
+        microscope = XYZUnit(dev, [7, 8, 9])
+        unit = [XYZUnit(dev, [1, 2, 3]),
+                XYZUnit(dev, [4, 5, 6])]
+
     virtual_unit = [VirtualXYZUnit(unit[i], microscope) for i in range(ndevices)]
 
     print "Device initialized"

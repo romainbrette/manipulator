@@ -5,3 +5,5 @@ from luigsneumann_SM5 import *
 from xyzunit import *
 from virtualxyzunit import *
 from fakedevice import *
+from xymicunit import *
+from leica import *
