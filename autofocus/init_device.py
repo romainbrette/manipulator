@@ -6,7 +6,7 @@ from Hamamatsu_camera import *
 def init_device(devtype):
     if devtype == 'SM5':
         try:
-            dev = LuigsNeumann_SM5('COM3')
+            dev = None
             cap = None
             microscope = camera_init()
             microscope.startContinuousSequenceAcquisition(1)
