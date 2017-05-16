@@ -2,11 +2,12 @@
 An XYZ unit made of an XY stage and another device representing the microscope Z axis
 """
 from device import *
+from numpy import array
 
 __all__ = ['XYMicUnit']
 
 
-class XYZUnit(Device):
+class XYMicUnit(Device):
     def __init__(self, dev, dev_mic, axes):
         '''
         Parameters
@@ -34,7 +35,7 @@ class XYZUnit(Device):
         The current position of the device axis in um.
         '''
         if axis is None: # all positions in a vector
-            return self.dev.position_group(self.axes) + [self.dev_mic.position()]
+            return array(list(self.dev.position_group(self.axes)) + [self.dev_mic.position()])
         else:
             if axis == 2: # Z
                 return self.dev_mic.position()
@@ -98,3 +99,17 @@ class XYZUnit(Device):
                 self.dev_mic.stop()
             else:
                 self.dev.stop(self.axes[axis])
+
+if __name__ == '__main__':
+    from luigsneumann_SM5 import *
+    from leica import *
+    from time import sleep
+
+    sm5 = LuigsNeumann_SM5('COM3')
+    mic = Leica('COM1')
+    stage = XYMicUnit(sm5, mic, [7,8])
+
+    sleep(1) # waiting for Leica microscope to be ready
+
+    print stage.position()
+    print mic.position()
