@@ -70,7 +70,7 @@ while(True):
     # Tracking while moving
     if track != 0:
         arm.relative_move(step, 0)
-        maxval, _, _, frame = focus(devtype, microscope, template, cap, 4)
+        maxval, _, _, frame = focus(devtype, microscope, template, cap, step)
         track += 1
     if track == nsteps:
         track = 0
