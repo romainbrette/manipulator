@@ -33,8 +33,7 @@ def getImg(devtype, microscope, z=None, cv2cap=None):
 
         if microscope.getRemainingImageCount() > 0:
             cam = microscope.getLastImage()
-            # Conversion so the frame can be used with openCV imshow()
-            frame = cam.view(dtype=np.uint8)
+            frame = cam
             img = cam
 
     elif devtype == 'SM10':
