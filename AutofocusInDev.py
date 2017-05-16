@@ -49,7 +49,7 @@ while(True):
 
     if key & 0xFF == ord('f'):
         try:
-            maxval, _, _ = focus(devtype, microscope, template, cap, 4)
+            maxval, _, _, frame = focus(devtype, microscope, template, cap, 4)
             print maxval
             print 'Autofocus done.'
         except TypeError:
@@ -70,7 +70,7 @@ while(True):
     # Tracking while moving
     if track != 0:
         arm.relative_move(step, 0)
-        maxval, _, _ = focus(devtype, microscope, template, cap, 4)
+        maxval, _, _, frame = focus(devtype, microscope, template, cap, 4)
         track += 1
     if track == nsteps:
         track = 0

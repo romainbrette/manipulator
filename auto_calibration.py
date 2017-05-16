@@ -53,7 +53,7 @@ while 1:
 
     if key & 0xFF == ord('f'):
         try:
-            maxval, _ = focus(devtype, microscope, template, cap, 10)
+            maxval, _, _, frame = focus(devtype, microscope, template, cap, 10)
             print maxval
             print 'Autofocus done.'
         except TypeError:
@@ -98,13 +98,13 @@ while 1:
             dx = loc[1] - x_init
             um_px = 50./dx
             platform.relative_move(-50, 0)
-            _, img = getImg(devtype, microscope, cv2cap=cap)
+            frame, img = getImg(devtype, microscope, cv2cap=cap)
             step += 1
             print 'step 0 done'
         elif step == 2:
             # calibrate arm x axis
-            estim, loc = focus_track(devtype, microscope, arm, template, track_step, 0, estim, cap)
-            _, img = getImg(devtype, microscope, cv2cap=cap)
+            estim, loc, frame = focus_track(devtype, microscope, arm, img, template, track_step, 0, estim, cap)
+            #_, img = getImg(devtype, microscope, cv2cap=cap)
             if track_step == 32:
                 x, y = loc[:2]
                 M[0, 0] = x*um_px
@@ -113,14 +113,14 @@ while 1:
                 estim = 0
                 track_step = 2
                 arm.absolute_move(init_pos_a[0], 0)
-                _, _ = getImg(devtype, microscope, init_pos_m[2], cap)
+                frame, img = getImg(devtype, microscope, init_pos_m[2], cap)
                 step += 1
                 print 'step 1 done'
             else:
                 track_step *= 2
         elif step == 3:
             # calibrate arm y axis
-            estim, loc = focus_track(devtype, microscope, arm, template, track_step, 1, estim, cap)
+            estim, loc, frame = focus_track(devtype, microscope, arm, img, template, track_step, 1, estim, cap)
             if track_step == 32:
                 x, y = loc[:2]
                 M[0, 1] = x*um_px
@@ -129,7 +129,7 @@ while 1:
                 estim = 0
                 track_step = 2
                 arm.absolute_move(init_pos_a[1], 1)
-                _, _ = getImg(devtype, microscope, init_pos_m[2], cap)
+                frame, img = getImg(devtype, microscope, init_pos_m[2], cap)
                 step += 1
                 print 'step 2 done'
             else:

@@ -38,11 +38,12 @@ def focus(devtype, microscope, template, cv2cap=None, rng = 1):
     # Getting the maxvals and their locations at +-4um, 1um steps, around the current height
     for i in range(rng*2+1):
         #if step <= 0:
-        _, img = getImg(devtype, microscope, current_z + (rng - i), cv2cap)
+        height = current_z + (rng - i)
+        frame, img = getImg(devtype, microscope, height, cv2cap)
         #else:
         #    _, img = getImg(devtype, microscope, current_z + i - rng/2-1, cv2cap)
         res, val, loc = templatematching(img, template)
-        print val
+
         locs += [loc]
         if res:
             # Template has been detected
@@ -55,19 +56,21 @@ def focus(devtype, microscope, template, cv2cap=None, rng = 1):
             maxval = val
             dep = rng - i
             #print len(vals)
-            return maxval, dep, loc
+            return maxval, dep, loc, frame
         '''
     # Search of the highest value, indicating that focus has been achieved
+    print vals
     maxval = max(vals)
 
     if maxval != 0:
         # Template has been detected at least once, setting the microscope at corresponding height
         index = vals.index(maxval)
         loc = locs[index]
-        _, img = getImg(devtype, microscope, current_z + (rng - index) , cv2cap)
+        focus_height = current_z + (rng - index)
+        frame , _ = getImg(devtype, microscope, focus_height , cv2cap)
         dep = (rng - index)
     else:
         # Template has never been detected, focus can not be achieved
         raise ValueError('The template image has not been detected.')
 
-    return maxval, dep, loc
+    return maxval, dep, loc, frame
