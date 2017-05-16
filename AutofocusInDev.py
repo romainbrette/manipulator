@@ -83,7 +83,7 @@ while(True):
     else:
         # Display a rectangle at the template matched location
         res, maxval, maxloc = templatematching(img, template)
-        #print maxval
+        print maxval
         if res:
             x, y = maxloc[:2]
             cv2.rectangle(frame, (x, y), (x + template.shape[1], y + template.shape[0]), (0, 255, 0))

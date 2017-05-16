@@ -8,9 +8,9 @@ def get_template(img):
     """
 
     height, width = img.shape[:2]
-    ratio = 16
+    ratio = 32
 
-    template = img[height/2-height/ratio:height/2+height/ratio, width/2-width/ratio:width/2+width/ratio]
+    template = img[height/2-3*height/ratio:height/2+3*height/ratio, width/2-3*width/ratio:width/2+3*width/ratio]
     height, width = template.shape[:2]
     weight = []
     for i in range(3):
@@ -21,7 +21,7 @@ def get_template(img):
             weight += [bin_edge.max()]
 
     index = weight.index(max(weight))
-    index = 2
+    index = 5
     j = index%3
     i = index//3
     template = template[i*height/4:height/2+i*height/4, j*width/4:width/2+j*width/4]
@@ -35,9 +35,9 @@ def disp_template_zone(img):
     :return: img: image with a red rectangle and a red centered cross
     """
     height, width = img.shape[:2]
-    ratio = 16
-    pt1 = (width/2 - width/ratio, height/2 - height/ratio)
-    pt2 = (width/2 + width/ratio, height/2 + height/ratio)
+    ratio = 32
+    pt1 = (width/2 - 3*width/ratio, height/2 - 3*height/ratio)
+    pt2 = (width/2 + 3*width/ratio, height/2 + 3*height/ratio)
     cv2.rectangle(img, pt1, pt2, (0, 0, 255))
     cv2.line(img, (width / 2 + 10, height / 2), (width / 2 - 10, height / 2), (0, 0, 255))
     cv2.line(img, (width / 2, height / 2 + 10), (width / 2, height / 2 - 10), (0, 0, 255))

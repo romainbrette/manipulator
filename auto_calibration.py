@@ -10,6 +10,7 @@ Quit with key 'q'
 from autofocus import *
 from numpy import matrix
 from numpy.linalg import inv
+import time
 
 # Type of used controller, either 'SM5' or 'SM10 for L&N SM-5 or L&N SM-10
 devtype = 'SM10'
@@ -86,6 +87,8 @@ while 1:
                 init_pos_m = [platform.position(0), platform.position(1), microscope.getPosition()]
             else:
                 init_pos_m = [platform.position(0), platform.position(1), platform.position(2)]
+            print init_pos_a
+            print init_pos_m
             template = get_template(img)
             cv2.imshow('template', template)
             _, _, loc = templatematching(img, template)
@@ -112,8 +115,10 @@ while 1:
                 M[2, 0] = estim
                 estim = 0
                 track_step = 2
-                arm.absolute_move(init_pos_a[0], 0)
-                frame, img = getImg(devtype, microscope, init_pos_m[2], cap)
+                #arm.absolute_move(init_pos_a[0], 0)
+                #time.sleep(2)
+                #frame, img = getImg(devtype, microscope, init_pos_m[2], cap)
+                #time.sleep(2)
                 step += 1
                 print 'step 1 done'
             else:
@@ -128,8 +133,8 @@ while 1:
                 M[2, 1] = estim
                 estim = 0
                 track_step = 2
-                arm.absolute_move(init_pos_a[1], 1)
-                frame, img = getImg(devtype, microscope, init_pos_m[2], cap)
+                #arm.absolute_move(init_pos_a[1], 1)
+                #frame, img = getImg(devtype, microscope, init_pos_m[2], cap)
                 step += 1
                 print 'step 2 done'
             else:
@@ -154,7 +159,8 @@ while 1:
             M[0, 2] = 0
             M[1, 2] = 0
             M[2, 2] = 1
-        elif step == 4:
+            step += 1
+        elif step == 5:
             print M
             M_inv = inv(M)
             calibrate = 0

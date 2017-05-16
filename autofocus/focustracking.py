@@ -26,9 +26,9 @@ def focus_track(devtype, microscope, arm, img, template, step, axis, estim=0, ca
         else:
             microscope.relative_move(estim*step, 2)
         _, estim_temp, estim_loc, frame = focus(devtype, microscope, template, cap, 1)
-    #print float(estim_temp)
+    print float(estim_temp)
     estim += float(estim_temp)/step
-    #print estim
-    estim_loc = [(estim_loc[i] - initloc[i])/step for i in range(2)]
+    print estim
+    estim_loc = [float(estim_loc[i] - initloc[i])/step for i in range(2)]
 
     return estim, estim_loc, frame
