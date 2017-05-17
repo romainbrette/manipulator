@@ -83,7 +83,6 @@ while 1:
 
     if calibrate:
         if step == 0:
-            #template = img[height / 2 - 20:height / 2 + 20, width / 2 - 20:width / 2 + 20]
             init_pos_a = [arm.position(0), arm.position(1), arm.position(2)]
             if devtype == 'SM5':
                 init_pos_m = [platform.position(0), platform.position(1), microscope.getPosition()]
@@ -121,20 +120,9 @@ while 1:
                 M[0, 0] = x*um_px
                 M[1, 0] = y*um_px
                 M[2, 0] = estim
-                #M[2, 0] = (microscope.position(2) - init_pos_m[2])/60.
                 estim = 0
                 track_step = 4
                 nstep = 1
-                #arm.absolute_move(init_pos_a[0], 0)
-                #time.sleep(2)
-                frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
-                #time.sleep(2)
-                #_, _, loc = templatematching(img, template)
-                #x, y = loc[:2]
-                #x = (x - x_init) * um_px
-                #y = (y - y_init) * um_px
-                #M[0, 0] = x/60.
-                #M[1, 0] = y/60.
                 step += 1
                 print 'step 1 done'
             else:
@@ -146,6 +134,8 @@ while 1:
             estim = 0
             arm.relative_move(track_step, 1)
             frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
+            cv2.imshow('Camera', frame)
+            cv2.waitKey(1)
             _, _, loc = templatematching(img, template)
             if nstep == 15:
                 #x, y = loc[:2]
@@ -154,10 +144,6 @@ while 1:
                 M[2, 1] = estim
                 estim = 0
                 track_step = 2
-                #arm.absolute_move(init_pos_a[1], 1)
-                frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
-                # time.sleep(2)
-                _, _, loc = templatematching(img, template)
                 x, y = loc[:2]
                 #x = (x - x_init) * um_px
                 y = (y - y_init) * um_px
