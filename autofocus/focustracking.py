@@ -15,16 +15,18 @@ def focus_track(devtype, microscope, arm, img, template, step, axis, estim=0, ca
     Focus after a move of the arm
     """
     _, _, initloc = templatematching(img, template)
+    arm.relative_move(step, axis)
+    frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
 
     if step == 2:
-        arm.relative_move(step, axis)
         _, estim_temp, estim_loc, frame, cap = focus(devtype, microscope, template, cap, 3)
     else:
-        arm.relative_move(step, axis)
         if devtype == 'SM5':
             microscope.setRelativePosition(estim*step)
         else:
             microscope.relative_move(estim*step, 2)
+
+        frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
         _, estim_temp, estim_loc, frame, cap = focus(devtype, microscope, template, cap, 3)
 
     estim += float(estim_temp)/float(step)

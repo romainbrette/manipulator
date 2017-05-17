@@ -23,7 +23,7 @@ arm = XYZUnit(dev, [1, 2, 3])
 platform = XYZUnit(dev, [7, 8, 9])
 
 # Naming the live camera window
-cv2.namedWindow('Camera')
+cv2.namedWindow('Camera', flags=cv2.WINDOW_NORMAL)
 
 # Booleans for tracking mode and existence of the template image for autofocus
 template = 0
@@ -95,7 +95,7 @@ while 1:
             _, _, loc = templatematching(img, template)
             x_init, y_init = loc[:2]
             platform.relative_move(50, 0)
-            _, img, cap = getImg(devtype, microscope, cv2cap=cap)
+            frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
             step += 1
         elif step == 1:
             _, _, loc = templatematching(img, template)
@@ -108,14 +108,14 @@ while 1:
         elif step == 2:
             # calibrate arm x axis
             estim, loc, frame, cap = focus_track(devtype, microscope, arm, img, template, track_step, 0, estim, cap)
-            estim = 0
-            #_, img = getImg(devtype, microscope, cv2cap=cap)
-            if nstep == 15:
-                #x, y = loc[:2]
-               # M[0, 0] = x*um_px
-                #M[1, 0] = y*um_px
-                #M[2, 0] = estim
-                M[2, 0] = (microscope.position(2) - init_pos_m[2])/60.
+            #estim = 0
+            frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
+            if nstep == 5:
+                x, y = loc[:2]
+                M[0, 0] = x*um_px
+                M[1, 0] = y*um_px
+                M[2, 0] = estim
+                #M[2, 0] = (microscope.position(2) - init_pos_m[2])/60.
                 estim = 0
                 track_step = 4
                 nstep = 1
@@ -123,17 +123,17 @@ while 1:
                 #time.sleep(2)
                 frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
                 #time.sleep(2)
-                _, _, loc = templatematching(img, template)
-                x, y = loc[:2]
-                x = (x - x_init) * um_px
-                y = (y - y_init) * um_px
-                M[0, 0] = x/60.
-                M[1, 0] = y/60.
+                #_, _, loc = templatematching(img, template)
+                #x, y = loc[:2]
+                #x = (x - x_init) * um_px
+                #y = (y - y_init) * um_px
+                #M[0, 0] = x/60.
+                #M[1, 0] = y/60.
                 step += 1
                 print 'step 1 done'
             else:
                 nstep += 1
-             #   track_step *= 2
+                track_step *= 2
         elif step == 3:
             # calibrate arm y axis
             #estim, loc, frame, cap = focus_track(devtype, microscope, arm, img, template, track_step, 1, estim, cap)
