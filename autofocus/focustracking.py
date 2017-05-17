@@ -17,22 +17,33 @@ def focus_track(devtype, microscope, arm, img, template, step, axis, estim=0, ca
     """
     _, _, initloc = templatematching(img, template)
     arm.relative_move(step, axis)
-    frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
-
+    pos = microscope.position(2)
+    frame, img, cap = getImg(devtype, microscope, pos, cv2cap=cap)
+    cv2.imshow('Camera', frame)
+    print 'arm moved'
+    cv2.waitKey(1)
     if step == 2:
-        cv2.imwrite('Before.jpg', frame)
         _, estim_temp, estim_loc, frame, cap = focus(devtype, microscope, template, cap, 3)
-        cv2.imwrite('First.jpg', frame)
+        cv2.imshow('Camera', frame)
+        cv2.waitKey(1)
     else:
         if devtype == 'SM5':
             microscope.setRelativePosition(estim*step)
         else:
-            microscope.relative_move(estim*step, 2)
+            if estim*step != -8:
+                microscope.relative_move(estim*step, 2)
+            else:
+                for i in range(2):
+                    microscope.relative_move(-4, 2)
 
-        frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
-        cv2.imwrite('before focus {t}.jpg'.format(t=step), frame)
+        print 'micro moved'
+        pos = microscope.position(2)
+        frame, img, cap = getImg(devtype, microscope, pos, cv2cap=cap)
+        cv2.imshow('Camera', frame)
+        cv2.waitKey(1)
         _, estim_temp, estim_loc, frame, cap = focus(devtype, microscope, template, cap, 3)
-        cv2.imwrite('after focus {t}.jpg'.format(t=step), frame)
+        cv2.imshow('Camera', frame)
+        cv2.waitKey(1)
 
     estim += float(estim_temp)/float(step)
     print estim

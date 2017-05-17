@@ -76,7 +76,7 @@ while 1:
             else:
                 pos[2, 0] = microscope.position(2) - init_pos_m[2]
             X = M_inv*pos
-            arm.absolute_move_group([init_pos_a[0]+X[0], init_pos_a[1]+X[1], init_pos_a[2]+X[2]], [0, 1, 2])
+            arm.absolute_move_group([init_pos_a[0]+X[0], init_pos_a[1]-X[1], init_pos_a[2]+X[2]], [0, 1, 2])
         else:
             print 'Calibration must be done beforehand.'
 
@@ -89,14 +89,14 @@ while 1:
                 init_pos_m = [platform.position(0), platform.position(1), microscope.getPosition()]
             else:
                 init_pos_m = [platform.position(0), platform.position(1), platform.position(2)]
-            print init_pos_a
-            print init_pos_m
             template = get_template(img)
             cv2.imshow('template', template)
             _, _, loc = templatematching(img, template)
             x_init, y_init = loc[:2]
             platform.relative_move(50, 0)
             frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
+            cv2.imshow('Camera', frame)
+            cv2.waitKey(1)
             step += 1
         elif step == 1:
             _, _, loc = templatematching(img, template)
@@ -104,14 +104,19 @@ while 1:
             um_px = fabs(50./dx)
             platform.relative_move(-50, 0)
             frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
+            cv2.imshow('Camera', frame)
+            cv2.waitKey(1)
             step += 1
             print 'step 0 done'
         elif step == 2:
             # calibrate arm x axis
             estim, loc, frame, cap = focus_track(devtype, microscope, arm, img, template, track_step, 0, estim, cap)
-            #estim = 0
             frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
+            cv2.imshow('Camera', frame)
+            cv2.waitKey(1)
             if nstep == 4:
+                test = (microscope.position(2) - init_pos_m[2])/float(2+4+8+16)
+                print test
                 x, y = loc[:2]
                 M[0, 0] = x*um_px
                 M[1, 0] = y*um_px
@@ -157,7 +162,7 @@ while 1:
                 #x = (x - x_init) * um_px
                 y = (y - y_init) * um_px
                 M[0, 1] = 0
-                M[1, 1] = y/60.
+                M[1, 1] = 60./y
                 step += 1
                 print 'step 2 done'
             else:
