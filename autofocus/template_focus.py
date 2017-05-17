@@ -47,7 +47,7 @@ def focus(devtype, microscope, template, cv2cap=None, rng = 1):
         #else:
         #    _, img = getImg(devtype, microscope, current_z + i - rng/2-1, cv2cap)
         res, val, loc = templatematching(img, template)
-
+        cv2.imshow('Focusing', frame)
         locs += [loc]
         if res:
             # Template has been detected
