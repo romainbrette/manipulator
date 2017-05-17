@@ -58,7 +58,7 @@ class VirtualXYZUnit(XYZUnit): # could be a device
         x : target position in um.
         '''
         if axis is not None:
-            print x
+            #print x
             x_target = x
             x = self.position()
             x[axis] = x_target
@@ -79,6 +79,35 @@ class VirtualXYZUnit(XYZUnit): # could be a device
             x[axis] = x_target
         self.dev.relative_move(dot(self.Minv, x))
 
+    def safe_move(self, x, withdraw = 0.):
+        '''
+        Moves the device to position x (an XYZ vector) in a way that minimizes
+        interaction with tissue. The manipulator is first moved horizontally,
+        then along the pipette axis.
+
+        Parameters
+        ----------
+        x : target position in um, an (X,Y,Z) vector
+        withdraw : in um; if not 0, the pipette is withdrawn by this value from the target position x
+        '''
+        # First, we determine the intersection between the line going through x
+        # with direction corresponding to the manipulator first axis.
+        #n = array([0,0,1.]) # vector normal the focal plane (we are in stage coordinates)
+        #u = dot(self.M, array([1.,0.,0.]))
+        u = M[0,:] # this is the vector for the first manipulator axis
+        #alpha = dot(n,self.position()-x)/dot(n,u)
+        #alpha = (self.position()-x)[2] / u[2]
+
+        alpha = (self.position() - x)[2] / M[0,2]
+        # TODO: check whether the intermediate move is accessible
+
+        # Intermediate move
+        self.absolute_move(x + alpha * u)
+        # Do we need to wait here?
+        # Final move
+        self.absolute_move(x - withdraw * u) # Or relative move in manipulator coordinates, first axis (faster)
+        #self.dev.relative_move(..., axis = 0)
+
     def secondary_calibration(self):
         '''
         Adjusts reference coordinate system assuming is centered on microscope view.
@@ -89,7 +118,8 @@ class VirtualXYZUnit(XYZUnit): # could be a device
         '''
         Go to current stage position.
         '''
-        self.absolute_move(self.stage.position())
+        #self.absolute_move(self.stage.position())
+        self.safe_move(self.stage.position())
 
     def primary_calibration(self, x, y):
         '''
