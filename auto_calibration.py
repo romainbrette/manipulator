@@ -10,6 +10,7 @@ Quit with key 'q'
 from autofocus import *
 from numpy import matrix
 from numpy.linalg import inv
+from math import fabs
 import time
 
 # Type of used controller, either 'SM5' or 'SM10 for L&N SM-5 or L&N SM-10
@@ -31,7 +32,7 @@ calibrate = 0
 calibrate_succeded = 0
 step = 0
 nstep = 1
-track_step = 4
+track_step = 2
 estim = 0
 M = matrix('0. 0. 0.; 0. 0. 0.,; 0. 0. 0.')
 
@@ -100,7 +101,7 @@ while 1:
         elif step == 1:
             _, _, loc = templatematching(img, template)
             dx = loc[1] - x_init
-            um_px = 50./dx
+            um_px = fabs(50./dx)
             platform.relative_move(-50, 0)
             frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
             step += 1
@@ -110,7 +111,7 @@ while 1:
             estim, loc, frame, cap = focus_track(devtype, microscope, arm, img, template, track_step, 0, estim, cap)
             #estim = 0
             frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
-            if nstep == 5:
+            if nstep == 4:
                 x, y = loc[:2]
                 M[0, 0] = x*um_px
                 M[1, 0] = y*um_px
