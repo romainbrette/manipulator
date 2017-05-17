@@ -41,7 +41,7 @@ def focus_track(devtype, microscope, arm, img, template, step, axis, estim=0, ca
         frame, img, cap = getImg(devtype, microscope, pos, cv2cap=cap)
         cv2.imshow('Camera', frame)
         cv2.waitKey(1)
-        _, estim_temp, estim_loc, frame, cap = focus(devtype, microscope, template, cap, 3)
+        _, estim_temp, estim_loc, frame, cap = focus(devtype, microscope, template, cap, 2)
         cv2.imshow('Camera', frame)
         cv2.waitKey(1)
 

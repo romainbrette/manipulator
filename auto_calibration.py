@@ -114,7 +114,7 @@ while 1:
             frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
-            if nstep == 4:
+            if nstep == 5:
                 test = (microscope.position(2) - init_pos_m[2])/float(2+4+8+16)
                 print test
                 x, y = loc[:2]
