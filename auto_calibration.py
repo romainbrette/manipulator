@@ -144,8 +144,9 @@ while 1:
                 estim = 0
                 track_step = 2
                 nstep = 1
-                x_init = x
-                y_init = y
+                loc = [0.,0.]
+                #x_init = x
+                #y_init = y
 
                 step += 1
                 print 'step 1 done'
@@ -170,6 +171,7 @@ while 1:
                 estim = 0
                 nstep = 1
                 track_step = 2
+                loc = [0., 0.]
                 #x_init = x
                 #y_init = y
 
@@ -196,6 +198,7 @@ while 1:
                 estim = 0
                 nstep = 1
                 track_step = 2
+                loc = [0., 0.]
 
                 step += 1
                 print 'step 3 done'
