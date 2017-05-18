@@ -32,7 +32,7 @@ calibrate = 0
 calibrate_succeded = 0
 step = 0
 nstep = 1
-maxnstep = 4
+maxnstep = 5
 track_step = 2
 estim = 0
 M = matrix('0. 0. 0.; 0. 0. 0.,; 0. 0. 0.')
@@ -100,7 +100,7 @@ while 1:
             _, _, loc = templatematching(img, template)
             x_init, y_init = loc[:2]
 
-            platform.relative_move(60, 0)
+            platform.relative_move(100, 0)
             frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
 
             cv2.imshow('Camera', frame)
@@ -114,9 +114,10 @@ while 1:
             dx = loc[0] - x_init
             dy = loc[1] - y_init
 
-            um_px = 60./((dx**2 + dy**2)**0.5)
+            um_px = 100./((dx**2 + dy**2)**0.5)
+            print um_px
 
-            platform.relative_move(-60, 0)
+            platform.relative_move(-100, 0)
 
             frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
 
@@ -130,6 +131,7 @@ while 1:
         elif step == 2:
 
             # calibrate arm x axis
+            cv2.waitKey(1)
             estim, loc, frame, cap = focus_track(devtype, microscope, arm, img, template, track_step, 0, estim, cap)
 
             frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
@@ -153,6 +155,7 @@ while 1:
                 track_step *= 2
         elif step == 3:
             # calibrate arm y axis
+            cv2.waitKey(1)
             estim, loc, frame, cap = focus_track(devtype, microscope, arm, img, template, track_step, 1, estim, cap)
             #arm.relative_move(track_step, 1)
             frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
@@ -167,6 +170,7 @@ while 1:
                 M[2, 1] = estim
 
                 estim = 0
+                nstep = 1
                 track_step = 2
                 x_init = x
                 y_init = y
@@ -180,6 +184,7 @@ while 1:
 
         elif step == 4:
             # calibrate arm z axis
+            cv2.waitKey(1)
             estim, loc, frame, cap = focus_track(devtype, microscope, arm, img, template, track_step, 2, estim, cap)
             frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
             cv2.imshow('Camera', frame)
