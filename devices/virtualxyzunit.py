@@ -104,9 +104,9 @@ class VirtualXYZUnit(XYZUnit): # could be a device
         # TODO: check whether the intermediate move is accessible
 
         # Intermediate move
-        self.absolute_move(x + alpha * u) # apparently wrong!
+        self.absolute_move(x + alpha * u)
         # We need to wait here!
-        sleep(3.)
+        self.wait_until_still()
         # Final move
         self.absolute_move(x - withdraw * u) # Or relative move in manipulator coordinates, first axis (faster)
         #self.dev.relative_move(..., axis = 0)
