@@ -11,7 +11,8 @@ import cv2
 
 __all__ = ['focus_track']
 
-def focus_track(devtype, microscope, arm, img, template, step, axis, estim=0, cap=None):
+
+def focus_track(devtype, microscope, arm, img, template, step, axis, um_px, estim=0, estim_loc=(0.,0.), cap=None):
     """
     Focus after a move of the arm
     """
@@ -22,21 +23,29 @@ def focus_track(devtype, microscope, arm, img, template, step, axis, estim=0, ca
     # Move the arm
     arm.relative_move(step, axis)
 
+    # Move the platform to center the tip
+    microscope.relative_move([i*step for i in estim_loc], [0, 1])
+
     # Update the frame. Must be the next image
-    pos = microscope.position(2)
-    frame, img, cap = getImg(devtype, microscope, pos, cv2cap=cap)
+
+    if devtype == 'SM5':
+        pos = microscope.getPosition()
+    else:
+        pos = microscope.position(2)
+
+    frame, img, cap = getImg(devtype, microscope, pos + estim * step, cv2cap=cap)
     cv2.imshow('Camera', frame)
-    print 'arm moved'
+    cv2.waitKey(1)
+    # Focus around the estimated focus height
+    _, estim_temp, loc, frame, cap = focus(devtype, microscope, template, cap, 2)
+    # MOVE THE PLATFORM TO COMPENSATE ERROR AND UPDATE FRAME
+    arm.relative_move([(loc[i] - initloc[i])*um_px for i in range(2)], [0,1])
+
+    frame, img, cap = getImg(devtype, microscope, pos + estim * step + estim_temp, cv2cap=cap)
+    cv2.imshow('Camera', frame)
     cv2.waitKey(1)
 
-    # focusing
-    if step == 2:
-        # No estimation has been made
-        _, estim_temp, loc, frame, cap = focus(devtype, microscope, template, cap, 2)
-        cv2.imshow('Camera', frame)
-        cv2.waitKey(1)
-    else:
-        # Estimation has been made, move the microscope to the estimated focus height
+    '''
         if devtype == 'SM5':
             microscope.setRelativePosition(estim*step)
         else:
@@ -46,21 +55,11 @@ def focus_track(devtype, microscope, arm, img, template, step, axis, estim=0, ca
             else:
                 for i in range(2):
                     microscope.relative_move(-4, 2)
-
-        print 'micro moved'
-
-        # Update the frame after moving the microscope
-        pos = microscope.position(2)
-        frame, img, cap = getImg(devtype, microscope, pos, cv2cap=cap)
-        cv2.imshow('Camera', frame)
-        cv2.waitKey(1)
-
-        # Focus around the estimated focus height
-        _, estim_temp, loc, frame, cap = focus(devtype, microscope, template, cap, 2)
-        cv2.imshow('Camera', frame)
-        cv2.waitKey(1)
+    '''
 
     # Update the estimated move to do for a move of 1 um of the arm
     estim += float(estim_temp)/float(step)
-    print estim
+    #print estim
+    loc = [estim_loc[i] + (loc[i]-initloc[i])*um_px/float(step) for i in range(2)]
+
     return estim, loc, frame, cap
