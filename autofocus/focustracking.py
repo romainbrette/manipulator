@@ -30,7 +30,7 @@ def focus_track(devtype, microscope, arm, img, template, step, axis, estim=0, ca
     cv2.waitKey(1)
 
     # focusing
-    if estim == 0:
+    if step == 2:
         # No estimation has been made
         _, estim_temp, loc, frame, cap = focus(devtype, microscope, template, cap, 3)
         cv2.imshow('Camera', frame)
@@ -62,5 +62,5 @@ def focus_track(devtype, microscope, arm, img, template, step, axis, estim=0, ca
 
     # Update the estimated move to do for a move of 1 um of the arm
     estim += float(estim_temp)/float(step)
-
+    print estim
     return estim, loc, frame, cap
