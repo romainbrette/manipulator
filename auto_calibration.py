@@ -111,8 +111,8 @@ while 1:
         elif step == 1:
 
             _, _, loc = templatematching(img, template)
-            dx = loc[1] - x_init
-            dy = loc[2] - y_init
+            dx = loc[0] - x_init
+            dy = loc[1] - y_init
 
             um_px = 60./((dx**2 + dy**2)**0.5)
 
@@ -180,8 +180,10 @@ while 1:
 
         elif step == 4:
             # calibrate arm z axis
-            estim, loc = focus_track(devtype, microscope, arm, template, track_step, 2, estim, cap)
-
+            estim, loc, frame, cap = focus_track(devtype, microscope, arm, img, template, track_step, 2, estim, cap)
+            frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
+            cv2.imshow('Camera', frame)
+            cv2.waitKey(1)
             if nstep == maxnstep:
 
                 x, y = loc[:2]
