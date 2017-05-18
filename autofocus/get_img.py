@@ -49,7 +49,7 @@ def getImg(devtype, microscope, z=None, cv2cap=None):
         ret, frame = cv2cap.read()
 
         # frame has to be encoded to an usable image to use tipdetect()
-        _, img = cv2.imencode('.jpg', frame, flags=cv2.CV_IMWRITE_JPG_QUALITY(100))
+        _, img = cv2.imencode('.jpg', frame)
         img = cv2.imdecode(img, 0)
         img = cv2.bilateralFilter(img,9,75,75)
 
@@ -75,7 +75,7 @@ if __name__ == '__main__':
     cv2.namedWindow('Camera')
     while 1:
         buffer = mmc.getLastImage()
-        frame, img = getImg('SM5', mmc)
+        frame, img, cap = getImg('SM5', mmc)
         cv2.imshow("Camera", frame)
         key = cv2.waitKey(1)
         if key & 0xFF == ord('q'):

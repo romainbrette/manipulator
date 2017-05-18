@@ -32,7 +32,7 @@ def focus_track(devtype, microscope, arm, img, template, step, axis, estim=0, ca
     # focusing
     if estim == 0:
         # No estimation has been made
-        _, estim_temp, estim_loc, frame, cap = focus(devtype, microscope, template, cap, 3)
+        _, estim_temp, loc, frame, cap = focus(devtype, microscope, template, cap, 3)
         cv2.imshow('Camera', frame)
         cv2.waitKey(1)
     else:
@@ -56,14 +56,11 @@ def focus_track(devtype, microscope, arm, img, template, step, axis, estim=0, ca
         cv2.waitKey(1)
 
         # Focus around the estimated focus height
-        _, estim_temp, estim_loc, frame, cap = focus(devtype, microscope, template, cap, 2)
+        _, estim_temp, loc, frame, cap = focus(devtype, microscope, template, cap, 2)
         cv2.imshow('Camera', frame)
         cv2.waitKey(1)
 
     # Update the estimated move to do for a move of 1 um of the arm
     estim += float(estim_temp)/float(step)
 
-    # Update the displacement in x and y of the tip for a move of 1 um of the arm, in px/um
-    estim_loc = [float(estim_loc[i] - initloc[i])/float(step) for i in range(2)]
-
-    return estim, estim_loc, frame, cap
+    return estim, loc, frame, cap
