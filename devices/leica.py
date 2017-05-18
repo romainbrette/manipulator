@@ -2,10 +2,14 @@
 A Z Unit for a Leica microscope, using MicroManager.
 Communication through serial COM port.
 """
+import warnings
 from device import *
 import sys
-sys.path.append('C:\\Program Files\\Micro-Manager-1.4')
-import MMCorePy
+sys.path.append('C:\\Program Files\\Micro-Manager-1.4') # This is not good!
+try:
+    import MMCorePy
+except ImportError: # Micromanager not installed
+    warnings.warn('Micromanager is not installed, cannot use the Leica class.')
 
 __all__ = ['Leica']
 

@@ -4,11 +4,12 @@ Manual calibration of manipulators with no camera feed.
 TODO:
 * Save configuration: only update the configuration dictionary
 * Precision seems incorrect.
-* Motor ranges (currently not saved).
+* Motor ranges (currently not saved and placed in manipulator memory).
+* Plane coordinates: saved weirdly.
 '''
 from Tkinter import *
 from devices import *
-from numpy import array, zeros
+from numpy import array, zeros, cross, dot
 from numpy.linalg import LinAlgError
 import pickle
 from serial import SerialException
@@ -100,12 +101,14 @@ class ManipulatorApplication(Frame):
         self.statusframe.grid(row=1, column=0, columnspan=3, padx=5, pady=30, sticky=W + E)
         self.status = StringVar('')
         Label(self.statusframe, textvariable=self.status, justify=LEFT).pack(padx=5, pady=5)
-        Button(self, text="Motor ranges", command=self.motor_ranges).grid(row=2, column=0, padx=5, pady=5)
+        Button(self, text="Select plane", command=self.select_plane).grid(row=2, column=0, padx=5, pady=5)
+        Button(self, text="Motor ranges", command=self.motor_ranges).grid(row=3, column=0, padx=5, pady=5)
 
         self.configuration = dict()
         self.load_configuration()
 
         self.motor_ranges_status = -1 # -1 means not doing the calibration
+        self.select_plane_status = -1  # -1 means not doint the plane selection
 
     def display_status(self, text):
         self.status.set(text)
@@ -122,6 +125,8 @@ class ManipulatorApplication(Frame):
             except KeyError: # not calibrated yet
                 print "Manipulator",i,"is not calibrated yet"
 
+        self.configuration['microscope'] = self.stage.memory
+
         pickle.dump(self.configuration, open(config_filename, "wb"))
 
     def load_configuration(self):
@@ -134,6 +139,7 @@ class ManipulatorApplication(Frame):
                 frame.unit.M = cfg['M']
                 frame.unit.Minv = cfg['Minv']
                 frame.unit.x0 = cfg['x0']
+            self.stage.memory = self.configuration['microscope']
         except IOError:
             self.display_status("No configuration file.")
             # Initialization
@@ -183,6 +189,30 @@ class ManipulatorApplication(Frame):
                 self.display_status("Motor range calibration done.")
                 self.motor_ranges_status = -1
 
+    def select_plane(self):
+        '''
+        Selects a plane of interest with three points.
+        '''
+        if self.select_plane_status == -1:
+            self.display_status('Move the stage and microscope to the first point in the plane and click again.')
+            self.select_plane_status = 0
+        elif self.select_plane_status == 0:
+            self.plane_x1 = self.stage.position()
+            self.display_status('Move the stage and microscope to the second point in the plane and click again.')
+            self.select_plane_status = 1
+        elif self.select_plane_status == 1:
+            self.plane_x2 = self.stage.position()
+            self.display_status('Move the stage and microscope to the third point in the plane and click again.')
+            self.select_plane_status = 2
+        else:
+            self.plane_x3 = self.stage.position()
+            # Calculate plane coordinates
+            vector = cross(self.plane_x2 - self.plane_x1, self.plane_x3 - self.plane_x1)
+            self.stage.memory['plane_vector'] = vector # maybe not the best way to do it
+            self.stage.memory['plane_offset'] = -dot(vector,self.plane_x1)
+            self.display_status('Plane selection done.')
+            self.select_plane_status = -1
+
     def destroy(self):
         self.save_configuration()
 
@@ -199,9 +229,10 @@ if __name__ == '__main__':
             dev = LuigsNeumann_SM5('COM3')
         else:
             dev = LuigsNeumann_SM10()
-    except SerialException:
+    except:
         print "L&N not found. Falling back on fake device."
         dev = FakeDevice()
+        SM5 = False
 
     if SM5:
         microscope_Z = Leica('COM1')
