@@ -6,6 +6,7 @@ TODO: raise exceptions if not calibrated
 from numpy import array, ones, zeros, eye, dot
 from numpy.linalg import inv
 from xyzunit import XYZUnit
+from time import sleep
 
 __all__ = ['VirtualXYZUnit','CalibrationError']
 
@@ -94,16 +95,18 @@ class VirtualXYZUnit(XYZUnit): # could be a device
         # with direction corresponding to the manipulator first axis.
         #n = array([0,0,1.]) # vector normal the focal plane (we are in stage coordinates)
         #u = dot(self.M, array([1.,0.,0.]))
-        u = M[0,:] # this is the vector for the first manipulator axis
-        #alpha = dot(n,self.position()-x)/dot(n,u)
+        u = self.M[:,0] # this is the vector for the first manipulator axis
+        xprime = self.position()
+        #alpha = dot(n,xprime-x)/dot(n,u)
         #alpha = (self.position()-x)[2] / u[2]
 
-        alpha = (self.position() - x)[2] / M[0,2]
+        alpha = (xprime - x)[2] / self.M[2,0]
         # TODO: check whether the intermediate move is accessible
 
         # Intermediate move
-        self.absolute_move(x + alpha * u)
-        # Do we need to wait here?
+        self.absolute_move(x + alpha * u) # apparently wrong!
+        # We need to wait here!
+        sleep(3.)
         # Final move
         self.absolute_move(x - withdraw * u) # Or relative move in manipulator coordinates, first axis (faster)
         #self.dev.relative_move(..., axis = 0)
