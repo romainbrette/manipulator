@@ -109,7 +109,9 @@ while 1:
             step += 1
 
         elif step == 1:
-
+            frame, img, cap = getImg(devtype, microscope, init_pos_m[2], cv2cap=cap)
+            cv2.imshow('Camera', frame)
+            cv2.waitKey(1)
             _, _, loc = templatematching(img, template)
             dx = loc[0] - x_init
             dy = loc[1] - y_init
@@ -120,7 +122,6 @@ while 1:
             platform.relative_move(-100, 0)
 
             frame, img, cap = getImg(devtype, microscope, init_pos_m[2], cv2cap=cap)
-
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
 
