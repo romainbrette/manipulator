@@ -43,7 +43,7 @@ def get_template_series(devtype, microscope, nb_images, cap):
               width / 2 - 3 * width / ratio:width / 2 + 3 * width / ratio]
         img = img[i * height / 4:height / 2 + i * height / 4, j * width / 4:width / 2 + j * width / 4]
         template_series += [img]
-
+        cv2.imwrite('Template_nb{n}.jpg'.format(n=k), img)
 
     return template_series, cap
 
