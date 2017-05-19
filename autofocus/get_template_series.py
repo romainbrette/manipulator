@@ -1,6 +1,5 @@
 import cv2
 import numpy as np
-from devices import *
 from get_img import *
 
 

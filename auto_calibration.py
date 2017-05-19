@@ -95,9 +95,9 @@ while 1:
                 init_pos_m = [platform.position(0), platform.position(1), platform.position(2)]
 
             template, cap = get_template_series(devtype, microscope, 5, cap)
-            cv2.imshow('template', template)
+            #cv2.imshow('template', template)
 
-            _, _, loc = templatematching(img, template)
+            _, _, loc = templatematching(img, template[len(template)/2])
             x_init, y_init = loc[:2]
 
             platform.relative_move(100, 0)
@@ -112,7 +112,7 @@ while 1:
             frame, img, cap = getImg(devtype, microscope, init_pos_m[2], cv2cap=cap)
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
-            _, _, loc = templatematching(img, template)
+            _, _, loc = templatematching(img, template[len(template)/2])
             dx = loc[0] - x_init
             dy = loc[1] - y_init
             # Determination of um_px should be done with a move of the platform greater than the (total) ones of the arm
@@ -238,11 +238,11 @@ while 1:
         frame = disp_template_zone(frame)
     else:
         # Display a rectangle at the template matched location
-        res, maxval, maxloc = templatematching(img, template)
+        res, maxval, maxloc = templatematching(img, template[len(template)/2])
         # print maxval
         if res:
             x, y = maxloc[:2]
-            cv2.rectangle(frame, (x, y), (x + template.shape[1], y + template.shape[0]), (0, 255, 0))
+            cv2.rectangle(frame, (x, y), (x + template[len(template)/2].shape[1], y + template[len(template)/2].shape[0]), (0, 255, 0))
 
     # Reversing the frame, FIND SOMETHING SO IT WORKS WITH TEMPLATE (REVERSE TEMPLATE ?)
     #frame = cv2.flip(frame, 2)

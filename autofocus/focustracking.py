@@ -25,7 +25,7 @@ def focus_track(devtype, microscope, arm, template, step, axis, alpha, um_px, es
     frame, img, cap = getImg(devtype, microscope, pos, cap)
 
     # Get initial location of the tip
-    _, _, initloc = templatematching(img, template)
+    _, _, initloc = templatematching(img, template[len(template)/2])
 
     # Move the arm
     arm.relative_move(step, axis)
