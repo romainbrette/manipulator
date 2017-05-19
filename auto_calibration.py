@@ -30,7 +30,7 @@ calibrate = 0
 calibrate_succeded = 0
 step = 0
 nstep = 1
-maxnstep = 5
+maxnstep = 7
 track_step = 2
 estim = 0.
 estloc = [0.,0.]
@@ -169,7 +169,7 @@ while 1:
             #_, _, loc = templatematching(img, template)
             if nstep == maxnstep:
 
-                x, y = loc[:2]
+                x, y = estloc[:2]
                 #M[0, 1] = (x - x_init)*um_px/(2**(maxnstep+1)-2)
                 #M[1, 1] = (y - y_init)*um_px/(2**(maxnstep+1)-2)
                 M[0, 1] = x
