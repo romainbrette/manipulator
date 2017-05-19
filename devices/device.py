@@ -93,7 +93,7 @@ class Device(object):
         """
         pass
 
-    def wait_until_still(self, axis):
+    def wait_until_still(self, axis = None):
         """
         Waits until motors have stopped.
 
@@ -103,7 +103,7 @@ class Device(object):
         """
         previous_position = self.position(axis)
         new_position = None
-        while (previous_position != new_position):
+        while array(previous_position != new_position).any():
             previous_position = new_position
             new_position = self.position(axis)
             time.sleep(0.1) # 100 us

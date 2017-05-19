@@ -139,7 +139,7 @@ if __name__ == '__main__':
     root = Tk()
     root.title('Manipulator')
 
-    SM5 = False
+    SM5 = True
 
     try:
         if SM5:
