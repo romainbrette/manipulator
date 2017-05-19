@@ -30,10 +30,10 @@ calibrate = 0
 calibrate_succeded = 0
 step = 0
 nstep = 1
-maxnstep = 10
+maxnstep = 5
 track_step = 2
 estim = 0.
-loc = [0.,0.]
+estloc = [0.,0.]
 alpha = [1., -1., 1.]
 M = matrix('0. 0. 0.; 0. 0. 0.,; 0. 0. 0.')
 
@@ -116,7 +116,6 @@ while 1:
             # Determination of um_px should be done with a move of the platform greater than the (total) ones of the arm
             # Thus the calibration would be accurate
             um_px = 100./((dx**2 + dy**2)**0.5)
-            print um_px
 
             platform.relative_move(-100, 0)
 
@@ -132,10 +131,12 @@ while 1:
         elif step == 2:
 
             # calibrate arm x axis
-            estim, loc, frame, cap = focus_track(devtype, microscope, arm, img, template, track_step, 0, alpha, um_px, estim, loc, cap)
-
+            estim, estloc, frame, cap = focus_track(devtype, microscope, arm, img, template, track_step, 0, alpha, um_px, estim, estloc, cap)
+            frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
+            cv2.imshow('Camera', frame)
+            cv2.waitKey(1)
             if nstep == maxnstep:
-                x, y = loc[:2]
+                x, y = estloc[:2]
                 #M[0, 0] = (x - x_init)*um_px/(2**(maxnstep+1)-2)
                 #M[1, 0] = (y - y_init)*um_px/(2**(maxnstep+1)-2)
                 M[0, 0] = x
@@ -145,9 +146,12 @@ while 1:
                 estim = 0
                 track_step = 2
                 nstep = 1
-                loc = [0.,0.]
+                estloc = [0.,0.]
                 #x_init = x
                 #y_init = y
+                frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
+                cv2.imshow('Camera', frame)
+                cv2.waitKey(1)
 
                 step += 1
                 print 'step 1 done'
@@ -156,7 +160,10 @@ while 1:
                 track_step *= 2
         elif step == 3:
             # calibrate arm y axis
-            estim, loc, frame, cap = focus_track(devtype, microscope, arm, img, template, track_step, 1, alpha, um_px, estim, loc, cap)
+            estim, estloc, frame, cap = focus_track(devtype, microscope, arm, img, template, track_step, 1, alpha, um_px, estim, estloc, cap)
+            frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
+            cv2.imshow('Camera', frame)
+            cv2.waitKey(1)
             #arm.relative_move(track_step, 1)
             #_, _, loc = templatematching(img, template)
             if nstep == maxnstep:
@@ -172,9 +179,12 @@ while 1:
                 estim = 0
                 nstep = 1
                 track_step = 2
-                loc = [0., 0.]
+                estloc = [0., 0.]
                 #x_init = x
                 #y_init = y
+                frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
+                cv2.imshow('Camera', frame)
+                cv2.waitKey(1)
 
                 step += 1
                 print 'step 2 done'
@@ -185,11 +195,13 @@ while 1:
 
         elif step == 4:
             # calibrate arm z axis
-            estim, loc, frame, cap = focus_track(devtype, microscope, arm, img, template, track_step, 2, alpha, um_px, estim, loc, cap)
-
+            estim, estloc, frame, cap = focus_track(devtype, microscope, arm, img, template, track_step, 2, alpha, um_px, estim, estloc, cap)
+            frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
+            cv2.imshow('Camera', frame)
+            cv2.waitKey(1)
             if nstep == maxnstep:
 
-                x, y = loc[:2]
+                x, y = estloc[:2]
                 #M[0, 2] = (x - x_init)*um_px/(2**(maxnstep+1)-2)
                 #M[1, 2] = (y - y_init)*um_px/(2**(maxnstep+1)-2)
                 M[0, 2] = x
@@ -199,7 +211,10 @@ while 1:
                 estim = 0
                 nstep = 1
                 track_step = 2
-                loc = [0., 0.]
+                estloc = [0., 0.]
+                frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
+                cv2.imshow('Camera', frame)
+                cv2.waitKey(1)
 
                 step += 1
                 print 'step 3 done'
@@ -215,7 +230,6 @@ while 1:
             calibrate = 0
             calibrate_succeded = 1
             print 'Calibration finished'
-
 
     # Our operations on the frame come here
     if type(template) == int:

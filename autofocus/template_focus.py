@@ -32,6 +32,9 @@ def focus(devtype, microscope, template, cv2cap=None, rng = 1):
     else:
         raise TypeError('Unknown device. Should be either "SM5" or "SM10".')
 
+    frame, img, cap = getImg(devtype, microscope, cv2cap=cv2cap)
+    cv2.imshow('Camera', frame)
+    cv2.waitKey(1)
 
     # Tabs of maxval and their location during the process
     vals = []
@@ -60,7 +63,6 @@ def focus(devtype, microscope, template, cv2cap=None, rng = 1):
             return maxval, dep, loc, frame
         '''
     # Search of the highest value, indicating that focus has been achieved
-    print vals
     maxval = max(vals)
 
     if maxval != 0:
