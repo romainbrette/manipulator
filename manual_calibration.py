@@ -125,7 +125,8 @@ class ManipulatorApplication(Frame):
             except KeyError: # not calibrated yet
                 print "Manipulator",i,"is not calibrated yet"
 
-        self.configuration['microscope'] = self.stage.memory
+        self.configuration['microscope']['plane_vector'] = self.plane_vector
+        self.configuration['microscope']['plane_offset'] = self.plane_offset
 
         pickle.dump(self.configuration, open(config_filename, "wb"))
 
@@ -139,7 +140,8 @@ class ManipulatorApplication(Frame):
                 frame.unit.M = cfg['M']
                 frame.unit.Minv = cfg['Minv']
                 frame.unit.x0 = cfg['x0']
-            self.stage.memory = self.configuration['microscope']
+            self.plane_vector = self.configuration['microscope'].get(['plane_vector'], array([0.,0.,0.]))
+            self.plane_offset = self.configuration['microscope'].get(['plane_offset'], 0.)
         except IOError:
             self.display_status("No configuration file.")
             # Initialization
