@@ -140,8 +140,8 @@ class ManipulatorApplication(Frame):
                 frame.unit.M = cfg['M']
                 frame.unit.Minv = cfg['Minv']
                 frame.unit.x0 = cfg['x0']
-            self.plane_vector = self.configuration['microscope'].get(['plane_vector'], array([0.,0.,0.]))
-            self.plane_offset = self.configuration['microscope'].get(['plane_offset'], 0.)
+            self.plane_vector = self.configuration['microscope'].get('plane_vector', array([0.,0.,0.]))
+            self.plane_offset = self.configuration['microscope'].get('plane_offset', 0.)
         except IOError:
             self.display_status("No configuration file.")
             # Initialization

@@ -20,6 +20,7 @@ from Tkinter import *
 from devices import *
 import pickle
 from serial import SerialException
+from numpy import array
 
 from os.path import expanduser
 home = expanduser("~")
@@ -66,6 +67,14 @@ class MicroscopeFrame(Frame):
 
         for i in range(nmemories):
             MemoryFrame(self, name="Position "+str(i+1), unit=unit).pack()
+
+        Button(self, text='Move to plane', command=self.move_to_plane).pack()
+
+    def move_to_plane(self):
+        '''
+        Moves the focus to the plane of interest.
+        '''
+        pass
 
 class ManipulatorFrame(LabelFrame):
     '''
@@ -123,12 +132,14 @@ class ManipulatorApplication(Frame):
             frame.unit.M = cfg['M']
             frame.unit.Minv = cfg['Minv']
             frame.unit.x0 = cfg['x0']
+        self.plane_vector = cfg_all['microscope'].get('plane_vector', array([0.,0.,0.]))
+        self.plane_offset = cfg_all['microscope'].get('plane_offset', 0.)
 
 if __name__ == '__main__':
     root = Tk()
     root.title('Manipulator')
 
-    SM5 = True
+    SM5 = False
 
     try:
         if SM5:
