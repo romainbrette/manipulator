@@ -32,7 +32,7 @@ def focus(devtype, microscope, template, cv2cap=None, rng = 1):
     else:
         raise TypeError('Unknown device. Should be either "SM5" or "SM10".')
 
-    frame, img, cap = getImg(devtype, microscope, cv2cap=cv2cap)
+    frame, img, cap = getImg(devtype, microscope, current_z, cv2cap=cv2cap)
     cv2.imshow('Camera', frame)
     cv2.waitKey(1)
 

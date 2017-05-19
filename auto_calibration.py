@@ -131,7 +131,7 @@ while 1:
         elif step == 2:
 
             # calibrate arm x axis
-            estim, estloc, frame, cap = focus_track(devtype, microscope, arm, img, template, track_step, 0, alpha, um_px, estim, estloc, cap)
+            estim, estloc, frame, cap = focus_track(devtype, microscope, arm, template, track_step, 0, alpha, um_px, estim, estloc, cap)
             frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
@@ -160,7 +160,7 @@ while 1:
                 track_step *= 2
         elif step == 3:
             # calibrate arm y axis
-            estim, estloc, frame, cap = focus_track(devtype, microscope, arm, img, template, track_step, 1, alpha, um_px, estim, estloc, cap)
+            estim, estloc, frame, cap = focus_track(devtype, microscope, arm, template, track_step, 1, alpha, um_px, estim, estloc, cap)
             frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
@@ -195,7 +195,7 @@ while 1:
 
         elif step == 4:
             # calibrate arm z axis
-            estim, estloc, frame, cap = focus_track(devtype, microscope, arm, img, template, track_step, 2, alpha, um_px, estim, estloc, cap)
+            estim, estloc, frame, cap = focus_track(devtype, microscope, arm, template, track_step, 2, alpha, um_px, estim, estloc, cap)
             frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
