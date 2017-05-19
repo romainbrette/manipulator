@@ -30,10 +30,11 @@ calibrate = 0
 calibrate_succeded = 0
 step = 0
 nstep = 1
-maxnstep = 5
+maxnstep = 10
 track_step = 2
 estim = 0.
 loc = [0.,0.]
+alpha = [1., -1., 1.]
 M = matrix('0. 0. 0.; 0. 0. 0.,; 0. 0. 0.')
 
 # GUI loop with image processing
@@ -78,7 +79,7 @@ while 1:
             else:
                 pos[2, 0] = microscope.position(2) - init_pos_m[2]
             X = M_inv*pos
-            arm.absolute_move_group([init_pos_a[0]+X[0], init_pos_a[1]-X[1], init_pos_a[2]+X[2]], [0, 1, 2])
+            arm.absolute_move_group([init_pos_a[0]+alpha[0]*X[0], init_pos_a[1]+alpha[1]*X[1], init_pos_a[2]+alpha[2]*X[2]], [0, 1, 2])
         else:
             print 'Calibration must be done beforehand.'
 
@@ -131,7 +132,7 @@ while 1:
         elif step == 2:
 
             # calibrate arm x axis
-            estim, loc, frame, cap = focus_track(devtype, microscope, arm, img, template, track_step, 0, um_px, estim, loc, cap)
+            estim, loc, frame, cap = focus_track(devtype, microscope, arm, img, template, track_step, 0, alpha, um_px, estim, loc, cap)
 
             if nstep == maxnstep:
                 x, y = loc[:2]
@@ -155,7 +156,7 @@ while 1:
                 track_step *= 2
         elif step == 3:
             # calibrate arm y axis
-            estim, loc, frame, cap = focus_track(devtype, microscope, arm, img, template, track_step, 1, um_px, estim, loc, cap)
+            estim, loc, frame, cap = focus_track(devtype, microscope, arm, img, template, track_step, 1, alpha, um_px, estim, loc, cap)
             #arm.relative_move(track_step, 1)
             #_, _, loc = templatematching(img, template)
             if nstep == maxnstep:
@@ -184,7 +185,7 @@ while 1:
 
         elif step == 4:
             # calibrate arm z axis
-            estim, loc, frame, cap = focus_track(devtype, microscope, arm, img, template, track_step, 2, um_px, estim, loc, cap)
+            estim, loc, frame, cap = focus_track(devtype, microscope, arm, img, template, track_step, 2, alpha, um_px, estim, loc, cap)
 
             if nstep == maxnstep:
 
