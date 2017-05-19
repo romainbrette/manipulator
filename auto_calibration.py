@@ -57,7 +57,7 @@ while 1:
 
     if key & 0xFF == ord('f'):
         try:
-            maxval, _, _, frame, cap = focus(devtype, microscope, template, cap, 10)
+            maxval, _, _, frame, cap = focus(devtype, microscope, template, cap)
             print maxval
             print 'Autofocus done.'
         except TypeError:
@@ -94,7 +94,7 @@ while 1:
             else:
                 init_pos_m = [platform.position(0), platform.position(1), platform.position(2)]
 
-            template = get_template(img)
+            template, cap = get_template_series(devtype, microscope, 5, cap)
             cv2.imshow('template', template)
 
             _, _, loc = templatematching(img, template)

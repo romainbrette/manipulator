@@ -45,7 +45,7 @@ def get_template_series(devtype, microscope, nb_images, cap):
         template_series += [img]
 
 
-    return template_series
+    return template_series, cap
 
 def disp_template_zone(img):
     """

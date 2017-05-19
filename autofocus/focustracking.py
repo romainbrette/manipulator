@@ -3,7 +3,8 @@ Tracking algorithm to keep the tip in focus during a move
 Use the template matching method to focus
 '''
 
-from template_focus import *
+#from template_focus import *
+from focus_template_series import *
 from template_matching import *
 from get_img import *
 import cv2
@@ -42,7 +43,7 @@ def focus_track(devtype, microscope, arm, template, step, axis, alpha, um_px, es
     cv2.imshow('Camera', frame)
     cv2.waitKey(1)
     # Focus around the estimated focus height
-    _, estim_temp, loc, frame, cap = focus(devtype, microscope, template, cap, 2)
+    _, estim_temp, loc, frame, cap = focus(devtype, microscope, template, cap)
     # MOVE THE PLATFORM TO COMPENSATE ERROR AND UPDATE FRAME
     for i in range(2):
         microscope.relative_move(alpha[i]*(loc[i] - initloc[i])*um_px , i)
