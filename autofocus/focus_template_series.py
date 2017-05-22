@@ -25,7 +25,7 @@ def focus(devtype, microscope, template, cv2cap=None):
     # Getting the microscope height according to the used controller
     if devtype == 'SM5':
         current_z = microscope.getPosition()
-    elif devtype== 'SM10':
+    elif devtype == 'SM10':
         current_z = microscope.position(2)
     else:
         raise TypeError('Unknown device. Should be either "SM5" or "SM10".')

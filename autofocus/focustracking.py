@@ -38,6 +38,9 @@ def focus_track(devtype, microscope, arm, template, step, axis, alpha, um_px, es
         microscope.relative_move(alpha[i]*estim_loc[i]*step, i)
 
     # Update the frame. Must be the next image
+    frame, img, cap = getImg(devtype, microscope, pos, cap)
+    cv2.imshow('Camera', frame)
+    cv2.waitKey(1)
 
     frame, img, cap = getImg(devtype, microscope, pos + estim * step, cv2cap=cap)
     cv2.imshow('Camera', frame)
@@ -51,6 +54,15 @@ def focus_track(devtype, microscope, arm, template, step, axis, alpha, um_px, es
     frame, img, cap = getImg(devtype, microscope, pos + estim * step + estim_temp, cv2cap=cap)
     cv2.imshow('Camera', frame)
     cv2.waitKey(1)
+
+    _, _, errloc = templatematching(img, template[len(template) / 2])
+    errloc = [errloc[i] - initloc[i] for i in range(2)]
+    err = (errloc[0]**2+errloc[1]**2)**0.5
+
+    if err > 10:
+        um_px += err / ((loc[0] - initloc[0])**2+(loc[1] - initloc[1])**2)**0.5
+        for i in range(2):
+            microscope.relative_move(alpha[i]*errloc[i]*um_px, i)
 
     '''
         if devtype == 'SM5':

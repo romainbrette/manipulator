@@ -248,7 +248,7 @@ while 1:
         frame = disp_template_zone(frame)
     else:
         # Display a rectangle at the template matched location
-        res, maxval, maxloc = templatematching(img, template[len(template)/2])
+        res, maxval, maxloc = templatematching(frame, template[len(template)/2])
         # print maxval
         if res:
             x, y = maxloc[:2]
