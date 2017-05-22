@@ -62,11 +62,11 @@ def focus(devtype, microscope, template, cv2cap=None):
         # At least one template has been detected, setting the microscope at corresponding height
         index = vals.index(maxval)
         loc = locs[index]
-        focus_height = current_z + index - len(template)/2
-        frame , _, cv2cap = getImg(devtype, microscope, focus_height , cv2cap)
+        focus_height = current_z + len(template)/2 - index
+        frame, _, cv2cap = getImg(devtype, microscope, focus_height, cv2cap)
         cv2.imshow('Camera', frame)
         cv2.waitKey(1)
-        dep = index- len(template)/2
+        dep = len(template)/2 - index
     else:
         # No template has been detected, focus can not be achieved
         raise ValueError('The template image has not been detected.')

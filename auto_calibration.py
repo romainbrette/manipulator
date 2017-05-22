@@ -33,7 +33,7 @@ nstep = 1
 maxnstep = 7
 track_step = 2
 estim = 0.
-estloc = [0.,0.]
+estloc = [0., 0.]
 alpha = [1., -1., 1.]
 M = matrix('0. 0. 0.; 0. 0. 0.,; 0. 0. 0.')
 
@@ -42,7 +42,7 @@ while 1:
 
     # Capture a frame from video
     if devtype == 'SM5':
-        buffer = microscope.getLastImage()
+        buf = microscope.getLastImage()
 
     frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
 
@@ -82,7 +82,6 @@ while 1:
             arm.absolute_move_group([init_pos_a[0]+alpha[0]*X[0], init_pos_a[1]+alpha[1]*X[1], init_pos_a[2]+alpha[2]*X[2]], [0, 1, 2])
         else:
             print 'Calibration must be done beforehand.'
-
 
     if calibrate:
         if step == 0:

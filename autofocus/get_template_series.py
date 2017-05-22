@@ -31,7 +31,7 @@ def get_template_series(devtype, microscope, nb_images, cap):
 
     if devtype == 'SM5':
         pos = microscope.getPosition()
-    elif devtype== 'SM10':
+    elif devtype == 'SM10':
         pos = microscope.position(2)
     else:
         raise TypeError('Unknown device. Should be either "SM5" or "SM10".')
@@ -44,7 +44,10 @@ def get_template_series(devtype, microscope, nb_images, cap):
         template_series += [img]
         cv2.imwrite('Template_nb{n}.jpg'.format(n=k), img)
 
+    frame, img, cap = getImg(devtype, microscope, pos, cap)
+
     return template_series, cap
+
 
 def disp_template_zone(img):
     """

@@ -46,7 +46,7 @@ def focus_track(devtype, microscope, arm, template, step, axis, alpha, um_px, es
     _, estim_temp, loc, frame, cap = focus(devtype, microscope, template, cap)
     # MOVE THE PLATFORM TO COMPENSATE ERROR AND UPDATE FRAME
     for i in range(2):
-        microscope.relative_move(alpha[i]*(loc[i] - initloc[i])*um_px , i)
+        microscope.relative_move(alpha[i]*(loc[i] - initloc[i])*um_px, i)
 
     frame, img, cap = getImg(devtype, microscope, pos + estim * step + estim_temp, cv2cap=cap)
     cv2.imshow('Camera', frame)
