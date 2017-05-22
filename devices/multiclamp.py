@@ -1,6 +1,8 @@
-'''
-Basic Interface to the MultiClamp 700A and 700B amplifiers. 
-'''
+"""
+Basic Interface to the MultiClamp 700A and 700B amplifiers.
+
+Note that the MultiClamp Commander has to be running in order to use the device.
+"""
 import ctypes
 import functools
 import os
@@ -9,7 +11,13 @@ import time
 
 NO_ERROR = 6000
 
+
 def needs_select(func):
+    """
+    Decorator for all methods of `MultiClamp` that need to select the device
+    first (only calls `Multiclamp.select_amplifier` if the respective device is
+    not already the selected device).
+    """
     @functools.wraps(func)
     def wrapper(self, *args, **kwds):
         if not MultiClamp.selected_device == self:
@@ -17,7 +25,16 @@ def needs_select(func):
         func(self, *args, **kwds)
     return wrapper
 
+
 def _identify_amplifier(model, serial, port, device, channel):
+    """
+    Return a dictionary with the identifying information for a MultiClamp
+    device, based on the values filled in by ``MCCMSG_FindFirstMultiClamp``/
+    ``MCCMSG_FindNextMultiClamp``. For a 700A device, returns the port, the
+    device number and the channel; for a 700B device, returns the serial number
+    and the channel. In all cases, the dictionary contains the `model` key with
+    `700A` or `700B` as a value.
+    """
     if model.value == 0:  # 700A
         logging.info(('Found a MultiClamp 700A (Port: {}, Device: {}, '
                       'Channel: {})').format(port.value, device.value,
@@ -34,8 +51,24 @@ def _identify_amplifier(model, serial, port, device, channel):
 
 
 class MultiClamp(object):
+    """
+    Device representing a MultiClamp amplifer channel (i.e., one amplifier with
+    two channels is represented by two devices).
+    
+    Parameters
+    ----------
+    kwds
+        Enough information to uniquely identify the device. If there is a single
+        device, no information is needed. If there is a single amplifier with
+        two channels, only the channel number (e.g. ``channel=1``) is needed.
+        If there are multiple amplifiers, they can be identified via their port/
+        device number (700A) or using their serial number (700B).
+    """
+    # The path where ``AxMultiClampMsg.dll`` is located
     dll_path = r'C:\Program Files\Molecular Devices\MultiClamp 700B Commander\3rd Party Support\AxMultiClampMsg'
+    # A list of all present devices
     all_devices = None
+    # The currently selected device
     selected_device = None
 
     def __init__(self, **kwds):
@@ -47,12 +80,19 @@ class MultiClamp(object):
         self.check_error(fail=True)
         if MultiClamp.all_devices is None:
             MultiClamp.all_devices = self.find_amplifiers()
-        print MultiClamp.all_devices
         self.identification = kwds
         self.select_amplifier()
-        MultiClamp.selected_device = self
 
     def check_error(self, fail=False):
+        """
+        Check the error code of the last command.
+
+        Parameters
+        ----------
+        fail : bool
+            If ``False`` (the default), any error will give rise to a warning;
+            if ``True``, any error will give rise to an `IOError`.
+        """
         if self.last_error.value != NO_ERROR:
             # Get the error text
             self.dll.MCCMSG_BuildErrorText(self.msg_handler,
@@ -69,6 +109,15 @@ class MultiClamp(object):
             self.last_error.value = NO_ERROR
 
     def find_amplifiers(self):
+        """
+        Return a list of all amplifier devices (each described by a dictionary,
+        see `_identifiy_amplifier`).
+        
+        Returns
+        -------
+        amplifiers : list of dict
+            A list of all detected amplifier devices.
+        """
         model = ctypes.c_uint()
         port = ctypes.c_uint()
         device = ctypes.c_uint()
@@ -100,6 +149,10 @@ class MultiClamp(object):
         return devices
 
     def select_amplifier(self):
+        """
+        Select the current amplifier (will be called automatically when
+        executing command such as `MultiClamp.voltage_clamp`.
+        """
         multiclamps = []
         for multiclamp in MultiClamp.all_devices:
             if all(multiclamp.get(key, None) == value
@@ -132,6 +185,7 @@ class MultiClamp(object):
                                                 channel,
                                                 ctypes.byref(self.last_error)):
             self.check_error(fail=True)
+        MultiClamp.selected_device = self
 
     @needs_select
     def voltage_clamp(self):
@@ -190,7 +244,6 @@ class MultiClamp(object):
         if not self.dll.MCCMSG_AutoSlowComp(self.msg_handler,
                                             ctypes.byref(self.last_error)):
             self.check_error()
-
 
     def close(self):
         self.dll.MCCMSG_DestroyObject(self.msg_handler)
