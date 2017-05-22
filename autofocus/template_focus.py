@@ -14,7 +14,7 @@ from scipy.optimize import minimize_scalar, minimize
 from math import fabs
 
 
-def focus(devtype, microscope, template, cv2cap=None, rng = 1):
+def dfocus(devtype, microscope, template, cv2cap=None, rng = 1):
     """
     Autofocus by searching the best template match in the image around the current height
     :param devtype: type of used controller

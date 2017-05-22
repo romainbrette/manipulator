@@ -54,7 +54,7 @@ def focus(devtype, microscope, template, cv2cap=None):
             #print len(vals)
             return maxval, dep, loc, frame
         '''
-    print vals
+
     # Search of the highest value, indicating which template image match the best the current image
     maxval = max(vals)
 
