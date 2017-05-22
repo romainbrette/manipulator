@@ -2,24 +2,31 @@
 Basic Interface to the MultiClamp 700A and 700B amplifiers. 
 '''
 import ctypes
+import functools
 import os
 import logging
 import time
 
 NO_ERROR = 6000
-logger = logging.Logger(__name__)
 
+def needs_select(func):
+    @functools.wraps(func)
+    def wrapper(self, *args, **kwds):
+        if not MultiClamp.selected_device == self:
+            self.select_amplifier()
+        func(self, *args, **kwds)
+    return wrapper
 
 def _identify_amplifier(model, serial, port, device, channel):
     if model.value == 0:  # 700A
-        logger.info(('Found a MultiClamp 700A (Port: {}, Device: {}, '
-                     'Channel: {})').format(port.value, device.value,
-                                            channel.value))
+        logging.info(('Found a MultiClamp 700A (Port: {}, Device: {}, '
+                      'Channel: {})').format(port.value, device.value,
+                                             channel.value))
         return {'model': '700A', 'port': port.value, 'device': device.value,
                 'channel': channel.value}
     elif model.value == 1:  # 700B
-        logger.info(('Found a MultiClamp 700B (Serial number: {}, '
-                     'Channel: {})').format(serial.value, channel.value))
+        logging.info(('Found a MultiClamp 700B (Serial number: {}, '
+                      'Channel: {})').format(serial.value, channel.value))
         return {'model': '700B', 'serial': serial.value,
                 'channel': channel.value}
     else:
@@ -40,23 +47,24 @@ class MultiClamp(object):
         self.check_error(fail=True)
         if MultiClamp.all_devices is None:
             MultiClamp.all_devices = self.find_amplifiers()
+        print MultiClamp.all_devices
         self.identification = kwds
         self.select_amplifier()
         MultiClamp.selected_device = self
 
     def check_error(self, fail=False):
-        if self.last_error != NO_ERROR:
+        if self.last_error.value != NO_ERROR:
             # Get the error text
-            self.dll.CLXMSG_BuildErrorText(self.msg_handler,
+            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
                                            self.last_error,
                                            self.error_msg,
                                            ctypes.c_uint(256))
             full_error = ('An error occurred while communicating with the '
-                          'MultiClamp amplifier: {}'.format(self.error_msg))
+                          'MultiClamp amplifier: {}'.format(self.error_msg.value))
             if fail:
                 raise IOError(full_error)
             else:
-                logger.warn(full_error)
+                logging.warn(full_error)
             # Reset the error code
             self.last_error.value = NO_ERROR
 
@@ -67,16 +75,18 @@ class MultiClamp(object):
         channel = ctypes.c_uint()
         serial = ctypes.create_string_buffer(16)
         devices = []
-        if not self.dll.MCCMSG_FindFirstMultiClamp(self.msg_handler,
-                                                   ctypes.byref(model),
-                                                   serial,
-                                                   ctypes.c_uint(16),  # buffer size
-                                                   ctypes.byref(port),
-                                                   ctypes.byref(device),
-                                                   ctypes.byref(channel),
-                                                   ctypes.byref(self.last_error)):
-            devices.append(self.identify_amplifier(model, serial, port, device,
-                                                   channel))
+        if self.dll.MCCMSG_FindFirstMultiClamp(self.msg_handler,
+                                               ctypes.byref(model),
+                                               serial,
+                                               ctypes.c_uint(16),  # buffer size
+                                               ctypes.byref(port),
+                                               ctypes.byref(device),
+                                               ctypes.byref(channel),
+                                               ctypes.byref(self.last_error)):
+            devices.append(_identify_amplifier(model, serial, port, device,
+                                               channel))
+        else:
+            self.check_error()
         while self.dll.MCCMSG_FindNextMultiClamp(self.msg_handler,
                                                  ctypes.byref(model),
                                                  serial,
@@ -90,29 +100,29 @@ class MultiClamp(object):
         return devices
 
     def select_amplifier(self):
-        devices = []
-        for device in MultiClamp.all_devices:
-            if all(device.get(key, None) == value
+        multiclamps = []
+        for multiclamp in MultiClamp.all_devices:
+            if all(multiclamp.get(key, None) == value
                    for key, value in self.identification.iteritems()):
-                devices.append(device)
-        if len(devices) == 0:
+                multiclamps.append(multiclamp)
+        if len(multiclamps) == 0:
             raise RuntimeError('No device identified via {} found'.format(self.identification))
-        elif len(devices) > 1:
-            raise RuntimeError('{} devices identified via {} found'.format(len(devices),
+        elif len(multiclamps) > 1:
+            raise RuntimeError('{} devices identified via {} found'.format(len(multiclamps),
                                                                            self.identification))
-        device = devices[0]
-        if device['model'] == '700A':
+        multiclamp = multiclamps[0]
+        if multiclamp['model'] == '700A':
             model = ctypes.c_uint(0)
             serial = None
-            port = ctypes.c_uint(device['port'])
-            device = ctypes.c_uint(device['device'])
-            channel = ctypes.c_uint(device['channel'])
-        elif device['model'] == '700B':
+            port = ctypes.c_uint(multiclamp['port'])
+            device = ctypes.c_uint(multiclamp['device'])
+            channel = ctypes.c_uint(multiclamp['channel'])
+        elif multiclamp['model'] == '700B':
             model = ctypes.c_uint(1)
-            serial = ctypes.c_uint(device['serial'])
+            serial = multiclamp['serial']
             port = None
             device = None
-            channel = ctypes.c_uint(device['channel'])
+            channel = ctypes.c_uint(multiclamp['channel'])
 
         if not self.dll.MCCMSG_SelectMultiClamp(self.msg_handler,
                                                 model,
@@ -123,18 +133,21 @@ class MultiClamp(object):
                                                 ctypes.byref(self.last_error)):
             self.check_error(fail=True)
 
+    @needs_select
     def voltage_clamp(self):
         # MCCMSG_MODE_VCLAMP = 0
         if not self.dll.MCCMSG_SetMode(self.msg_handler, ctypes.c_uint(0),
                                        ctypes.byref(self.last_error)):
             self.check_error()
 
+    @needs_select
     def current_clamp(self):
         # MCCMSG_MODE_ICLAMP = 1
         if not self.dll.MCCMSG_SetMode(self.msg_handler, ctypes.c_uint(1),
                                        ctypes.byref(self.last_error)):
             self.check_error()
 
+    @needs_select
     def get_fast_compensation_capacitance(self):
         capacitance = ctypes.c_double(0.)
         if not self.dll.MCCMSG_GetFastCompCap(self.msg_handler,
@@ -143,17 +156,20 @@ class MultiClamp(object):
             self.check_error()
         return capacitance
 
+    @needs_select
     def set_fast_compensation_capacitance(self, capacitance):
         if not self.dll.MCCMSG_SetFastCompCap(self.msg_handler,
                                               ctypes.c_double(capacitance),
                                               ctypes.byref(self.last_error)):
             self.check_error()
 
+    @needs_select
     def auto_fast_compensation(self):
         if not self.dll.MCCMSG_AutoFastComp(self.msg_handler,
                                             ctypes.byref(self.last_error)):
             self.check_error()
 
+    @needs_select
     def get_slow_compensation_capacitance(self):
         capacitance = ctypes.c_double(0.)
         if not self.dll.MCCMSG_GetSlowCompCap(self.msg_handler,
@@ -162,12 +178,14 @@ class MultiClamp(object):
             self.check_error()
         return capacitance
 
+    @needs_select
     def set_slow_compensation_capacitance(self, capacitance):
         if not self.dll.MCCMSG_SetSlowCompCap(self.msg_handler,
                                               ctypes.c_double(capacitance),
                                               ctypes.byref(self.last_error)):
             self.check_error()
 
+    @needs_select
     def auto_slow_compensation(self):
         if not self.dll.MCCMSG_AutoSlowComp(self.msg_handler,
                                             ctypes.byref(self.last_error)):
@@ -181,12 +199,15 @@ class MultiClamp(object):
 
 if __name__ == '__main__':
     print('Connecting to the MultiClamp amplifier')
-    mcc = MultiClamp(channel=0)
+    mcc = MultiClamp(channel=1)
     print('Switching to current clamp')
     mcc.current_clamp()
     time.sleep(2)
     print('Switching to voltage clamp')
     mcc.voltage_clamp()
+    print('Setting compensation values')
+    mcc.set_slow_compensation_capacitance(1e-12)
+    mcc.set_fast_compensation_capacitance(5e-12)
     print('Compensation values:')
     print('Slow: {}'.format(mcc.get_slow_compensation_capacitance()))
     print('Fast: {}'.format(mcc.get_fast_compensation_capacitance()))
