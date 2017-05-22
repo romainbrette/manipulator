@@ -38,8 +38,11 @@ def get_template_series(devtype, microscope, nb_images, cap):
 
     for k in range(nb_images):
         frame, img, cap = getImg(devtype, microscope, pos-(nb_images-1)/2+k, cap)
-        img = img[height / 2 - 3 * height / ratio:height / 2 + 3 * height / ratio,
-              width / 2 - 3 * width / ratio:width / 2 + 3 * width / ratio]
+        height, width = img.shape[:2]
+        cv2.imshow('Camera', frame)
+        cv2.waitKey(1)
+        img = img[height / 2 - 3 * height / ratio:height / 2 + 3 * height / ratio, width / 2 - 3 * width / ratio:width / 2 + 3 * width / ratio]
+        height, width = img.shape[:2]
         img = img[i * height / 4:height / 2 + i * height / 4, j * width / 4:width / 2 + j * width / 4]
         template_series += [img]
         cv2.imwrite('Template_nb{n}.jpg'.format(n=k), img)
