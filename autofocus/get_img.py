@@ -50,7 +50,7 @@ def getImg(devtype, microscope, z=None, cv2cap=None):
         # frame has to be encoded to an usable image to use tipdetect()
         #_, img = cv2.imencode('.jpg', frame)
         #img = cv2.imdecode(img, 0)
-        img = (img/256).astype(np.uint8)
+        img = frame
         #img = cv2.bilateralFilter(img,9,75,75)
 
     else:

@@ -135,10 +135,10 @@ while 1:
             #frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
-            _, dep, _, frame, cap = focus(devtype, microscope, template, cap)
-            cv2.imshow('Camera', frame)
-            cv2.waitKey(1)
-            estim += float(dep)/track_step
+            #_, dep, _, frame, cap = focus(devtype, microscope, template, cap)
+            #cv2.imshow('Camera', frame)
+            #cv2.waitKey(1)
+            #estim += float(dep)/track_step
             if nstep == maxnstep:
                 x, y = estloc[:2]
                 #M[0, 0] = (x - x_init)*um_px/(2**(maxnstep+1)-2)
@@ -168,10 +168,10 @@ while 1:
             #frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
-            _, dep, _, frame, cap = focus(devtype, microscope, template, cap)
-            cv2.imshow('Camera', frame)
-            cv2.waitKey(1)
-            estim += float(dep) / track_step
+            #_, dep, _, frame, cap = focus(devtype, microscope, template, cap)
+            #cv2.imshow('Camera', frame)
+            #cv2.waitKey(1)
+            #estim += float(dep) / track_step
 
             if nstep == maxnstep:
 
@@ -206,10 +206,10 @@ while 1:
             #frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
-            _, dep, _, frame, cap = focus(devtype, microscope, template, cap)
-            cv2.imshow('Camera', frame)
-            cv2.waitKey(1)
-            estim += float(dep) / track_step
+            #_, dep, _, frame, cap = focus(devtype, microscope, template, cap)
+            #cv2.imshow('Camera', frame)
+            #cv2.waitKey(1)
+            #estim += float(dep) / track_step
             if nstep == maxnstep:
 
                 x, y = estloc[:2]
