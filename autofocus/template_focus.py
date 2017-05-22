@@ -4,24 +4,21 @@ First user must put the tip on focus to get the template
 Template matching is not scale nor rotation invariant
 """
 
-__all__ = ['focus']
-
-from Hamamatsu_camera import *
 from template_matching import *
 from get_img import *
 import cv2
-from scipy.optimize import minimize_scalar, minimize
-from math import fabs
+
+__all__ = ['dfocus']
 
 
-def dfocus(devtype, microscope, template, cv2cap=None, rng = 1):
+def dfocus(devtype, microscope, template, cv2cap=None, rng=1):
     """
     Autofocus by searching the best template match in the image around the current height
     :param devtype: type of used controller
     :param microscope: device controlling the microscope
     :param template: template image to look for
     :param cv2cap: video capture from cv2, unnecessary if devtype='SM5' 
-    :param step: step length made if the arm is moving (for quicker tracking)
+    :param rng: range of search in um
     """
 
     # Getting the microscope height according to the used controller
@@ -71,7 +68,7 @@ def dfocus(devtype, microscope, template, cv2cap=None, rng = 1):
         index = vals.index(maxval)
         loc = locs[index]
         focus_height = current_z + (rng - index)
-        frame , _, cv2cap = getImg(devtype, microscope, focus_height , cv2cap)
+        frame, _, cv2cap = getImg(devtype, microscope, focus_height , cv2cap)
         cv2.imshow('Camera', frame)
         cv2.waitKey(1)
         dep = (rng - index)

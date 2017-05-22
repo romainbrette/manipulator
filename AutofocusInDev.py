@@ -67,6 +67,16 @@ while(True):
     if key & 0xFF == ord('d'):
         track ^= 1
 
+    if key & 0xff == ord('g'):
+        frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
+        cv2.imshow('before', frame)
+        cv2.waitKey(1)
+        arm.relative_move(100, 0)
+        frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
+        cv2.imshow('after', frame)
+        cv2.waitKey(1)
+
+
     # Tracking while moving
     if track != 0:
         arm.relative_move(step, 0)

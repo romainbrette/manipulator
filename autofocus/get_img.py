@@ -45,6 +45,8 @@ def getImg(devtype, microscope, z=None, cv2cap=None):
             cv2cap = cv2.VideoCapture(0)
 
         # Capture frame
+        _ = cv2cap.grab()
+        _, frame = cv2cap.retrieve()
         ret, frame = cv2cap.read()
 
         # frame has to be encoded to an usable image to use tipdetect()
