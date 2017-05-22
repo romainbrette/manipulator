@@ -31,7 +31,7 @@ calibrate_succeded = 0
 step = 0
 nstep = 1
 maxnstep = 7
-track_step = 2
+track_step = 2.
 estim = 0.
 estloc = [0., 0.]
 alpha = [1., -1., 1.]
@@ -132,9 +132,13 @@ while 1:
 
             # calibrate arm x axis
             estim, estloc, frame, cap = focus_track(devtype, microscope, arm, template, track_step, 0, alpha, um_px, estim, estloc, cap)
-            frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
+            #frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
+            _, dep, _, frame, cap = focus(devtype, microscope, template, cap)
+            cv2.imshow('Camera', frame)
+            cv2.waitKey(1)
+            estim += float(dep)/track_step
             if nstep == maxnstep:
                 x, y = estloc[:2]
                 #M[0, 0] = (x - x_init)*um_px/(2**(maxnstep+1)-2)
@@ -144,9 +148,9 @@ while 1:
                 M[2, 0] = estim
 
                 estim = 0
-                track_step = 2
+                track_step = 2.
                 nstep = 1
-                estloc = [0.,0.]
+                estloc = [0., 0.]
                 #x_init = x
                 #y_init = y
                 frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
@@ -161,11 +165,14 @@ while 1:
         elif step == 3:
             # calibrate arm y axis
             estim, estloc, frame, cap = focus_track(devtype, microscope, arm, template, track_step, 1, alpha, um_px, estim, estloc, cap)
-            frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
+            #frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
-            #arm.relative_move(track_step, 1)
-            #_, _, loc = templatematching(img, template)
+            _, dep, _, frame, cap = focus(devtype, microscope, template, cap)
+            cv2.imshow('Camera', frame)
+            cv2.waitKey(1)
+            estim += float(dep) / track_step
+
             if nstep == maxnstep:
 
                 x, y = estloc[:2]
@@ -178,7 +185,7 @@ while 1:
 
                 estim = 0
                 nstep = 1
-                track_step = 2
+                track_step = 2.
                 estloc = [0., 0.]
                 #x_init = x
                 #y_init = y
@@ -196,9 +203,13 @@ while 1:
         elif step == 4:
             # calibrate arm z axis
             estim, estloc, frame, cap = focus_track(devtype, microscope, arm, template, track_step, 2, alpha, um_px, estim, estloc, cap)
-            frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
+            #frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
+            _, dep, _, frame, cap = focus(devtype, microscope, template, cap)
+            cv2.imshow('Camera', frame)
+            cv2.waitKey(1)
+            estim += float(dep) / track_step
             if nstep == maxnstep:
 
                 x, y = estloc[:2]
@@ -210,7 +221,7 @@ while 1:
 
                 estim = 0
                 nstep = 1
-                track_step = 2
+                track_step = 2.
                 estloc = [0., 0.]
                 frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
                 cv2.imshow('Camera', frame)
