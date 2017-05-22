@@ -59,11 +59,13 @@ def focus_track(devtype, microscope, arm, template, step, axis, alpha, um_px, es
     errloc = [errloc[i] - initloc[i] for i in range(2)]
     err = (errloc[0]**2+errloc[1]**2)**0.5
 
+    '''
     if err > 10:
         um_px += err / ((loc[0] - initloc[0])**2+(loc[1] - initloc[1])**2)**0.5
+        print 'um_px corr'
         for i in range(2):
             microscope.relative_move(alpha[i]*errloc[i]*um_px, i)
-
+    '''
     '''
         if devtype == 'SM5':
             microscope.setRelativePosition(estim*step)

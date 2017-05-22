@@ -153,7 +153,9 @@ while 1:
                 estloc = [0., 0.]
                 #x_init = x
                 #y_init = y
-                frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
+                arm.absolute_move_group(init_pos_a, [0,1,2])
+                microscope.absolute_move_group(init_pos_m, [0,1,2])
+                frame, img, cap = getImg(devtype, microscope, init_pos_m[2], cv2cap=cap)
                 cv2.imshow('Camera', frame)
                 cv2.waitKey(1)
 
@@ -189,7 +191,9 @@ while 1:
                 estloc = [0., 0.]
                 #x_init = x
                 #y_init = y
-                frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
+                arm.absolute_move_group(init_pos_a, [0, 1, 2])
+                microscope.absolute_move_group(init_pos_m, [0, 1, 2])
+                frame, img, cap = getImg(devtype, microscope, init_pos_m[2], cv2cap=cap)
                 cv2.imshow('Camera', frame)
                 cv2.waitKey(1)
 
