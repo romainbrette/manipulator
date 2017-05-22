@@ -10,15 +10,39 @@ NO_ERROR = 6000
 logger = logging.Logger(__name__)
 
 
+def _identify_amplifier(model, serial, port, device, channel):
+    if model.value == 0:  # 700A
+        logger.info(('Found a MultiClamp 700A (Port: {}, Device: {}, '
+                     'Channel: {})').format(port.value, device.value,
+                                            channel.value))
+        return {'model': '700A', 'port': port.value, 'device': device.value,
+                'channel': channel.value}
+    elif model.value == 1:  # 700B
+        logger.info(('Found a MultiClamp 700B (Serial number: {}, '
+                     'Channel: {})').format(serial.value, channel.value))
+        return {'model': '700B', 'serial': serial.value,
+                'channel': channel.value}
+    else:
+        raise AssertionError('Unknown model')
+
+
 class MultiClamp(object):
-    def __init__(self, dll_path=r'C:\Program Files\Molecular Devices\MultiClamp 700B Commander\3rd Party Support\AxMultiClampMsg'):
-        self.dll = ctypes.WinDLL(os.path.join(dll_path, 'AxMultiClampMsg.dll'))
+    dll_path = r'C:\Program Files\Molecular Devices\MultiClamp 700B Commander\3rd Party Support\AxMultiClampMsg'
+    all_devices = None
+    selected_device = None
+
+    def __init__(self, **kwds):
+        self.dll = ctypes.WinDLL(os.path.join(MultiClamp.dll_path,
+                                              'AxMultiClampMsg.dll'))
         self.last_error = ctypes.c_int(NO_ERROR)
         self.error_msg = ctypes.create_string_buffer(256)
         self.msg_handler = self.dll.MCCMSG_CreateObject(ctypes.byref(self.last_error))
         self.check_error(fail=True)
-        # TODO: Only supports one channel (i.e. headstage) for now
-        self.find_and_select_amplifier()
+        if MultiClamp.all_devices is None:
+            MultiClamp.all_devices = self.find_amplifiers()
+        self.identification = kwds
+        self.select_amplifier()
+        MultiClamp.selected_device = self
 
     def check_error(self, fail=False):
         if self.last_error != NO_ERROR:
@@ -36,12 +60,13 @@ class MultiClamp(object):
             # Reset the error code
             self.last_error.value = NO_ERROR
 
-    def find_and_select_amplifier(self):
+    def find_amplifiers(self):
         model = ctypes.c_uint()
         port = ctypes.c_uint()
         device = ctypes.c_uint()
         channel = ctypes.c_uint()
         serial = ctypes.create_string_buffer(16)
+        devices = []
         if not self.dll.MCCMSG_FindFirstMultiClamp(self.msg_handler,
                                                    ctypes.byref(model),
                                                    serial,
@@ -50,16 +75,44 @@ class MultiClamp(object):
                                                    ctypes.byref(device),
                                                    ctypes.byref(channel),
                                                    ctypes.byref(self.last_error)):
-            self.check_error(fail=True)
-        if model.value == 0:  # 700A
-            logger.info(('Found a MultiClamp 700A (Port: {}, Device: {}, '
-                         'Channel: {})').format(port.value, device.value,
-                                                channel.value))
-        elif model.value == 1:  # 700B
-            logger.info(('Found a MultiClamp 700B (Serial number: {}, '
-                         'Channel: {})').format(serial.value, channel.value))
-        else:
-            raise AssertionError('Unknown model')
+            devices.append(self.identify_amplifier(model, serial, port, device,
+                                                   channel))
+        while self.dll.MCCMSG_FindNextMultiClamp(self.msg_handler,
+                                                 ctypes.byref(model),
+                                                 serial,
+                                                 ctypes.c_uint(16),  # buffer size
+                                                 ctypes.byref(port),
+                                                 ctypes.byref(device),
+                                                 ctypes.byref(channel),
+                                                 ctypes.byref(self.last_error)):
+            devices.append(_identify_amplifier(model, serial, port, device,
+                                                   channel))
+        return devices
+
+    def select_amplifier(self):
+        devices = []
+        for device in MultiClamp.all_devices:
+            if all(device.get(key, None) == value
+                   for key, value in self.identification.iteritems()):
+                devices.append(device)
+        if len(devices) == 0:
+            raise RuntimeError('No device identified via {} found'.format(self.identification))
+        elif len(devices) > 1:
+            raise RuntimeError('{} devices identified via {} found'.format(len(devices),
+                                                                           self.identification))
+        device = devices[0]
+        if device['model'] == '700A':
+            model = ctypes.c_uint(0)
+            serial = None
+            port = ctypes.c_uint(device['port'])
+            device = ctypes.c_uint(device['device'])
+            channel = ctypes.c_uint(device['channel'])
+        elif device['model'] == '700B':
+            model = ctypes.c_uint(1)
+            serial = ctypes.c_uint(device['serial'])
+            port = None
+            device = None
+            channel = ctypes.c_uint(device['channel'])
 
         if not self.dll.MCCMSG_SelectMultiClamp(self.msg_handler,
                                                 model,
@@ -128,7 +181,7 @@ class MultiClamp(object):
 
 if __name__ == '__main__':
     print('Connecting to the MultiClamp amplifier')
-    mcc = MultiClamp()
+    mcc = MultiClamp(channel=0)
     print('Switching to current clamp')
     mcc.current_clamp()
     time.sleep(2)
