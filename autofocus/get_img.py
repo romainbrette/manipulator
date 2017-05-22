@@ -5,7 +5,6 @@ Encode the frame to make it usable for some functions (cornerHarris)
 
 import cv2
 import numpy as np
-import time
 
 __all__ = ['getImg']
 
@@ -49,8 +48,9 @@ def getImg(devtype, microscope, z=None, cv2cap=None):
         ret, frame = cv2cap.read()
 
         # frame has to be encoded to an usable image to use tipdetect()
-        _, img = cv2.imencode('.jpg', frame)
-        img = cv2.imdecode(img, 0)
+        #_, img = cv2.imencode('.jpg', frame)
+        #img = cv2.imdecode(img, 0)
+        img = (img/256).astype(np.uint8)
         #img = cv2.bilateralFilter(img,9,75,75)
 
     else:
