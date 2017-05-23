@@ -36,7 +36,7 @@ while(True):
     if devtype == 'SM5':
         buffer = microscope.getLastImage()
 
-    frame, img = getImg(devtype, microscope, cv2cap=cap)
+    frame = getImg(devtype, microscope, cv2cap=cap)
 
     # Keyboards controls:
     # 'q' to quit,
@@ -57,8 +57,8 @@ while(True):
 
     if key & 0xFF == ord('t'):
         if type(template) == int:
-            #template = img[height / 2 - 20:height / 2 + 20, width / 2 - 20:width / 2 + 20]
-            template = get_template(img)
+            #template = frame[height / 2 - 20:height / 2 + 20, width / 2 - 20:width / 2 + 20]
+            template = get_template(frame)
             cv2.imshow('template', template)
         else:
             template = 0
@@ -68,11 +68,11 @@ while(True):
         track ^= 1
 
     if key & 0xff == ord('g'):
-        frame, img = getImg(devtype, microscope, cv2cap=cap)
+        frame = getImg(devtype, microscope, cv2cap=cap)
         cv2.imshow('before', frame)
         cv2.waitKey(1)
         arm.relative_move(100, 0)
-        frame, img = getImg(devtype, microscope, cv2cap=cap, update=1)
+        frame = getImg(devtype, microscope, cv2cap=cap, update=1)
         cv2.imshow('after', frame)
         cv2.waitKey(1)
 
@@ -92,7 +92,7 @@ while(True):
         frame = disp_template_zone(frame)
     else:
         # Display a rectangle at the template matched location
-        res, maxval, maxloc = templatematching(img, template)
+        res, maxval, maxloc = templatematching(frame, template)
         print maxval
         if res:
             x, y = maxloc[:2]

@@ -5,16 +5,16 @@ from get_img import *
 
 def get_template_series(devtype, microscope, nb_images, cap):
     """
-    Get a template image of the tip around the center of an image for any angle of the tip.
+    Get a series of template images of the tip around the center of an image for any angle of the tip.
     """
 
     template_series = []
 
-    frame, img = getImg(devtype, microscope, cv2cap=cap, update=1)
-    height, width = img.shape[:2]
+    frame = getImg(devtype, microscope, cv2cap=cap, update=1)
+    height, width = frame.shape[:2]
     ratio = 32
 
-    template = img[height/2-3*height/ratio:height/2+3*height/ratio, width/2-3*width/ratio:width/2+3*width/ratio]
+    template = frame[height/2-3*height/ratio:height/2+3*height/ratio, width/2-3*width/ratio:width/2+3*width/ratio]
     height, width = template.shape[:2]
     weight = []
     for i in range(3):
@@ -37,17 +37,17 @@ def get_template_series(devtype, microscope, nb_images, cap):
         raise TypeError('Unknown device. Should be either "SM5" or "SM10".')
 
     for k in range(nb_images):
-        frame, img = getImg(devtype, microscope, pos-(nb_images-1)/2+k, cap)
-        height, width = img.shape[:2]
+        frame = getImg(devtype, microscope, pos-(nb_images-1)/2+k, cap)
+        height, width = frame.shape[:2]
         cv2.imshow('Camera', frame)
         cv2.waitKey(1)
-        img = img[height / 2 - 3 * height / ratio:height / 2 + 3 * height / ratio, width / 2 - 3 * width / ratio:width / 2 + 3 * width / ratio]
+        img = frame[height / 2 - 3 * height / ratio:height / 2 + 3 * height / ratio, width / 2 - 3 * width / ratio:width / 2 + 3 * width / ratio]
         height, width = img.shape[:2]
         img = img[i * height / 4:height / 2 + i * height / 4, j * width / 4:width / 2 + j * width / 4]
         template_series += [img]
-        cv2.imwrite('Template_nb{n}.jpg'.format(n=k), img)
+        #cv2.imwrite('Template_nb{n}.jpg'.format(n=k), img)
 
-    frame, img = getImg(devtype, microscope, pos, cap)
+    _, _ = getImg(devtype, microscope, pos, cap)
 
     return template_series
 

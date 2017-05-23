@@ -1,15 +1,14 @@
 """
-Autofocusing on the tip using template matching
+Autofocusing on the tip using template matching with several templates images, best match determine the move to do
 First user must put the tip on focus to get the template
 Template matching is not scale nor rotation invariant
 """
-
-__all__ = ['focus']
 
 from template_matching import *
 from get_img import *
 import cv2
 
+__all__ = ['focus']
 
 
 def focus(devtype, microscope, template, cv2cap=None):
@@ -19,7 +18,6 @@ def focus(devtype, microscope, template, cv2cap=None):
     :param microscope: device controlling the microscope
     :param template: tab of template images to look for
     :param cv2cap: video capture from cv2, unnecessary if devtype='SM5' 
-    :param step: step length made if the arm is moving (for quicker tracking)
     """
 
     # Getting the microscope height according to the used controller
@@ -30,15 +28,15 @@ def focus(devtype, microscope, template, cv2cap=None):
     else:
         raise TypeError('Unknown device. Should be either "SM5" or "SM10".')
 
-    frame, img = getImg(devtype, microscope, cv2cap=cv2cap, update=1)
+    frame = getImg(devtype, microscope, cv2cap=cv2cap, update=1)
     # Tabs of maxval and their location during the process
     vals = []
     locs = []
 
-    # Getting the maxvals and their locations at +- rng um, 1um steps, around the current height
+    # Getting the maxvals and their locations
     for i in template:
 
-        res, val, loc = templatematching(img, i)
+        res, val, loc = templatematching(frame, i)
         locs += [loc]
 
         if res:
@@ -47,13 +45,6 @@ def focus(devtype, microscope, template, cv2cap=None):
         else:
             # Template has not been detected, val set at 0
             vals += [0]
-        '''
-        if val > 0.95:
-            maxval = val
-            dep = rng - i
-            #print len(vals)
-            return maxval, dep, loc, frame
-        '''
 
     # Search of the highest value, indicating which template image match the best the current image
     maxval = max(vals)
@@ -63,7 +54,7 @@ def focus(devtype, microscope, template, cv2cap=None):
         index = vals.index(maxval)
         loc = locs[index]
         focus_height = current_z + len(template)/2 - index
-        frame, _ = getImg(devtype, microscope, focus_height, cv2cap)
+        frame = getImg(devtype, microscope, focus_height, cv2cap)
         cv2.imshow('Camera', frame)
         cv2.waitKey(1)
         dep = len(template)/2 - index

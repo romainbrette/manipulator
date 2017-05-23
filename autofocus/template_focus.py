@@ -24,7 +24,7 @@ def dfocus(devtype, microscope, template, cv2cap=None, rng=1):
     # Getting the microscope height according to the used controller
     if devtype == 'SM5':
         current_z = microscope.getPosition()
-    elif devtype== 'SM10':
+    elif devtype == 'SM10':
         current_z = microscope.position(2)
     else:
         raise TypeError('Unknown device. Should be either "SM5" or "SM10".')
@@ -37,8 +37,8 @@ def dfocus(devtype, microscope, template, cv2cap=None, rng=1):
     for i in range(rng*2+1):
 
         height = current_z + (rng - i)
-        frame, img = getImg(devtype, microscope, height, cv2cap)
-        res, val, loc = templatematching(img, template)
+        frame = getImg(devtype, microscope, height, cv2cap)
+        res, val, loc = templatematching(frame, template)
         cv2.imshow('Camera', frame)
         cv2.waitKey(1)
         locs += [loc]
@@ -48,13 +48,7 @@ def dfocus(devtype, microscope, template, cv2cap=None, rng=1):
         else:
             # Template has not been detected, val set at 0
             vals += [0]
-        '''
-        if val > 0.95:
-            maxval = val
-            dep = rng - i
-            #print len(vals)
-            return maxval, dep, loc, frame
-        '''
+
     print vals
     # Search of the highest value, indicating that focus has been achieved
     maxval = max(vals)

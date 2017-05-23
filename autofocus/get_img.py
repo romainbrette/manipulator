@@ -4,7 +4,6 @@ Encode the frame to make it usable for some functions (cornerHarris)
 """
 
 import cv2
-import numpy as np
 
 __all__ = ['getImg']
 
@@ -17,11 +16,11 @@ def getImg(devtype, microscope, z=None, cv2cap=None, update=0):
     :param microscope: class instance controlling the microscope
     :param z: desired absolute height of the microscope
     :param cv2cap: video capture from cv2, used when devtype='SM10'
+    :param update: indicating if the user wants the next frame or not 
     :return frame: image taken directly from the video capture
-            img: frame encoded in 8bits, necessary for some functions as cornerHarris()
     """
 
-    frame, img = 0, 0
+    frame = 0
     if devtype == 'SM5':
 
         # Move the microscope if an height has been specify
@@ -31,9 +30,7 @@ def getImg(devtype, microscope, z=None, cv2cap=None, update=0):
         # Capture frame
 
         if microscope.getRemainingImageCount() > 0:
-            cam = microscope.getLastImage()
-            frame = cam
-            img = cam
+            frame = microscope.getLastImage()
 
     elif devtype == 'SM10':
 
@@ -49,16 +46,10 @@ def getImg(devtype, microscope, z=None, cv2cap=None, update=0):
 
         ret, frame = cv2cap.read()
 
-        # frame has to be encoded to an usable image to use tipdetect()
-        #_, img = cv2.imencode('.jpg', frame)
-        #img = cv2.imdecode(img, 0)
-        img = frame
-        #img = cv2.bilateralFilter(img,9,75,75)
-
     else:
         raise TypeError('Unknown device. Should be either "SM5" or "SM10".')
 
-    return frame, img
+    return frame
 
 
 if __name__ == '__main__':
@@ -77,7 +68,7 @@ if __name__ == '__main__':
     cv2.namedWindow('Camera')
     while 1:
         buffer = mmc.getLastImage()
-        frame, img, cap = getImg('SM5', mmc)
+        frame = getImg('SM5', mmc)
         cv2.imshow("Camera", frame)
         key = cv2.waitKey(1)
         if key & 0xFF == ord('q'):

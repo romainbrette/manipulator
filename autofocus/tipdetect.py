@@ -30,7 +30,7 @@ def tip_detect(img):
     y, x = np.unravel_index(n, img.shape)
     criterion = dst.flatten()[n]
 
-    return x,y,criterion
+    return x, y, criterion
 
 
 if __name__ == '__main__': # test
