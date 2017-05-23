@@ -10,7 +10,7 @@ def get_template_series(devtype, microscope, nb_images, cap):
 
     template_series = []
 
-    frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
+    frame, img = getImg(devtype, microscope, cv2cap=cap, update=1)
     height, width = img.shape[:2]
     ratio = 32
 
@@ -37,7 +37,7 @@ def get_template_series(devtype, microscope, nb_images, cap):
         raise TypeError('Unknown device. Should be either "SM5" or "SM10".')
 
     for k in range(nb_images):
-        frame, img, cap = getImg(devtype, microscope, pos-(nb_images-1)/2+k, cap)
+        frame, img = getImg(devtype, microscope, pos-(nb_images-1)/2+k, cap)
         height, width = img.shape[:2]
         cv2.imshow('Camera', frame)
         cv2.waitKey(1)
@@ -47,9 +47,9 @@ def get_template_series(devtype, microscope, nb_images, cap):
         template_series += [img]
         cv2.imwrite('Template_nb{n}.jpg'.format(n=k), img)
 
-    frame, img, cap = getImg(devtype, microscope, pos, cap)
+    frame, img = getImg(devtype, microscope, pos, cap)
 
-    return template_series, cap
+    return template_series
 
 
 def disp_template_zone(img):

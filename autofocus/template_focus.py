@@ -29,10 +29,6 @@ def dfocus(devtype, microscope, template, cv2cap=None, rng=1):
     else:
         raise TypeError('Unknown device. Should be either "SM5" or "SM10".')
 
-    frame, img, cap = getImg(devtype, microscope, current_z+rng, cv2cap=cv2cap)
-    cv2.imshow('Camera', frame)
-    cv2.waitKey(1)
-
     # Tabs of maxval and their location during the process
     vals = []
     locs = []
@@ -41,7 +37,7 @@ def dfocus(devtype, microscope, template, cv2cap=None, rng=1):
     for i in range(rng*2+1):
 
         height = current_z + (rng - i)
-        frame, img, cv2cap = getImg(devtype, microscope, height, cv2cap)
+        frame, img = getImg(devtype, microscope, height, cv2cap)
         res, val, loc = templatematching(img, template)
         cv2.imshow('Camera', frame)
         cv2.waitKey(1)
@@ -68,7 +64,7 @@ def dfocus(devtype, microscope, template, cv2cap=None, rng=1):
         index = vals.index(maxval)
         loc = locs[index]
         focus_height = current_z + (rng - index)
-        frame, _, cv2cap = getImg(devtype, microscope, focus_height , cv2cap)
+        frame, _ = getImg(devtype, microscope, focus_height, cv2cap)
         cv2.imshow('Camera', frame)
         cv2.waitKey(1)
         dep = (rng - index)
@@ -76,4 +72,4 @@ def dfocus(devtype, microscope, template, cv2cap=None, rng=1):
         # Template has never been detected, focus can not be achieved
         raise ValueError('The template image has not been detected.')
 
-    return maxval, dep, loc, frame, cv2cap
+    return maxval, dep, loc, frame

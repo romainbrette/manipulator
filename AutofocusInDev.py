@@ -36,7 +36,7 @@ while(True):
     if devtype == 'SM5':
         buffer = microscope.getLastImage()
 
-    frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
+    frame, img = getImg(devtype, microscope, cv2cap=cap)
 
     # Keyboards controls:
     # 'q' to quit,
@@ -49,7 +49,7 @@ while(True):
 
     if key & 0xFF == ord('f'):
         try:
-            maxval, _, _, frame, cap = dfocus(devtype, microscope, template, cap, 4)
+            maxval, _, _, frame = dfocus(devtype, microscope, template, cap, 4)
             print maxval
             print 'Autofocus done.'
         except TypeError:
@@ -68,11 +68,11 @@ while(True):
         track ^= 1
 
     if key & 0xff == ord('g'):
-        frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
+        frame, img = getImg(devtype, microscope, cv2cap=cap)
         cv2.imshow('before', frame)
         cv2.waitKey(1)
         arm.relative_move(100, 0)
-        frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
+        frame, img = getImg(devtype, microscope, cv2cap=cap, update=1)
         cv2.imshow('after', frame)
         cv2.waitKey(1)
 
@@ -80,7 +80,7 @@ while(True):
     # Tracking while moving
     if track != 0:
         arm.relative_move(step, 0)
-        maxval, _, _, frame, cap = dfocus(devtype, microscope, template, cap, step)
+        maxval, _, _, frame = dfocus(devtype, microscope, template, cap, step)
         track += 1
     if track == nsteps:
         track = 0

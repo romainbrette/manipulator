@@ -9,7 +9,7 @@ import numpy as np
 __all__ = ['getImg']
 
 
-def getImg(devtype, microscope, z=None, cv2cap=None):
+def getImg(devtype, microscope, z=None, cv2cap=None, update=0):
 
     """
     get an image from the microscope at given height z
@@ -39,14 +39,14 @@ def getImg(devtype, microscope, z=None, cv2cap=None):
 
         # Move the microscope if an height has been specify
         if z:
-            cv2cap.release()
             microscope.absolute_move(z, 2)
-            #time.sleep(1)
-            cv2cap = cv2.VideoCapture(0)
+            update = 1
+
+        if update:
+            _, frame = cv2cap.retrieve()
 
         # Capture frame
-        _ = cv2cap.grab()
-        _, frame = cv2cap.retrieve()
+
         ret, frame = cv2cap.read()
 
         # frame has to be encoded to an usable image to use tipdetect()
@@ -58,7 +58,7 @@ def getImg(devtype, microscope, z=None, cv2cap=None):
     else:
         raise TypeError('Unknown device. Should be either "SM5" or "SM10".')
 
-    return frame, img, cv2cap
+    return frame, img
 
 
 if __name__ == '__main__':

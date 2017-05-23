@@ -22,14 +22,14 @@ def focus_track(devtype, microscope, arm, template, step, axis, alpha, um_px, es
         pos = microscope.getPosition()
     else:
         pos = microscope.position(2)
-    frame, img, cap = getImg(devtype, microscope, pos, cap)
+    frame, img = getImg(devtype, microscope, cv2cap=cap, update=1)
 
     # Get initial location of the tip
     _, _, initloc = templatematching(img, template[len(template)/2])
 
     # Move the arm
     arm.relative_move(step, axis)
-    frame, img, cap = getImg(devtype, microscope, pos, cap)
+    frame, img = getImg(devtype, microscope, cv2cap=cap, update=1)
     cv2.imshow('Camera', frame)
     cv2.waitKey(1)
 
@@ -38,20 +38,20 @@ def focus_track(devtype, microscope, arm, template, step, axis, alpha, um_px, es
         microscope.relative_move(alpha[i]*estim_loc[i]*step, i)
 
     # Update the frame. Must be the next image
-    frame, img, cap = getImg(devtype, microscope, pos, cap)
+    frame, img = getImg(devtype, microscope, cv2cap=cap, update=1)
     cv2.imshow('Camera', frame)
     cv2.waitKey(1)
 
-    frame, img, cap = getImg(devtype, microscope, pos + estim * step, cv2cap=cap)
+    frame, img = getImg(devtype, microscope, pos + estim * step, cv2cap=cap)
     cv2.imshow('Camera', frame)
     cv2.waitKey(1)
     # Focus around the estimated focus height
-    _, estim_temp, loc, frame, cap = focus(devtype, microscope, template, cap)
+    _, estim_temp, loc, frame = focus(devtype, microscope, template, cap)
     # MOVE THE PLATFORM TO COMPENSATE ERROR AND UPDATE FRAME
     for i in range(2):
         microscope.relative_move(alpha[i]*(loc[i] - initloc[i])*um_px, i)
 
-    frame, img, cap = getImg(devtype, microscope, pos + estim * step + estim_temp, cv2cap=cap)
+    frame, img = getImg(devtype, microscope, cv2cap=cap, update=1)
     cv2.imshow('Camera', frame)
     cv2.waitKey(1)
 
@@ -83,4 +83,4 @@ def focus_track(devtype, microscope, arm, template, step, axis, alpha, um_px, es
     print estim
     loc = [estim_loc[i] + (loc[i]-initloc[i])*um_px/float(step) for i in range(2)]
 
-    return estim, loc, frame, cap
+    return estim, loc, frame

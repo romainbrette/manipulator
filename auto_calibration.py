@@ -44,7 +44,7 @@ while 1:
     if devtype == 'SM5':
         buf = microscope.getLastImage()
 
-    frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
+    frame, img = getImg(devtype, microscope, cv2cap=cap)
 
     # Keyboards controls:
     # 'q' to quit,
@@ -57,7 +57,7 @@ while 1:
 
     if key & 0xFF == ord('f'):
         try:
-            maxval, _, _, frame, cap = focus(devtype, microscope, template, cap)
+            maxval, _, _, frame = focus(devtype, microscope, template, cap)
             print maxval
             print 'Autofocus done.'
         except TypeError:
@@ -93,14 +93,14 @@ while 1:
             else:
                 init_pos_m = [platform.position(0), platform.position(1), platform.position(2)]
 
-            template, cap = get_template_series(devtype, microscope, 5, cap)
+            template = get_template_series(devtype, microscope, 5, cap)
             #cv2.imshow('template', template)
 
             _, _, loc = templatematching(img, template[len(template)/2])
             x_init, y_init = loc[:2]
 
             platform.relative_move(100, 0)
-            frame, img, cap = getImg(devtype, microscope, init_pos_m[2], cv2cap=cap)
+            frame, img = getImg(devtype, microscope, cv2cap=cap, update=1)
 
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
@@ -114,7 +114,7 @@ while 1:
             print um_px
             platform.relative_move(-100, 0)
 
-            frame, img, cap = getImg(devtype, microscope, init_pos_m[2], cv2cap=cap)
+            frame, img = getImg(devtype, microscope, cv2cap=cap, update=1)
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
 
@@ -122,8 +122,8 @@ while 1:
 
         elif step == 1:
 
-            platform.relative_move(100, 1)
-            frame, img, cap = getImg(devtype, microscope, init_pos_m[2], cv2cap=cap)
+            platform.relative_move(50, 1)
+            frame, img = getImg(devtype, microscope, cv2cap=cap, update=1)
 
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
@@ -133,26 +133,25 @@ while 1:
             dy = loc[1] - y_init
             # Determination of um_px should be done with a move of the platform greater than the (total) ones of the arm
             # Thus the calibration would be accurate
-            um_px = 100./((dx**2 + dy**2)**0.5)
+            um_px = 50./((dx**2 + dy**2)**0.5)
             print um_px
-            platform.relative_move(-100, 1)
+            platform.relative_move(-50, 1)
 
-            frame, img, cap = getImg(devtype, microscope, init_pos_m[2], cv2cap=cap)
+            frame, img = getImg(devtype, microscope, cv2cap=cap, update=1)
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
             step += 1
-            calibration = 0
 
             print 'step 0 done'
 
         elif step == 2:
 
             # calibrate arm x axis
-            estim, estloc, frame, cap = focus_track(devtype, microscope, arm, template, track_step, 0, alpha, um_px, estim, estloc, cap)
-            #frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
+            estim, estloc, frame = focus_track(devtype, microscope, arm, template, track_step, 0, alpha, um_px, estim, estloc, cap)
+            #frame, img = getImg(devtype, microscope, cv2cap=cap, update=1)
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
-            #_, dep, _, frame, cap = focus(devtype, microscope, template, cap)
+            #_, dep, _, frame = focus(devtype, microscope, template, cap)
             #cv2.imshow('Camera', frame)
             #cv2.waitKey(1)
             #estim += float(dep)/track_step
@@ -172,9 +171,9 @@ while 1:
                 #y_init = y
                 arm.absolute_move_group(init_pos_a, [0,1,2])
                 microscope.absolute_move_group(init_pos_m, [0,1,2])
-                frame, img, cap = getImg(devtype, microscope, init_pos_m[2], cv2cap=cap)
+                frame, img = getImg(devtype, microscope, cv2cap=cap, update=1)
                 cv2.imshow('Camera', frame)
-                cv2.waitKey(1)
+                cv2.waitKey(10)
 
                 step += 1
                 print 'step 1 done'
@@ -183,11 +182,11 @@ while 1:
                 track_step *= 2
         elif step == 3:
             # calibrate arm y axis
-            estim, estloc, frame, cap = focus_track(devtype, microscope, arm, template, track_step, 1, alpha, um_px, estim, estloc, cap)
-            #frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
+            estim, estloc, frame = focus_track(devtype, microscope, arm, template, track_step, 1, alpha, um_px, estim, estloc, cap)
+            #frame, img = getImg(devtype, microscope, cv2cap=cap, update=1)
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
-            #_, dep, _, frame, cap = focus(devtype, microscope, template, cap)
+            #_, dep, _, frame = focus(devtype, microscope, template, cap)
             #cv2.imshow('Camera', frame)
             #cv2.waitKey(1)
             #estim += float(dep)/track_step
@@ -210,11 +209,12 @@ while 1:
                 #y_init = y
                 arm.absolute_move_group(init_pos_a, [0, 1, 2])
                 microscope.absolute_move_group(init_pos_m, [0, 1, 2])
-                frame, img, cap = getImg(devtype, microscope, init_pos_m[2], cv2cap=cap)
+                frame, img = getImg(devtype, microscope, cv2cap=cap, update=1)
                 cv2.imshow('Camera', frame)
-                cv2.waitKey(1)
+                cv2.waitKey(10)
 
                 step += 1
+
                 print 'step 2 done'
 
             else:
@@ -223,8 +223,8 @@ while 1:
 
         elif step == 4:
             # calibrate arm z axis
-            estim, estloc, frame, cap = focus_track(devtype, microscope, arm, template, track_step, 2, alpha, um_px, estim, estloc, cap)
-            #frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
+            estim, estloc, frame = focus_track(devtype, microscope, arm, template, track_step, 2, alpha, um_px, estim, estloc, cap)
+            #frame, img = getImg(devtype, microscope, cv2cap=cap, update=1)
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
             #_, dep, _, frame, cap = focus(devtype, microscope, template, cap)
@@ -244,7 +244,7 @@ while 1:
                 nstep = 1
                 track_step = 2.
                 estloc = [0., 0.]
-                frame, img, cap = getImg(devtype, microscope, cv2cap=cap)
+                frame, img = getImg(devtype, microscope, cv2cap=cap, update=1)
                 cv2.imshow('Camera', frame)
                 cv2.waitKey(1)
 
@@ -260,7 +260,7 @@ while 1:
             M_inv = inv(M)
             print M_inv
             calibrate = 0
-            calibrate_succeded = 1
+            calibrate_succeeded = 1
             print 'Calibration finished'
 
     # Our operations on the frame come here
