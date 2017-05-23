@@ -8,6 +8,8 @@ Quit with key 'q'
 """
 
 from autofocus import *
+from numpy import matrix
+from numpy.linalg import inv
 
 # Type of used controller, either 'SM5' or 'SM10 for L&N SM-5 or L&N SM-10
 devtype = 'SM10'
@@ -17,6 +19,7 @@ dev, microscope, cap = init_device(devtype)
 
 # Device controlling the used arm
 arm = XYZUnit(dev, [1, 2, 3])
+platform = XYZUnit(dev, [7, 8, 9])
 
 # Naming the live camera window
 cv2.namedWindow('Camera')
@@ -28,6 +31,14 @@ template = 0
 # Step displacement for tracking an nuber of steps to make
 step = 4
 nsteps = 10
+
+M = matrix([[0.80672554,  0.05661232, -0.00566123],
+        [0.0537817, -1.01052989, -0.],
+        [-0.5546875,  0.,  1.]])
+
+M_inv = inv(M)
+
+alpha = [1., -1., 1.]
 
 # GUI loop with image processing
 while(True):
@@ -57,6 +68,12 @@ while(True):
 
     if key & 0xFF == ord('t'):
         if type(template) == int:
+            init_pos_a = [arm.position(0), arm.position(1), arm.position(2)]
+
+            if devtype == 'SM5':
+                init_pos_m = [platform.position(0), platform.position(1), microscope.getPosition()]
+            else:
+                init_pos_m = [platform.position(0), platform.position(1), platform.position(2)]
             #template = frame[height / 2 - 20:height / 2 + 20, width / 2 - 20:width / 2 + 20]
             template = get_template(frame)
             cv2.imshow('template', template)
@@ -75,6 +92,17 @@ while(True):
         frame = getImg(devtype, microscope, cv2cap=cap, update=1)
         cv2.imshow('after', frame)
         cv2.waitKey(1)
+
+    if key & 0xFF == ord('p'):
+        pos = matrix('0.; 0.; 0.')
+        pos[0, 0] = microscope.position(0) - init_pos_m[0]
+        pos[1, 0] = microscope.position(1) - init_pos_m[1]
+        if devtype == 'SM5':
+            pos[2, 0] = microscope.getPosition() - init_pos_m[2]
+        else:
+            pos[2, 0] = microscope.position(2) - init_pos_m[2]
+        X = M_inv*pos
+        arm.absolute_move_group([init_pos_a[0]+alpha[0]*X[0], init_pos_a[1]+alpha[1]*X[1], init_pos_a[2]+alpha[2]*X[2]], [0, 1, 2])
 
 
     # Tracking while moving
