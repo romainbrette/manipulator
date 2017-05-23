@@ -80,7 +80,6 @@ def focus_track(devtype, microscope, arm, template, step, axis, alpha, um_px, es
 
     # Update the estimated move to do for a move of 1 um of the arm
     estim += float(estim_temp)/float(step)
-    print estim
     loc = [estim_loc[i] + (loc[i]-initloc[i])*um_px/float(step) for i in range(2)]
 
     return estim, loc, frame

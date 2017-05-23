@@ -30,7 +30,7 @@ calibrate = 0
 calibrate_succeeded = 0
 step = 0
 nstep = 1
-maxnstep = 7
+maxnstep = 8
 track_step = 2.
 estim = 0.
 estloc = [0., 0.]
@@ -111,7 +111,6 @@ while 1:
             # Determination of um_px should be done with a move of the platform greater than the (total) ones of the arm
             # Thus the calibration would be accurate
             um_px = 100./((dx**2 + dy**2)**0.5)
-            print um_px
             platform.relative_move(-100, 0)
 
             frame, img = getImg(devtype, microscope, cv2cap=cap, update=1)
@@ -120,31 +119,9 @@ while 1:
 
             step += 1
 
-        elif step == 1:
-
-            platform.relative_move(50, 1)
-            frame, img = getImg(devtype, microscope, cv2cap=cap, update=1)
-
-            cv2.imshow('Camera', frame)
-            cv2.waitKey(1)
-
-            _, _, loc = templatematching(img, template[len(template)/2])
-            dx = loc[0] - x_init
-            dy = loc[1] - y_init
-            # Determination of um_px should be done with a move of the platform greater than the (total) ones of the arm
-            # Thus the calibration would be accurate
-            um_px = 50./((dx**2 + dy**2)**0.5)
-            print um_px
-            platform.relative_move(-50, 1)
-
-            frame, img = getImg(devtype, microscope, cv2cap=cap, update=1)
-            cv2.imshow('Camera', frame)
-            cv2.waitKey(1)
-            step += 1
-
             print 'step 0 done'
 
-        elif step == 2:
+        elif step == 1:
 
             # calibrate arm x axis
             estim, estloc, frame = focus_track(devtype, microscope, arm, template, track_step, 0, alpha, um_px, estim, estloc, cap)
@@ -180,7 +157,7 @@ while 1:
             else:
                 nstep += 1
                 track_step *= 2
-        elif step == 3:
+        elif step == 2:
             # calibrate arm y axis
             estim, estloc, frame = focus_track(devtype, microscope, arm, template, track_step, 1, alpha, um_px, estim, estloc, cap)
             #frame, img = getImg(devtype, microscope, cv2cap=cap, update=1)
@@ -221,7 +198,7 @@ while 1:
                 nstep += 1
                 track_step *= 2
 
-        elif step == 4:
+        elif step == 3:
             # calibrate arm z axis
             estim, estloc, frame = focus_track(devtype, microscope, arm, template, track_step, 2, alpha, um_px, estim, estloc, cap)
             #frame, img = getImg(devtype, microscope, cv2cap=cap, update=1)
@@ -244,6 +221,8 @@ while 1:
                 nstep = 1
                 track_step = 2.
                 estloc = [0., 0.]
+                arm.absolute_move_group(init_pos_a, [0, 1, 2])
+                microscope.absolute_move_group(init_pos_m, [0, 1, 2])
                 frame, img = getImg(devtype, microscope, cv2cap=cap, update=1)
                 cv2.imshow('Camera', frame)
                 cv2.waitKey(1)
@@ -255,7 +234,7 @@ while 1:
                 nstep += 1
                 track_step *= 2
 
-        elif step == 5:
+        elif step == 4:
             print M
             M_inv = inv(M)
             print M_inv
@@ -264,16 +243,16 @@ while 1:
             print 'Calibration finished'
 
     # Our operations on the frame come here
-    if type(template) == int:
+    #if type(template) == int:
         # Display a rectangle where the template will be taken
-        frame = disp_template_zone(frame)
-    else:
+    frame = disp_template_zone(frame)
+    #else:
         # Display a rectangle at the template matched location
-        res, maxval, maxloc = templatematching(frame, template[len(template)/2])
+        #res, maxval, maxloc = templatematching(frame, template[len(template)/2])
         # print maxval
-        if res:
-            x, y = maxloc[:2]
-            cv2.rectangle(frame, (x, y), (x + template[len(template)/2].shape[1], y + template[len(template)/2].shape[0]), (0, 255, 0))
+        #if res:
+            #x, y = maxloc[:2]
+            #cv2.rectangle(frame, (x, y), (x + template[len(template)/2].shape[1], y + template[len(template)/2].shape[0]), (0, 255, 0))
 
     # Reversing the frame, FIND SOMETHING SO IT WORKS WITH TEMPLATE (REVERSE TEMPLATE ?)
     #frame = cv2.flip(frame, 2)
