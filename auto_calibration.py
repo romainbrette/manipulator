@@ -164,7 +164,7 @@ while 1:
 
                 # Update transformation matrix (Jacobian)
                 M[0, 0] = x
-                M[1, 0] = y
+                M[1, 0] = -y
                 M[2, 0] = estim
 
                 # Resetting values used in calibration for the calibration of next axis
@@ -200,7 +200,7 @@ while 1:
                 x, y = estloc[:2]
 
                 M[0, 1] = x
-                M[1, 1] = y
+                M[1, 1] = -y
 
                 M[2, 1] = estim
 
@@ -235,7 +235,7 @@ while 1:
                 x, y = estloc[:2]
 
                 M[0, 2] = x
-                M[1, 2] = y
+                M[1, 2] = -y
                 M[2, 2] = estim
 
                 estim = 0
