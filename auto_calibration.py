@@ -27,7 +27,7 @@ cv2.namedWindow('Camera', flags=cv2.WINDOW_NORMAL)
 # Booleans for tracking mode and existence of the template image for autofocus
 template = 0
 calibrate = 0
-calibrate_succeded = 0
+calibrate_succeeded = 0
 step = 0
 nstep = 1
 maxnstep = 7
@@ -35,7 +35,7 @@ track_step = 2.
 estim = 0.
 estloc = [0., 0.]
 alpha = [1., -1., 1.]
-M = matrix('0. 0. 0.; 0. 0. 0.,; 0. 0. 0.')
+M = matrix('0. 0. 0.; 0. 0. 0.; 0. 0. 0.')
 
 # GUI loop with image processing
 while 1:
@@ -65,12 +65,12 @@ while 1:
 
     if key & 0xFF == ord('b'):
         calibrate ^= 1
-        calibrate_succeded = 0
+        calibrate_succeeded = 0
         template = 0
         step = 0
 
     if key & 0xFF == ord('p'):
-        if calibrate_succeded:
+        if calibrate_succeeded:
             pos = matrix('0.; 0.; 0.')
             pos[0, 0] = microscope.position(0) - init_pos_m[0]
             pos[1, 0] = microscope.position(1) - init_pos_m[1]
@@ -105,19 +105,13 @@ while 1:
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
 
-            step += 1
-
-        elif step == 1:
-            frame, img, cap = getImg(devtype, microscope, init_pos_m[2], cv2cap=cap)
-            cv2.imshow('Camera', frame)
-            cv2.waitKey(1)
             _, _, loc = templatematching(img, template[len(template)/2])
             dx = loc[0] - x_init
             dy = loc[1] - y_init
             # Determination of um_px should be done with a move of the platform greater than the (total) ones of the arm
             # Thus the calibration would be accurate
             um_px = 100./((dx**2 + dy**2)**0.5)
-
+            print um_px
             platform.relative_move(-100, 0)
 
             frame, img, cap = getImg(devtype, microscope, init_pos_m[2], cv2cap=cap)
@@ -125,6 +119,29 @@ while 1:
             cv2.waitKey(1)
 
             step += 1
+
+        elif step == 1:
+
+            platform.relative_move(100, 1)
+            frame, img, cap = getImg(devtype, microscope, init_pos_m[2], cv2cap=cap)
+
+            cv2.imshow('Camera', frame)
+            cv2.waitKey(1)
+
+            _, _, loc = templatematching(img, template[len(template)/2])
+            dx = loc[0] - x_init
+            dy = loc[1] - y_init
+            # Determination of um_px should be done with a move of the platform greater than the (total) ones of the arm
+            # Thus the calibration would be accurate
+            um_px = 100./((dx**2 + dy**2)**0.5)
+            print um_px
+            platform.relative_move(-100, 1)
+
+            frame, img, cap = getImg(devtype, microscope, init_pos_m[2], cv2cap=cap)
+            cv2.imshow('Camera', frame)
+            cv2.waitKey(1)
+            step += 1
+            calibration = 0
 
             print 'step 0 done'
 
@@ -173,7 +190,7 @@ while 1:
             #_, dep, _, frame, cap = focus(devtype, microscope, template, cap)
             #cv2.imshow('Camera', frame)
             #cv2.waitKey(1)
-            #estim += float(dep) / track_step
+            #estim += float(dep)/track_step
 
             if nstep == maxnstep:
 
@@ -213,7 +230,7 @@ while 1:
             #_, dep, _, frame, cap = focus(devtype, microscope, template, cap)
             #cv2.imshow('Camera', frame)
             #cv2.waitKey(1)
-            #estim += float(dep) / track_step
+            #estim += float(dep)/track_step
             if nstep == maxnstep:
 
                 x, y = estloc[:2]
