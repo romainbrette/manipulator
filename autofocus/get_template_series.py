@@ -47,7 +47,7 @@ def get_template_series(devtype, microscope, nb_images, cap):
         template_series += [img]
         #cv2.imwrite('Template_nb{n}.jpg'.format(n=k), img)
 
-    _, _ = getImg(devtype, microscope, pos, cap)
+    _ = getImg(devtype, microscope, pos, cap)
 
     return template_series
 

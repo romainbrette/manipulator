@@ -213,7 +213,7 @@ while 1:
                 microscope.absolute_move_group(init_pos_m, [0, 1, 2])
                 frame = getImg(devtype, microscope, cv2cap=cap, update=1)
                 cv2.imshow('Camera', frame)
-                cv2.waitKey(10)
+                cv2.waitKey(1000)
 
                 step += 1
 
