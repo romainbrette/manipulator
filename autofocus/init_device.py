@@ -8,7 +8,7 @@ def init_device(devtype):
     if devtype == 'SM5':
         try:
             dev = LuigsNeumann_SM5('COM3')
-            cap = camera_init()
+            cap = camera_init(devtype)
             cap.startContinuousSequenceAcquisition(1)
             devmic = Leica()
             microscope = XYMicUnit(dev, devmic, [7, 8])

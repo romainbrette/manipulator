@@ -12,7 +12,7 @@ from numpy import matrix
 from numpy.linalg import inv
 
 # Type of used controller, either 'SM5' or 'SM10 for L&N SM-5 or L&N SM-10
-devtype = 'SM10'
+devtype = 'SM5'
 
 # Initializing the device, camera and microscope according to the used controller
 dev, microscope, cap = init_device(devtype)
@@ -275,9 +275,7 @@ while 1:
     frame = disp_template_zone(frame)
     # TODO: reverse frame along x and y axis, carefull might also need to reverse template images
 
-    if isinstance(frame, np.ndarray):
-        # Display the resulting frame
-        cv2.imshow('Camera', frame/(1.0 * frame.max()))
+    cv2.imshow('Camera', frame)
     cv2.waitKey(1)
 
 # When everything done, release the capture

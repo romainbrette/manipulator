@@ -25,7 +25,7 @@ def get_template_series(devtype, microscope, nb_images, cap):
             weight += [bin_edge.max()]
 
     index = weight.index(max(weight))
-    index = 5
+    index = 3
     j = index%3
     i = index//3
 
@@ -45,7 +45,6 @@ def get_template_series(devtype, microscope, nb_images, cap):
         height, width = img.shape[:2]
         img = img[i * height / 4:height / 2 + i * height / 4, j * width / 4:width / 2 + j * width / 4]
         template_series += [img]
-        #cv2.imwrite('Template_nb{n}.jpg'.format(n=k), img)
 
     _ = getImg(devtype, microscope, pos, cap)
 

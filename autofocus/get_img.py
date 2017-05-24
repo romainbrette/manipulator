@@ -32,10 +32,8 @@ def getImg(devtype, microscope, z=None, cv2cap=None, update=0):
 
         if cv2cap.getRemainingImageCount() > 0:
 
-            if update:
-                frame = cv2cap.getLastImage()
-
             frame = cv2cap.getLastImage()
+            frame = frame/(1.0*frame.max())
 
     elif devtype == 'SM10':
 
