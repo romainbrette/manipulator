@@ -27,7 +27,6 @@ def camera_init():
     # To get the properties you can set on the camera:
     # print mmc.getDevicePropertyNames('Camera')
 
-
     mmc.setCameraDevice('Camera')
     mmc.setExposure(15)
 

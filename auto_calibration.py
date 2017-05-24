@@ -17,9 +17,8 @@ devtype = 'SM10'
 # Initializing the device, camera and microscope according to the used controller
 dev, microscope, cap = init_device(devtype)
 
-# Device controlling the used arm and platform
+# Device controlling the used arm and microscope
 arm = XYZUnit(dev, [1, 2, 3])
-platform = XYZUnit(dev, [7, 8, 9])
 
 # Naming the live camera window
 cv2.namedWindow('Camera', flags=cv2.WINDOW_NORMAL)
@@ -58,7 +57,7 @@ while 1:
 
     # Capture a frame from video
     if devtype == 'SM5':
-        buf = microscope.getLastImage()
+        buf = cap.getLastImage()
 
     frame = getImg(devtype, microscope, cv2cap=cap)
 
@@ -90,7 +89,7 @@ while 1:
             pos[0, 0] = microscope.position(0) - init_pos_m[0]
             pos[1, 0] = microscope.position(1) - init_pos_m[1]
             if devtype == 'SM5':
-                pos[2, 0] = microscope.getPosition() - init_pos_m[2]
+                pos[2, 0] = microscope.position(2) - init_pos_m[2]
             else:
                 pos[2, 0] = microscope.position(2) - init_pos_m[2]
             X = M_inv*pos
@@ -100,13 +99,13 @@ while 1:
 
     if calibrate:
         if step == 0:
-            # Saving initial position of the arm and the platform/microscope
+            # Saving initial position of the arm and the microscope
             init_pos_a = [arm.position(0), arm.position(1), arm.position(2)]
 
             if devtype == 'SM5':
-                init_pos_m = [platform.position(0), platform.position(1), microscope.getPosition()]
+                init_pos_m = [microscope.position(0), microscope.position(1), microscope.position(2)]
             else:
-                init_pos_m = [platform.position(0), platform.position(1), platform.position(2)]
+                init_pos_m = [microscope.position(0), microscope.position(1), microscope.position(2)]
 
             # Get a series of template images for auto focus
             template = get_template_series(devtype, microscope, 5, cap)
@@ -115,10 +114,10 @@ while 1:
             _, _, loc = templatematching(frame, template[len(template)/2])
             x_init, y_init = loc[:2]
 
-            # Getting the ratio um per pixels by moving the platform by 100 um along x axis:
+            # Getting the ratio um per pixels by moving the microscope by 100 um along x axis:
 
-            # Moving the platform
-            platform.relative_move(100, 0)
+            # Moving the microscope
+            microscope.relative_move(100, 0)
 
             # Refreshing the frame after the move
             frame = getImg(devtype, microscope, cv2cap=cap, update=1)
@@ -130,12 +129,12 @@ while 1:
             dx = loc[0] - x_init
             dy = loc[1] - y_init
 
-            # Determination of um_px should be done with a move of the platform greater than the (total) ones of the arm
+            # Determination of um_px should be done with a move of the microscope greater than the (total) ones of the arm
             # Thus the calibration would be accurate
             um_px = 100./((dx**2 + dy**2)**0.5)
 
-            # Resetting position of platform
-            platform.relative_move(-100, 0)
+            # Resetting position of microscope
+            microscope.relative_move(-100, 0)
 
             # Refreshing frame
             frame = getImg(devtype, microscope, cv2cap=cap, update=1)
@@ -159,7 +158,7 @@ while 1:
                 # When the moves are finished:
                 # Accuracy along axis = total displacement +- 1um = 2**(maxnstep-1)-2 +-1
 
-                # Depack calibration along axis x and y of the platform
+                # Depack calibration along axis x and y of the microscope
                 x, y = estloc[:2]
 
                 # Update transformation matrix (Jacobian)
@@ -173,7 +172,7 @@ while 1:
                 nstep = 1
                 estloc = [0., 0.]
 
-                # Resetting position of arm and platform so no error gets to the next axis calibration
+                # Resetting position of arm and microscope so no error gets to the next axis calibration
                 arm.absolute_move_group(init_pos_a, [0, 1, 2])
                 microscope.absolute_move_group(init_pos_m, [0, 1, 2])
 
@@ -280,8 +279,9 @@ while 1:
     # Reversing the frame, FIND SOMETHING SO IT WORKS WITH TEMPLATE (REVERSE TEMPLATE ?)
     #frame = cv2.flip(frame, 2)
 
-    # Display the resulting frame
-    cv2.imshow('Camera', frame)
+    if isinstance(frame, np.ndarray):
+        # Display the resulting frame
+        cv2.imshow('Camera', frame/(1.0 * frame.max()))
     cv2.waitKey(1)
 
 # When everything done, release the capture

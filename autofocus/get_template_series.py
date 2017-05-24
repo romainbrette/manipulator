@@ -30,7 +30,7 @@ def get_template_series(devtype, microscope, nb_images, cap):
     i = index//3
 
     if devtype == 'SM5':
-        pos = microscope.getPosition()
+        pos = microscope.position(2)
     elif devtype == 'SM10':
         pos = microscope.position(2)
     else:

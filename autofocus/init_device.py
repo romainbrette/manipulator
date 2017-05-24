@@ -3,13 +3,15 @@ from devices import *
 from serial import SerialException
 from Hamamatsu_camera import *
 
+
 def init_device(devtype):
     if devtype == 'SM5':
         try:
-            dev = None
-            cap = None
-            microscope = camera_init()
-            microscope.startContinuousSequenceAcquisition(1)
+            dev = LuigsNeumann_SM5()
+            cap = camera_init()
+            cap.startContinuousSequenceAcquisition(1)
+            devmic = Leica()
+            microscope = XYMicUnit(dev, devmic, [7, 8])
         except Warning:
             raise SerialException("L&N SM-5 not found.")
     elif devtype == 'SM10':

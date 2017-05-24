@@ -25,17 +25,17 @@ def getImg(devtype, microscope, z=None, cv2cap=None, update=0):
 
         # Move the microscope if an height has been specify
         if z:
-            microscope.setPosition(z)
+            microscope.absolute_move(z, 2)
             update = 1
 
         # Capture frame
 
-        if microscope.getRemainingImageCount() > 0:
+        if cv2cap.getRemainingImageCount() > 0:
 
             if update:
-                frame = microscope.getLastImage()
+                frame = cv2cap.getLastImage()
 
-            frame = microscope.getLastImage()
+            frame = cv2cap.getLastImage()
 
     elif devtype == 'SM10':
 

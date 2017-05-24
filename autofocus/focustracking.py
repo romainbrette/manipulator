@@ -18,7 +18,7 @@ def focus_track(devtype, microscope, arm, template, step, axis, alpha, um_px, es
     """
 
     if devtype == 'SM5':
-        pos = microscope.getPosition()
+        pos = microscope.position(2)
     else:
         pos = microscope.position(2)
 
