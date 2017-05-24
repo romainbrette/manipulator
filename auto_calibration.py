@@ -46,7 +46,7 @@ track_step = 2.
 estim = [0., 0., 0.]
 
 # Orientation
-alpha = [1., -1., 1.]
+alpha = [-1., 1., 1.]
 
 # Initializing transformation matrix (Jacobian)
 M = matrix('0. 0. 0.; 0. 0. 0.; 0. 0. 0.')
@@ -108,6 +108,9 @@ while 1:
         else:
             print 'Calibration must be done beforehand.'
 
+    if key & 0xFF == ord('a'):
+        microscope.relative_move(-100, 0)
+
     if calibrate:
         if step == 0:
             # Saving initial position of the arm and the microscope
@@ -129,6 +132,7 @@ while 1:
 
             # Moving the microscope
             microscope.relative_move(100, 0)
+            cv2.waitKey(1000)
 
             # Refreshing the frame after the move
             frame = getImg(devtype, microscope, cv2cap=cap, update=1)
@@ -145,6 +149,7 @@ while 1:
 
             # Resetting position of microscope
             microscope.relative_move(-100, 0)
+            cv2.waitKey(1000)
 
             # Refreshing frame
             frame = getImg(devtype, microscope, cv2cap=cap, update=1)
@@ -162,6 +167,7 @@ while 1:
             estim, frame = focus_track(devtype, microscope, arm, template, track_step, 0, alpha, um_px, estim, cap)
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
+            print estim
 
             if nstep == maxnstep:
 
@@ -169,9 +175,9 @@ while 1:
                 # Accuracy along z axis = total displacement +- 1um = 2**(maxnstep-1)-2 +-1
 
                 # Update transformation matrix (Jacobian)
-                M[0, 0] = estim[0]
-                M[1, 0] = -estim[1]
-                M[2, 0] = estim[2]
+                M[0, 0] = alpha[0]*estim[0]
+                M[1, 0] = alpha[1]*estim[1]
+                M[2, 0] = alpha[2]*estim[2]
 
                 # Resetting values used in calibration for the calibration of next axis
                 estim = [0., 0., 0.]
@@ -182,6 +188,8 @@ while 1:
                 for i in range(3):
                     arm.absolute_move(init_pos_a[i], i)
                     microscope.absolute_move(init_pos_m[i], i)
+
+                cv2.waitKey(1000)
 
                 # Update the frame
                 frame = getImg(devtype, microscope, cv2cap=cap, update=1)
@@ -200,12 +208,13 @@ while 1:
             estim, frame = focus_track(devtype, microscope, arm, template, track_step, 1, alpha, um_px, estim, cap)
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
+            print estim
 
             if nstep == maxnstep:
 
-                M[0, 0] = estim[0]
-                M[1, 0] = -estim[1]
-                M[2, 0] = estim[2]
+                M[0, 1] = alpha[0]*estim[0]
+                M[1, 1] = alpha[1]*estim[1]
+                M[2, 1] = alpha[2]*estim[2]
 
                 estim = [0., 0., 0.]
                 nstep = 1
@@ -215,6 +224,8 @@ while 1:
                 for i in range(3):
                     arm.absolute_move(init_pos_a[i], i)
                     microscope.absolute_move(init_pos_m[i], i)
+
+                cv2.waitKey(1000)
 
                 frame = getImg(devtype, microscope, cv2cap=cap, update=1)
                 cv2.imshow('Camera', frame)
@@ -234,12 +245,13 @@ while 1:
 
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
+            print estim
 
             if nstep == maxnstep:
 
-                M[0, 0] = estim[0]
-                M[1, 0] = -estim[1]
-                M[2, 0] = estim[2]
+                M[0, 2] = alpha[0]*estim[0]
+                M[1, 2] = alpha[1]*estim[1]
+                M[2, 2] = alpha[2]*estim[2]
 
                 estim = [0., 0., 0.]
                 nstep = 1
@@ -248,6 +260,8 @@ while 1:
                 for i in range(3):
                     arm.absolute_move(init_pos_a[i], i)
                     microscope.absolute_move(init_pos_m[i], i)
+
+                cv2.waitKey(1000)
 
                 frame = getImg(devtype, microscope, cv2cap=cap, update=1)
                 cv2.imshow('Camera', frame)

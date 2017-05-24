@@ -4,6 +4,7 @@ Not scale nor rotation invariant
 """
 
 import cv2
+import numpy as np
 
 __all__ = ['templatematching']
 

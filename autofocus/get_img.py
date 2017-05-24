@@ -4,6 +4,7 @@ Encode the frame to make it usable for some functions (cornerHarris)
 """
 
 import cv2
+import numpy as np
 
 __all__ = ['getImg']
 
@@ -26,6 +27,7 @@ def getImg(devtype, microscope, z=None, cv2cap=None, update=0):
         # Move the microscope if an height has been specify
         if z:
             microscope.absolute_move(z, 2)
+            cv2.waitKey(1000)
             update = 1
 
         # Capture frame
@@ -33,7 +35,7 @@ def getImg(devtype, microscope, z=None, cv2cap=None, update=0):
         if cv2cap.getRemainingImageCount() > 0:
 
             frame = cv2cap.getLastImage()
-            frame = frame/(1.0*frame.max())
+            frame = np.float32(frame/(1.0*frame.max()))
 
     elif devtype == 'SM10':
 
@@ -66,7 +68,7 @@ if __name__ == '__main__':
         print "L&N SM-5 not found. Falling back on fake device."
         dev = FakeDevice()
 
-    mmc = camera_init()
+    mmc = camera_init('SM5')
     mmc.startContinuousSequenceAcquisition(1)
     cv2.namedWindow('Camera')
     while 1:
