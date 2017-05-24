@@ -12,15 +12,17 @@ sys.path.append('C:\\Program Files\\Micro-Manager-1.4')
 __all__ = ['camera_init', 'camera_unload']
 
 
-def camera_init():
+def camera_init(devtype):
     """
     Initializing the camera/microscope
     :return: mmc: microscope device, can be controlled using micro manager methods (see HAMAMATSU_CAMERA_METHODS.txt)
     """
-
     print "Setting up camera and microscope...",
     mmc = MMCorePy.CMMCore()
-    mmc.loadDevice('Camera', 'HamamatsuHam', 'HamamatsuHam_DCAM')
+
+    if devtype == 'SM5':
+        mmc.loadDevice('Camera', 'HamamatsuHam', 'HamamatsuHam_DCAM')
+
     mmc.initializeDevice('Camera')
     print "done"
 
