@@ -104,7 +104,7 @@ while 1:
                 pos[2, 0] = microscope.position(2) - init_pos_m[2]
             X = M_inv*pos
             for i in range(3):
-                arm.absolute_move(init_pos_a[i]+alpha[i]*X[i], i)
+                arm.absolute_move(init_pos_a[i]+X[i], i)
         else:
             print 'Calibration must be done beforehand.'
 
