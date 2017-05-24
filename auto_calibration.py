@@ -51,6 +51,7 @@ alpha = [1., -1., 1.]
 
 # Initializing transformation matrix (Jacobian)
 M = matrix('0. 0. 0.; 0. 0. 0.; 0. 0. 0.')
+M_inv = M
 
 # GUI loop with image processing
 while 1:
@@ -73,7 +74,7 @@ while 1:
     if key & 0xFF == ord('f'):
         try:
             _, _, _, frame = focus(devtype, microscope, template, cap)
-            print 'Autofocus done.'
+            print 'Auto-focus done.'
         except TypeError:
             print 'Template image has not been taken yet.'
 
@@ -93,7 +94,8 @@ while 1:
             else:
                 pos[2, 0] = microscope.position(2) - init_pos_m[2]
             X = M_inv*pos
-            arm.absolute_move_group([init_pos_a[0]+alpha[0]*X[0], init_pos_a[1]+alpha[1]*X[1], init_pos_a[2]+alpha[2]*X[2]], [0, 1, 2])
+            for i in range(3):
+                arm.absolute_move(init_pos_a[i]+alpha[i]*X[i], i)
         else:
             print 'Calibration must be done beforehand.'
 
@@ -129,8 +131,7 @@ while 1:
             dx = loc[0] - x_init
             dy = loc[1] - y_init
 
-            # Determination of um_px should be done with a move of the microscope greater than the (total) ones of the arm
-            # Thus the calibration would be accurate
+            # Determination of um_px
             um_px = 100./((dx**2 + dy**2)**0.5)
 
             # Resetting position of microscope
@@ -149,14 +150,15 @@ while 1:
             # calibrate arm x axis using exponential moves:
             # moves the arm, recenter the tip and refocus.
             # displacements are saved
-            estim, estloc, frame = focus_track(devtype, microscope, arm, template, track_step, 0, alpha, um_px, estim, estloc, cap)
+            estim, estloc, frame = focus_track(devtype, microscope, arm, template, track_step, 0, alpha, um_px, estim,
+                                               estloc, cap)
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
 
             if nstep == maxnstep:
 
                 # When the moves are finished:
-                # Accuracy along axis = total displacement +- 1um = 2**(maxnstep-1)-2 +-1
+                # Accuracy along z axis = total displacement +- 1um = 2**(maxnstep-1)-2 +-1
 
                 # Depack calibration along axis x and y of the microscope
                 x, y = estloc[:2]
@@ -173,8 +175,9 @@ while 1:
                 estloc = [0., 0.]
 
                 # Resetting position of arm and microscope so no error gets to the next axis calibration
-                arm.absolute_move_group(init_pos_a, [0, 1, 2])
-                microscope.absolute_move_group(init_pos_m, [0, 1, 2])
+                for i in range(3):
+                    arm.absolute_move(init_pos_a[i], i)
+                    microscope.absolute_move(init_pos_m[i], i)
 
                 # Update the frame
                 frame = getImg(devtype, microscope, cv2cap=cap, update=1)
@@ -190,7 +193,8 @@ while 1:
 
         elif step == 2:
             # calibrate arm y axis
-            estim, estloc, frame = focus_track(devtype, microscope, arm, template, track_step, 1, alpha, um_px, estim, estloc, cap)
+            estim, estloc, frame = focus_track(devtype, microscope, arm, template, track_step, 1, alpha, um_px, estim,
+                                               estloc, cap)
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
 
@@ -208,8 +212,9 @@ while 1:
                 track_step = 2.
                 estloc = [0., 0.]
 
-                arm.absolute_move_group(init_pos_a, [0, 1, 2])
-                microscope.absolute_move_group(init_pos_m, [0, 1, 2])
+                for i in range(3):
+                    arm.absolute_move(init_pos_a[i], i)
+                    microscope.absolute_move(init_pos_m[i], i)
                 frame = getImg(devtype, microscope, cv2cap=cap, update=1)
                 cv2.imshow('Camera', frame)
                 cv2.waitKey(1000)
@@ -224,7 +229,8 @@ while 1:
 
         elif step == 3:
             # calibrate arm z axis
-            estim, estloc, frame = focus_track(devtype, microscope, arm, template, track_step, 2, alpha, um_px, estim, estloc, cap)
+            estim, estloc, frame = focus_track(devtype, microscope, arm, template, track_step, 2, alpha, um_px, estim,
+                                               estloc, cap)
 
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
@@ -242,8 +248,9 @@ while 1:
                 track_step = 2.
                 estloc = [0., 0.]
 
-                arm.absolute_move_group(init_pos_a, [0, 1, 2])
-                microscope.absolute_move_group(init_pos_m, [0, 1, 2])
+                for i in range(3):
+                    arm.absolute_move(init_pos_a[i], i)
+                    microscope.absolute_move(init_pos_m[i], i)
 
                 frame = getImg(devtype, microscope, cv2cap=cap, update=1)
                 cv2.imshow('Camera', frame)
@@ -266,18 +273,9 @@ while 1:
             print 'Calibration finished'
 
     # Our operations on the frame come here
-    #if type(template) == int:
+
     # Display a rectangle where the template will be taken
     frame = disp_template_zone(frame)
-    #else:
-        # Display a rectangle at the template matched location
-        #res, maxval, maxloc = templatematching(frame, template[len(template)/2])
-        #if res:
-            #x, y = maxloc[:2]
-            #cv2.rectangle(frame, (x, y), (x + template[len(template)/2].shape[1], y + template[len(template)/2].shape[0]), (0, 255, 0))
-
-    # Reversing the frame, FIND SOMETHING SO IT WORKS WITH TEMPLATE (REVERSE TEMPLATE ?)
-    #frame = cv2.flip(frame, 2)
 
     if isinstance(frame, np.ndarray):
         # Display the resulting frame
