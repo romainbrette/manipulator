@@ -24,7 +24,7 @@ class LuigsNeumann_SM5(SerialDevice):
         self.port.bytesize = serial.EIGHTBITS
         self.port.parity=serial.PARITY_NONE
         self.port.stopbits=serial.STOPBITS_ONE
-        self.port.timeout=1. #None # blocking
+        self.port.timeout=None # blocking
 
         self.port.open()
         self.established_time = time.time()
@@ -58,8 +58,10 @@ class LuigsNeumann_SM5(SerialDevice):
 
         expected = binascii.unhexlify('06' + ack_ID)
 
+        print 1
         self.port.write(sendbytes)
 
+        print 2
         answer = self.port.read(nbytes_answer+6)
 
         if answer[:len(expected)] != expected :
