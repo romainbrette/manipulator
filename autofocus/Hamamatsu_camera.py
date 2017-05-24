@@ -5,9 +5,9 @@ Use Micro Manager Py
 
 import time
 import sys
-
-sys.path.append('C:\\Program Files\\Micro-Manager-1.4')
 import MMCorePy
+sys.path.append('C:\\Program Files\\Micro-Manager-1.4')
+
 
 __all__ = ['camera_init', 'camera_unload']
 

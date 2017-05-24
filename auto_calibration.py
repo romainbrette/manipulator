@@ -17,6 +17,8 @@ devtype = 'SM10'
 # Initializing the device, camera and microscope according to the used controller
 dev, microscope, cap = init_device(devtype)
 
+exposure = 15
+
 # Device controlling the used arm and microscope
 arm = XYZUnit(dev, [1, 2, 3])
 
@@ -70,6 +72,16 @@ while 1:
     key = cv2.waitKey(1)
     if key & 0xFF == ord('q'):
         break
+
+    if key & 0xFF == ord('+'):
+        if devtype == 'SM5':
+            exposure += 1
+            cap.setExposure(exposure)
+
+    if key & 0xFF == ord('-'):
+        if devtype == 'SM5':
+            exposure -= 1
+            cap.setExposure(exposure)
 
     if key & 0xFF == ord('f'):
         try:
@@ -144,7 +156,7 @@ while 1:
 
             step += 1
 
-            print 'step 0 done'
+            print 'Calibrated platform'
 
         elif step == 1:
             # calibrate arm x axis using exponential moves:
@@ -185,7 +197,7 @@ while 1:
                 cv2.waitKey(10)
 
                 step += 1
-                print 'step 1 done'
+                print 'Calibrated x axis'
 
             else:
                 nstep += 1
@@ -215,13 +227,14 @@ while 1:
                 for i in range(3):
                     arm.absolute_move(init_pos_a[i], i)
                     microscope.absolute_move(init_pos_m[i], i)
+
                 frame = getImg(devtype, microscope, cv2cap=cap, update=1)
                 cv2.imshow('Camera', frame)
                 cv2.waitKey(1000)
 
                 step += 1
 
-                print 'step 2 done'
+                print 'Calibrated y axis'
 
             else:
                 nstep += 1
@@ -257,7 +270,7 @@ while 1:
                 cv2.waitKey(1)
 
                 step += 1
-                print 'step 3 done'
+                print 'Calibrated z axis'
 
             else:
                 nstep += 1
@@ -276,6 +289,7 @@ while 1:
 
     # Display a rectangle where the template will be taken
     frame = disp_template_zone(frame)
+    # TODO: reverse frame along x and y axis, carefull might also need to reverse template images
 
     if isinstance(frame, np.ndarray):
         # Display the resulting frame

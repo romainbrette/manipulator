@@ -7,7 +7,7 @@ from Hamamatsu_camera import *
 def init_device(devtype):
     if devtype == 'SM5':
         try:
-            dev = LuigsNeumann_SM5()
+            dev = LuigsNeumann_SM5('COM3')
             cap = camera_init()
             cap.startContinuousSequenceAcquisition(1)
             devmic = Leica()
