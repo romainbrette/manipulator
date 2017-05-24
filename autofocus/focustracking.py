@@ -12,7 +12,7 @@ import cv2
 __all__ = ['focus_track']
 
 
-def focus_track(devtype, microscope, arm, template, step, axis, alpha, um_px, estim=0, estim_loc=(0., 0.), cap=None):
+def focus_track(devtype, microscope, arm, template, step, axis, alpha, um_px, estim=(0., 0., 0.), cap=None):
     """
     Focus after a move of the arm
     """
@@ -36,7 +36,7 @@ def focus_track(devtype, microscope, arm, template, step, axis, alpha, um_px, es
 
     # Move the platform to center the tip
     for i in range(2):
-        microscope.relative_move(alpha[i]*estim_loc[i]*step, i)
+        microscope.relative_move(alpha[i]*estim[i]*step, i)
 
     # Update the frame.
     frame = getImg(devtype, microscope, cv2cap=cap, update=1)
@@ -44,7 +44,7 @@ def focus_track(devtype, microscope, arm, template, step, axis, alpha, um_px, es
     cv2.waitKey(1)
 
     # Move the microscope
-    frame = getImg(devtype, microscope, pos + estim * step, cv2cap=cap)
+    frame = getImg(devtype, microscope, pos + estim[2] * step, cv2cap=cap)
     cv2.imshow('Camera', frame)
     cv2.waitKey(5)
 
@@ -61,7 +61,7 @@ def focus_track(devtype, microscope, arm, template, step, axis, alpha, um_px, es
     cv2.waitKey(1)
 
     # Update the estimated move to do for a move of 1 um of the arm
-    estim += float(estim_temp)/float(step)
-    loc = [estim_loc[i] + (loc[i]-initloc[i])*um_px/float(step) for i in range(2)]
+    estim = [estim[i] + (loc[i]-initloc[i])*um_px/float(step) for i in range(2)]
+    estim[2] += float(estim_temp)/float(step)
 
-    return estim, loc, frame
+    return estim, frame

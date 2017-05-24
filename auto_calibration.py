@@ -42,11 +42,8 @@ maxnstep = 8
 # Initial displacement of the arm to do, in um
 track_step = 2.
 
-# Initial estimation (displacement z_microscope)/(displ moved axis), in um/um
-estim = 0.
-
-# Initial estimation (displacement x:y_microscope)/(displ moved axis), in um/um
-estloc = [0., 0.]
+# Initial estimation (displacement microscope)/(displ moved axis), in um/um
+estim = [0., 0., 0.]
 
 # Orientation
 alpha = [1., -1., 1.]
@@ -162,8 +159,7 @@ while 1:
             # calibrate arm x axis using exponential moves:
             # moves the arm, recenter the tip and refocus.
             # displacements are saved
-            estim, estloc, frame = focus_track(devtype, microscope, arm, template, track_step, 0, alpha, um_px, estim,
-                                               estloc, cap)
+            estim, frame = focus_track(devtype, microscope, arm, template, track_step, 0, alpha, um_px, estim, cap)
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
 
@@ -172,19 +168,15 @@ while 1:
                 # When the moves are finished:
                 # Accuracy along z axis = total displacement +- 1um = 2**(maxnstep-1)-2 +-1
 
-                # Depack calibration along axis x and y of the microscope
-                x, y = estloc[:2]
-
                 # Update transformation matrix (Jacobian)
-                M[0, 0] = x
-                M[1, 0] = -y
-                M[2, 0] = estim
+                M[0, 0] = estim[0]
+                M[1, 0] = -estim[1]
+                M[2, 0] = estim[2]
 
                 # Resetting values used in calibration for the calibration of next axis
-                estim = 0
+                estim = [0., 0., 0.]
                 track_step = 2.
                 nstep = 1
-                estloc = [0., 0.]
 
                 # Resetting position of arm and microscope so no error gets to the next axis calibration
                 for i in range(3):
@@ -205,21 +197,17 @@ while 1:
 
         elif step == 2:
             # calibrate arm y axis
-            estim, estloc, frame = focus_track(devtype, microscope, arm, template, track_step, 1, alpha, um_px, estim,
-                                               estloc, cap)
+            estim, frame = focus_track(devtype, microscope, arm, template, track_step, 1, alpha, um_px, estim, cap)
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
 
             if nstep == maxnstep:
 
-                x, y = estloc[:2]
+                M[0, 0] = estim[0]
+                M[1, 0] = -estim[1]
+                M[2, 0] = estim[2]
 
-                M[0, 1] = x
-                M[1, 1] = -y
-
-                M[2, 1] = estim
-
-                estim = 0
+                estim = [0., 0., 0.]
                 nstep = 1
                 track_step = 2.
                 estloc = [0., 0.]
@@ -242,24 +230,20 @@ while 1:
 
         elif step == 3:
             # calibrate arm z axis
-            estim, estloc, frame = focus_track(devtype, microscope, arm, template, track_step, 2, alpha, um_px, estim,
-                                               estloc, cap)
+            estim, frame = focus_track(devtype, microscope, arm, template, track_step, 2, alpha, um_px, estim, cap)
 
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
 
             if nstep == maxnstep:
 
-                x, y = estloc[:2]
+                M[0, 0] = estim[0]
+                M[1, 0] = -estim[1]
+                M[2, 0] = estim[2]
 
-                M[0, 2] = x
-                M[1, 2] = -y
-                M[2, 2] = estim
-
-                estim = 0
+                estim = [0., 0., 0.]
                 nstep = 1
                 track_step = 2.
-                estloc = [0., 0.]
 
                 for i in range(3):
                     arm.absolute_move(init_pos_a[i], i)
