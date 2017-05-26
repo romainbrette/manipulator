@@ -26,28 +26,8 @@ from os.path import expanduser
 home = expanduser("~")
 config_filename = home+'/config_manipulator.cfg'
 
-__all__ = ['MemoryFrame', 'MicroscopeFrame', 'ManipulatorFrame', 'ManipulatorApplication']
+__all__ = ['MicroscopeFrame', 'ManipulatorFrame', 'ManipulatorApplication']
 
-class MemoryFrame(Frame):
-    '''
-    A frame for saving/load current position in memory
-
-    TODO: merge this with the microscope frame?
-    '''
-    def __init__(self, master=None, name = '', unit = None, cnf={}, dev=None, **kw):
-        Frame.__init__(self, master, cnf, **kw)
-
-        self.unit = unit
-        self.name = StringVar(value = name)
-        Entry(self, textvariable = self.name).pack(side = LEFT)
-        Button(self, text="Store", command=self.store).pack(side = LEFT)
-        Button(self, text="Go", command=self.go).pack(side = LEFT)
-
-    def store(self):
-        self.unit.memory[self.name.get()] = self.unit.position()
-
-    def go(self):
-        self.unit.absolute_move(self.unit.memory[self.name.get()])
 
 class MicroscopeFrame(Frame):
     '''
@@ -64,9 +44,6 @@ class MicroscopeFrame(Frame):
 
         self.master = master
         self.unit = unit # XYZ unit
-
-        for i in range(nmemories):
-            MemoryFrame(self, name="Position "+str(i+1), unit=unit).pack()
 
         Button(self, text='Move to plane', command=self.move_to_plane).pack()
 
@@ -139,7 +116,7 @@ if __name__ == '__main__':
     root = Tk()
     root.title('Manipulator')
 
-    SM5 = True
+    SM5 = False
 
     try:
         if SM5:

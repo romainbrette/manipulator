@@ -194,6 +194,7 @@ class ManipulatorApplication(Frame):
     def select_plane(self):
         '''
         Selects a plane of interest with three points.
+        Perhas better done in simple_manipulator?
         '''
         if self.select_plane_status == -1:
             self.display_status('Move the stage and microscope to the first point in the plane and click again.')
