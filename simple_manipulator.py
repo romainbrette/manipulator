@@ -52,7 +52,7 @@ class MicroscopeFrame(Frame):
         '''
         Moves the focus to the plane of interest.
         '''
-        self.unit.absolute_move(self.plane.project(self.unit.position()), array([0.,0.,1.]))
+        self.unit.absolute_move(self.plane.project(self.unit.position(), array([0.,0.,1.])))
 
 class ManipulatorFrame(LabelFrame):
     '''
@@ -110,7 +110,7 @@ class ManipulatorApplication(Frame):
             frame.unit.M = cfg['M']
             frame.unit.Minv = cfg['Minv']
             frame.unit.x0 = cfg['x0']
-        self.plane = cfg_all['microscope'].get('plane', None)
+        self.frame_microscope.plane = cfg_all['microscope'].get('plane', None)
 
 if __name__ == '__main__':
     root = Tk()

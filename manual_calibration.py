@@ -221,7 +221,7 @@ if __name__ == '__main__':
     root.title('Manipulator')
     ndevices = 2
 
-    SM5 = True
+    SM5 = False
 
     try:
         if SM5:
