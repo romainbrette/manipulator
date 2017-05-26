@@ -13,6 +13,7 @@ from numpy import array, zeros, cross, dot
 from numpy.linalg import LinAlgError
 import pickle
 from serial import SerialException
+from geometry import *
 
 from os.path import expanduser
 home = expanduser("~")
@@ -125,8 +126,7 @@ class ManipulatorApplication(Frame):
             except KeyError: # not calibrated yet
                 print "Manipulator",i,"is not calibrated yet"
 
-        self.configuration['microscope']['plane_vector'] = self.plane_vector
-        self.configuration['microscope']['plane_offset'] = self.plane_offset
+        self.configuration['microscope']['plane'] = self.plane
 
         pickle.dump(self.configuration, open(config_filename, "wb"))
 
@@ -140,8 +140,7 @@ class ManipulatorApplication(Frame):
                 frame.unit.M = cfg['M']
                 frame.unit.Minv = cfg['Minv']
                 frame.unit.x0 = cfg['x0']
-            self.plane_vector = self.configuration['microscope'].get('plane_vector', array([0.,0.,0.]))
-            self.plane_offset = self.configuration['microscope'].get('plane_offset', 0.)
+            self.plane = self.configuration['microscope'].get('plane', None)
         except IOError:
             self.display_status("No configuration file.")
             # Initialization
@@ -194,7 +193,7 @@ class ManipulatorApplication(Frame):
     def select_plane(self):
         '''
         Selects a plane of interest with three points.
-        Perhas better done in simple_manipulator?
+        * Perhaps better done in simple_manipulator
         '''
         if self.select_plane_status == -1:
             self.display_status('Move the stage and microscope to the first point in the plane and click again.')
@@ -209,10 +208,7 @@ class ManipulatorApplication(Frame):
             self.select_plane_status = 2
         else:
             self.plane_x3 = self.stage.position()
-            # Calculate plane coordinates
-            vector = cross(self.plane_x2 - self.plane_x1, self.plane_x3 - self.plane_x1)
-            self.stage.memory['plane_vector'] = vector # maybe not the best way to do it
-            self.stage.memory['plane_offset'] = -dot(vector,self.plane_x1)
+            self.plane = Plane.from_points(self.plane_x1, self.plane_x2, self.plane_x3)
             self.display_status('Plane selection done.')
             self.select_plane_status = -1
 

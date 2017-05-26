@@ -18,6 +18,7 @@ TODO:
 '''
 from Tkinter import *
 from devices import *
+from geometry import *
 import pickle
 from serial import SerialException
 from numpy import array
@@ -51,7 +52,7 @@ class MicroscopeFrame(Frame):
         '''
         Moves the focus to the plane of interest.
         '''
-        pass
+        self.unit.absolute_move(self.plane.project(self.unit.position()), array([0.,0.,1.]))
 
 class ManipulatorFrame(LabelFrame):
     '''
@@ -109,8 +110,7 @@ class ManipulatorApplication(Frame):
             frame.unit.M = cfg['M']
             frame.unit.Minv = cfg['Minv']
             frame.unit.x0 = cfg['x0']
-        self.plane_vector = cfg_all['microscope'].get('plane_vector', array([0.,0.,0.]))
-        self.plane_offset = cfg_all['microscope'].get('plane_offset', 0.)
+        self.plane = cfg_all['microscope'].get('plane', None)
 
 if __name__ == '__main__':
     root = Tk()
