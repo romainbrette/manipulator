@@ -14,6 +14,8 @@ from numpy import zeros
 
 __all__ = ['LuigsNeumann_SM5']
 
+verbose = True
+
 class LuigsNeumann_SM5(SerialDevice):
     def __init__(self, name=None):
         # Note that the port name is arbitrary, it should be set or found out
@@ -24,7 +26,7 @@ class LuigsNeumann_SM5(SerialDevice):
         self.port.bytesize = serial.EIGHTBITS
         self.port.parity=serial.PARITY_NONE
         self.port.stopbits=serial.STOPBITS_ONE
-        self.port.timeout=None # blocking
+        self.port.timeout=0.1 #None is blocking; 0 is non blocking
 
         self.port.open()
         self.established_time = time.time()
@@ -36,8 +38,8 @@ class LuigsNeumann_SM5(SerialDevice):
         '''
         now = time.time()
         if now - self.established_time > 3:
-            self.established_time = now
             self.establish_connection()
+        self.established_time = now
 
         high, low = self.CRC_16(data,len(data))
 
@@ -58,19 +60,23 @@ class LuigsNeumann_SM5(SerialDevice):
 
         expected = binascii.unhexlify('06' + ack_ID)
 
-        print 1
         self.port.write(sendbytes)
 
-        print 2
         answer = self.port.read(nbytes_answer+6)
 
         if answer[:len(expected)] != expected :
-            warnings.warn('Did not get expected response for command with ID ' + ID)
+            warnings.warn('Did not get expected response for command with ID ' + ID +' ; resending')
+            # Resend
+            return self.send_command(ID, data, nbytes_answer, ack_ID)
 
         return answer[4:4+nbytes_answer]
 
     def establish_connection(self):
+        if verbose:
+            print "establishing connection"
         self.send_command('0400', [], 0, ack_ID='040b')
+        if verbose:
+            print "connection established"
 
     def position(self, axis):
         '''
@@ -126,6 +132,8 @@ class LuigsNeumann_SM5(SerialDevice):
 
 if __name__ == '__main__':
     sm5 = LuigsNeumann_SM5('COM3')
+
+    """
     print 'getting positions:'
 
     for ax in range(1, 9):
@@ -145,3 +153,19 @@ if __name__ == '__main__':
 
     print 'moving stage (2 axes)'
     sm5.relative_move_group([50, 50], [7, 8])
+    """
+
+    """
+    Apparently: with two successive absolute moves, the second
+    cancels the first. With two successive relative moves, a sort of random
+    result is obtained, probably because the second cancels the first at midcourse.
+    """
+
+    for i in range(5):
+        print sm5.position(1)
+        sm5.absolute_move(1000,1)
+        time.sleep(1)
+        print sm5.position(1)
+        sm5.absolute_move(1128,1)
+        print sm5.position(1)
+        time.sleep(1)

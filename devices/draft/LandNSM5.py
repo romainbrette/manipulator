@@ -396,3 +396,12 @@ class LandNSM5 :
 		crcHigh = ctypes.c_ubyte(crc>>8)
 		crcLow  = ctypes.c_ubyte(crc)
 		return (crcHigh.value,crcLow.value)
+
+if __name__ == '__main__':
+	dev = LandNSM5()
+	dev.establishConnection()
+	print dev.getPosition(1, 'x')
+	dev.goVariableFastToRelativePosition(1, 'x', 128)
+	time.sleep(2.)
+	dev.goVariableFastToRelativePosition(1, 'x', -128)
+	print dev.getPosition(1, 'x')
