@@ -2,7 +2,7 @@
 Camera GUI for LuigsNeumann_SM10 and SM5 to make an auto-calibration of an arm
 Requires OpenCV
 To begin the calibration, the user shall put the tip on focus at the center of the displayed red cross and press 'b'
-after calibration, press 'p' to center the tip in any position of the microscope (with some accuracy)
+after calibration, press 'p' to center the tip in any position of the microscope
 Auto focus using template matching by pressing 'f'
 Quit with key 'q'
 """
@@ -15,12 +15,10 @@ from numpy.linalg import inv
 devtype = 'SM5'
 
 # Initializing the device, camera and microscope according to the used controller
-dev, microscope, cap = init_device(devtype)
+dev, microscope, arm, cap = init_device(devtype, 'dev1')
 
+# Exposure for the camera when using MicroManager
 exposure = 15
-
-# Device controlling the used arm and microscope
-arm = XYZUnit(dev, [1, 2, 3])
 
 # Naming the live camera window
 cv2.namedWindow('Camera', flags=cv2.WINDOW_NORMAL)
@@ -46,7 +44,10 @@ track_step = 2.
 estim = [0., 0., 0.]
 
 # Orientation
-alpha = [-1., 1., 1.]
+if devtype == 'SM5':
+    alpha = [-1., 1., 1.]
+else:
+    alpha = [1., -1., 1.]
 
 # Initializing transformation matrix (Jacobian)
 M = matrix('0. 0. 0.; 0. 0. 0.; 0. 0. 0.')
@@ -81,10 +82,10 @@ while 1:
             cap.setExposure(exposure)
 
     if key & 0xFF == ord('f'):
-        try:
+        if isinstance(template, np.ndarray):
             _, _, _, frame = focus(devtype, microscope, template, cap)
             print 'Auto-focus done.'
-        except TypeError:
+        else:
             print 'Template image has not been taken yet.'
 
     if key & 0xFF == ord('b'):
@@ -115,11 +116,7 @@ while 1:
         if step == 0:
             # Saving initial position of the arm and the microscope
             init_pos_a = [arm.position(0), arm.position(1), arm.position(2)]
-
-            if devtype == 'SM5':
-                init_pos_m = [microscope.position(0), microscope.position(1), microscope.position(2)]
-            else:
-                init_pos_m = [microscope.position(0), microscope.position(1), microscope.position(2)]
+            init_pos_m = [microscope.position(0), microscope.position(1), microscope.position(2)]
 
             # Get a series of template images for auto focus
             template = get_template_series(devtype, microscope, 5, cap)
@@ -285,9 +282,12 @@ while 1:
 
     # Our operations on the frame come here
 
-    # Display a rectangle where the template will be taken
-    frame = disp_template_zone(frame)
-    # TODO: reverse frame along x and y axis, carefull might also need to reverse template images
+    if not isinstance(template, np.ndarray):
+        # Display a rectangle where the template will be taken
+        frame = disp_template_zone(frame)
+
+    # Display a red centered cross
+    frame = disp_centered_cross(frame)
 
     cv2.imshow('Camera', frame)
     cv2.waitKey(1)

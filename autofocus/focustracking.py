@@ -17,10 +17,7 @@ def focus_track(devtype, microscope, arm, template, step, axis, alpha, um_px, es
     Focus after a move of the arm
     """
 
-    if devtype == 'SM5':
-        pos = microscope.position(2)
-    else:
-        pos = microscope.position(2)
+    pos = microscope.position(2)
 
     # Update frame just in case
     frame = getImg(devtype, microscope, cv2cap=cap, update=1)

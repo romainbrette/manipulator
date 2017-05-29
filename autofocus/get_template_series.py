@@ -2,6 +2,8 @@ import cv2
 import numpy as np
 from get_img import *
 
+__all__ = ['get_template_series', 'disp_template_zone', 'disp_centered_cross']
+
 
 def get_template_series(devtype, microscope, nb_images, cap):
     """
@@ -21,20 +23,14 @@ def get_template_series(devtype, microscope, nb_images, cap):
         for j in range(3):
             temp = template[i*height/4:height/2+i*height/4, j*width/4:width/2+j*width/4]
             bin_edge, _ = np.histogram(temp.flatten())
-            #weight += [temp.argmax()]
-            weight += [bin_edge.max()]
+            weight += [bin_edge.min()]
 
     index = weight.index(max(weight))
-    index = 3
+    #index = 3
     j = index%3
     i = index//3
 
-    if devtype == 'SM5':
-        pos = microscope.position(2)
-    elif devtype == 'SM10':
-        pos = microscope.position(2)
-    else:
-        raise TypeError('Unknown device. Should be either "SM5" or "SM10".')
+    pos = microscope.position(2)
 
     for k in range(nb_images):
         frame = getImg(devtype, microscope, pos-(nb_images-1)/2+k, cap)
@@ -55,13 +51,20 @@ def disp_template_zone(img):
     """
     Display the zone where the template image is taken
     :param img: image
-    :return: img: image with a red rectangle and a red centered cross
+    :return: img: image with a red rectangle
     """
     height, width = img.shape[:2]
     ratio = 32
     pt1 = (width/2 - 3*width/ratio, height/2 - 3*height/ratio)
     pt2 = (width/2 + 3*width/ratio, height/2 + 3*height/ratio)
     cv2.rectangle(img, pt1, pt2, (0, 0, 255))
+
+    return img
+
+
+def disp_centered_cross(img):
+
+    height, width = img.shape[:2]
     cv2.line(img, (width / 2 + 10, height / 2), (width / 2 - 10, height / 2), (0, 0, 255))
     cv2.line(img, (width / 2, height / 2 + 10), (width / 2, height / 2 - 10), (0, 0, 255))
 

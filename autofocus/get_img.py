@@ -54,6 +54,8 @@ def getImg(devtype, microscope, z=None, cv2cap=None, update=0):
     else:
         raise TypeError('Unknown device. Should be either "SM5" or "SM10".')
 
+    frame = cv2.flip(frame, 2)
+
     return frame
 
 
