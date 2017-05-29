@@ -20,8 +20,8 @@ def init_device(devtype, armdev):
     elif devtype == 'SM10':
         try:
             dev = LuigsNeumann_SM10()
-            cap = cv2.VideoCapture(0)
-            #cap = camera_init(devtype)
+            #cap = cv2.VideoCapture(0)
+            cap = camera_init(devtype)
             microscope = XYZUnit(dev, [7, 8, 9])
         except SerialException:
             raise SerialException("L&N SM-10 not found.")

@@ -5,8 +5,9 @@ Use Micro Manager Py
 
 import time
 import sys
-import MMCorePy
 sys.path.append('C:\\Program Files\\Micro-Manager-1.4')
+import MMCorePy
+
 
 
 __all__ = ['camera_init', 'camera_unload']
@@ -22,6 +23,8 @@ def camera_init(devtype):
 
     if devtype == 'SM5':
         mmc.loadDevice('Camera', 'HamamatsuHam', 'HamamatsuHam_DCAM')
+    elif devtype == 'SM10':
+        mmc.loadDevice('Camera', 'Lumenera', 'LuCam')
 
     mmc.initializeDevice('Camera')
     print "done"
