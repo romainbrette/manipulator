@@ -74,6 +74,7 @@ class LuigsNeumann_SM5(SerialDevice):
     def establish_connection(self):
         if verbose:
             print "establishing connection"
+        self.established_time = time.time()
         self.send_command('0400', [], 0, ack_ID='040b')
         if verbose:
             print "connection established"
