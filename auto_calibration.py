@@ -144,8 +144,8 @@ while 1:
             # Determination of um_px
             um_px = 100./((dx**2 + dy**2)**0.5)
 
-            alpha[0, 0] = dx/100.
-            alpha[1, 0] = dy/100.
+            alpha[0, 0] = dx*um_px/100.
+            alpha[1, 0] = dy*um_px/100.
 
             # Resetting position of microscope
             microscope.relative_move(-100, 0)
@@ -170,8 +170,8 @@ while 1:
             dx = loc[0] - x_init
             dy = loc[1] - y_init
 
-            alpha[0, 1] = dx/100.
-            alpha[1, 1] = dy/100.
+            alpha[0, 1] = dx*um_px/100.
+            alpha[1, 1] = dy*um_px/100.
 
             # Resetting position of microscope
             microscope.relative_move(-100, 1)
@@ -193,7 +193,6 @@ while 1:
             estim, frame = focus_track(devtype, microscope, arm, template, track_step, 0, alpha, um_px, estim, cap)
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
-            print estim
 
             if nstep == maxnstep:
 
@@ -201,8 +200,10 @@ while 1:
                 # Accuracy along z axis = total displacement +- 1um = 2**(maxnstep-1)-2 +-1
 
                 # Update transformation matrix (Jacobian)
-                M[0, 0] = alpha[0]*estim[0]
-                M[1, 0] = alpha[1]*estim[1]
+                temp = matrix('{a}; {b}'.format(a=estim[0], b=estim[1]))
+                temp = alpha*temp
+                M[0, 0] = temp[0, 0]
+                M[1, 0] = temp[1, 0]
                 M[2, 0] = estim[2]
 
                 # Resetting values used in calibration for the calibration of next axis
@@ -223,6 +224,7 @@ while 1:
                 cv2.waitKey(10)
 
                 step += 1
+
                 print 'Calibrated x axis'
 
             else:
@@ -238,8 +240,10 @@ while 1:
 
             if nstep == maxnstep:
 
-                M[0, 1] = alpha[0]*estim[0]
-                M[1, 1] = alpha[1]*estim[1]
+                temp = matrix('{a}; {b}'.format(a=estim[0], b=estim[1]))
+                temp = alpha * temp
+                M[0, 1] = temp[0, 0]
+                M[1, 1] = temp[1, 0]
                 M[2, 1] = estim[2]
 
                 estim = [0., 0., 0.]
@@ -275,8 +279,10 @@ while 1:
 
             if nstep == maxnstep:
 
-                M[0, 2] = alpha[0]*estim[0]
-                M[1, 2] = alpha[1]*estim[1]
+                temp = matrix('{a}; {b}'.format(a=estim[0], b=estim[1]))
+                temp = alpha * temp
+                M[0, 2] = temp[0, 0]
+                M[1, 2] = temp[1, 0]
                 M[2, 2] = estim[2]
 
                 estim = [0., 0., 0.]
