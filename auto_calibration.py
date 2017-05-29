@@ -36,7 +36,7 @@ step = 0
 nstep = 1
 
 # Maximum number of steps to do
-maxnstep = 8
+maxnstep = 7
 
 # Initial displacement of the arm to do, in um
 track_step = 2.
@@ -236,7 +236,6 @@ while 1:
             estim, frame = focus_track(devtype, microscope, arm, template, track_step, 1, alpha, um_px, estim, cap)
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
-            print estim
 
             if nstep == maxnstep:
 
@@ -275,7 +274,6 @@ while 1:
 
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
-            print estim
 
             if nstep == maxnstep:
 
