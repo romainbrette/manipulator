@@ -99,10 +99,7 @@ while 1:
             pos = matrix('0.; 0.; 0.')
             pos[0, 0] = microscope.position(0) - init_pos_m[0]
             pos[1, 0] = microscope.position(1) - init_pos_m[1]
-            if devtype == 'SM5':
-                pos[2, 0] = microscope.position(2) - init_pos_m[2]
-            else:
-                pos[2, 0] = microscope.position(2) - init_pos_m[2]
+            pos[2, 0] = microscope.position(2) - init_pos_m[2]
             X = M_inv*pos
             for i in range(3):
                 arm.absolute_move(init_pos_a[i]+X[i], i)

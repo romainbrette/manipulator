@@ -27,8 +27,8 @@ def get_template_series(devtype, microscope, nb_images, cap):
 
     index = weight.index(max(weight))
     #index = 3
-    j = index%3
-    i = index//3
+    j = index % 3
+    i = index // 3
 
     pos = microscope.position(2)
 
