@@ -8,6 +8,7 @@ Quit with key 'q'
 """
 
 from autofocus import *
+import numpy as np
 from numpy import matrix
 from numpy.linalg import inv
 
@@ -44,10 +45,13 @@ track_step = 2.
 estim = [0., 0., 0.]
 
 # Orientation
+'''
 if devtype == 'SM5':
     alpha = [-1., 1., 1.]
 else:
     alpha = [1., -1., 1.]
+'''
+alpha = matrix('0. 0.; 0. 0.')
 
 # Initializing transformation matrix (Jacobian)
 M = matrix('0. 0. 0.; 0. 0. 0.; 0. 0. 0.')
@@ -97,9 +101,8 @@ while 1:
     if key & 0xFF == ord('p'):
         if calibrate_succeeded:
             pos = matrix('0.; 0.; 0.')
-            pos[0, 0] = microscope.position(0) - init_pos_m[0]
-            pos[1, 0] = microscope.position(1) - init_pos_m[1]
-            pos[2, 0] = microscope.position(2) - init_pos_m[2]
+            for i in range(3):
+                pos[i, 0] = microscope.position(i) - init_pos_m[i]
             X = M_inv*pos
             for i in range(3):
                 arm.absolute_move(init_pos_a[i]+X[i], i)
@@ -141,8 +144,37 @@ while 1:
             # Determination of um_px
             um_px = 100./((dx**2 + dy**2)**0.5)
 
+            alpha[0, 0] = dx/100.
+            alpha[1, 0] = dy/100.
+
             # Resetting position of microscope
             microscope.relative_move(-100, 0)
+            cv2.waitKey(1000)
+
+            # Refreshing frame
+            frame = getImg(devtype, microscope, cv2cap=cap, update=1)
+            cv2.imshow('Camera', frame)
+            cv2.waitKey(1)
+
+            # Moving the microscope
+            microscope.relative_move(100, 1)
+            cv2.waitKey(1000)
+
+            # Refreshing the frame after the move
+            frame = getImg(devtype, microscope, cv2cap=cap, update=1)
+            cv2.imshow('Camera', frame)
+            cv2.waitKey(1)
+
+            # Getting the displacement, in pixels, of the tip on the screen
+            _, _, loc = templatematching(frame, template[len(template)/2])
+            dx = loc[0] - x_init
+            dy = loc[1] - y_init
+
+            alpha[0, 1] = dx/100.
+            alpha[1, 1] = dy/100.
+
+            # Resetting position of microscope
+            microscope.relative_move(-100, 1)
             cv2.waitKey(1000)
 
             # Refreshing frame
@@ -171,7 +203,7 @@ while 1:
                 # Update transformation matrix (Jacobian)
                 M[0, 0] = alpha[0]*estim[0]
                 M[1, 0] = alpha[1]*estim[1]
-                M[2, 0] = alpha[2]*estim[2]
+                M[2, 0] = estim[2]
 
                 # Resetting values used in calibration for the calibration of next axis
                 estim = [0., 0., 0.]
@@ -208,7 +240,7 @@ while 1:
 
                 M[0, 1] = alpha[0]*estim[0]
                 M[1, 1] = alpha[1]*estim[1]
-                M[2, 1] = alpha[2]*estim[2]
+                M[2, 1] = estim[2]
 
                 estim = [0., 0., 0.]
                 nstep = 1
@@ -245,7 +277,7 @@ while 1:
 
                 M[0, 2] = alpha[0]*estim[0]
                 M[1, 2] = alpha[1]*estim[1]
-                M[2, 2] = alpha[2]*estim[2]
+                M[2, 2] = estim[2]
 
                 estim = [0., 0., 0.]
                 nstep = 1

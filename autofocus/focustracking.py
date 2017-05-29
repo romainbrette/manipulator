@@ -6,6 +6,7 @@ Use the template matching method to focus
 from focus_template_series import *
 from template_matching import *
 from get_img import *
+from numpy import matrix
 import cv2
 
 
@@ -33,9 +34,11 @@ def focus_track(devtype, microscope, arm, template, step, axis, alpha, um_px, es
     cv2.waitKey(1)
 
     # Move the platform to center the tip
+    delta = matrix('{a}; {b}'.format(a=estim[0]*step, b=estim[1]*step))
+    move = alpha*delta
     for i in range(2):
-        microscope.relative_move(alpha[i]*estim[i]*step, i)
-        cv2.waitKey(1000)
+        microscope.relative_move(move[i, 0], i)
+    cv2.waitKey(1000)
 
     # Update the frame.
     frame = getImg(devtype, microscope, cv2cap=cap, update=1)
@@ -51,12 +54,14 @@ def focus_track(devtype, microscope, arm, template, step, axis, alpha, um_px, es
     _, estim_temp, loc, frame = focus(devtype, microscope, template, cap)
 
     # Move the platform for compensation
+    delta = matrix('{a}; {b}'.format(a=(initloc[0] - loc[0])*um_px, b=(initloc[1] - loc[1])*um_px))
+    move = alpha * delta
     for i in range(2):
-        microscope.relative_move(alpha[i]*(loc[i] - initloc[i])*um_px, i)
+        microscope.relative_move(move[i, 0], i)
 
     cv2.waitKey(1000)
 
-    #Update frame
+    # Update frame
     frame = getImg(devtype, microscope, cv2cap=cap, update=1)
     cv2.imshow('Camera', frame)
     cv2.waitKey(1)
@@ -64,6 +69,6 @@ def focus_track(devtype, microscope, arm, template, step, axis, alpha, um_px, es
     # Update the estimated move to do for a move of 1 um of the arm
     estim[2] += float(estim_temp)/float(step)
     for i in range(2):
-        estim[i] += (loc[i]-initloc[i])*um_px/float(step)
+        estim[i] += (initloc[i] - loc[i])*um_px/float(step)
 
     return estim, frame
