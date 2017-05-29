@@ -9,7 +9,11 @@ def stop_device(devtype, dev, microscope, cap):
         cap.reset()
         del microscope
     elif devtype == 'SM10':
-        cap.release()
+        cap.stopSequenceAcquisition()
+        camera_unload(cap)
+        cap.reset()
+        del microscope
+        #cap.release()
 
     cv2.destroyAllWindows()
     del dev

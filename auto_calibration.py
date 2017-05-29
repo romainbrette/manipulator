@@ -13,7 +13,7 @@ from numpy import matrix
 from numpy.linalg import inv
 
 # Type of used controller, either 'SM5' or 'SM10 for L&N SM-5 or L&N SM-10
-devtype = 'SM5'
+devtype = 'SM10'
 
 # Initializing the device, camera and microscope according to the used controller
 dev, microscope, arm, cap = init_device(devtype, 'dev1')
@@ -61,8 +61,7 @@ M_inv = M
 while 1:
 
     # Capture a frame from video
-    if devtype == 'SM5':
-        buf = cap.getLastImage()
+    buf = cap.getLastImage()
 
     frame = getImg(devtype, microscope, cv2cap=cap)
 

@@ -44,12 +44,16 @@ def getImg(devtype, microscope, z=None, cv2cap=None, update=0):
             microscope.absolute_move(z, 2)
             update = 1
 
-        if update:
-            _, frame = cv2cap.retrieve()
+        #if update:
+        #    _, frame = cv2cap.retrieve()
 
         # Capture frame
 
-        ret, frame = cv2cap.read()
+        #ret, frame = cv2cap.read()
+        if cv2cap.getRemainingImageCount() > 0:
+
+            frame = cv2cap.getLastImage()
+            frame = np.float32(frame/(1.0*frame.max()))
 
     else:
         raise TypeError('Unknown device. Should be either "SM5" or "SM10".')
