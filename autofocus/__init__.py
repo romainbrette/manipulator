@@ -8,6 +8,6 @@ from Hamamatsu_camera import *
 #from get_template import *
 from init_device import *
 from stop_device import *
-
+from MouseCallback import *
 from focus_template_series import *
 from get_template_series import *

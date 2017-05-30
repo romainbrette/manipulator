@@ -59,6 +59,11 @@ M = matrix('0. 0. 0.; 0. 0. 0.; 0. 0. 0.')
 M_inv = M
 
 x_init, y_init = 0, 0
+um_px = 0.
+init_pos_m = [0., 0., 0.]
+init_pos_a = [0., 0., 0.]
+
+cv2.setMouseCallback('Camera', clic_position, {calibrate_succeeded, M_inv, x_init, y_init, um_px, microscope, arm, init_pos_m, init_pos_a})
 
 # GUI loop with image processing
 while 1:
