@@ -13,7 +13,7 @@ from numpy.linalg import inv
 from time import sleep
 
 # Type of used controller, either 'SM5' or 'SM10 for L&N SM-5 or L&N SM-10
-devtype = 'SM10'
+devtype = 'SM5'
 
 # Initializing the device, camera and microscope according to the used controller
 dev, microscope, arm, cap = init_device(devtype, 'dev1')
@@ -37,7 +37,7 @@ step = 0
 nstep = 1
 
 # Maximum number of steps to do
-maxnstep = 7
+maxnstep = 9
 
 # Initial displacement of the arm to do, in um
 track_step = 2.
@@ -63,7 +63,7 @@ um_px = 0.
 init_pos_m = [0., 0., 0.]
 init_pos_a = [0., 0., 0.]
 
-cv2.setMouseCallback('Camera', clic_position, {calibrate_succeeded, M_inv, x_init, y_init, um_px, microscope, arm, init_pos_m, init_pos_a})
+#cv2.setMouseCallback('Camera', clic_position, [calibrate_succeeded, M_inv, x_init, y_init, um_px, microscope, arm, init_pos_m, init_pos_a])
 
 # GUI loop with image processing
 while 1:
@@ -110,6 +110,7 @@ while 1:
             pos = matrix('0.; 0.; 0.')
             for i in range(3):
                 pos[i, 0] = microscope.position(i) - init_pos_m[i]
+
             X = M_inv*pos
             for i in range(3):
                 arm.absolute_move(init_pos_a[i]+X[i], i)
@@ -154,15 +155,15 @@ while 1:
             for i in range(2):
                 arm.relative_move(move[i, 0], i)
             sleep(1)
-            init_pos_a = [arm.position(i) for i in range(2)]
-            init_pos_m = [microscope.position(i) for i in range(2)]
+            init_pos_a = [arm.position(i) for i in range(3)]
+            init_pos_m = [microscope.position(i) for i in range(3)]
             recal = 0
 
     if calibrate:
         if step == 0:
             # Saving initial position of the arm and the microscope
-            init_pos_a = [arm.position(i) for i in range(2)]
-            init_pos_m = [microscope.position(i) for i in range(2)]
+            init_pos_a = [arm.position(i) for i in range(3)]
+            init_pos_m = [microscope.position(i) for i in range(3)]
 
             # Get a series of template images for auto focus
             template = get_template_series(devtype, microscope, 5, cap)
@@ -246,10 +247,11 @@ while 1:
                 # Accuracy along z axis = total displacement +- 1um = 2**(maxnstep-1)-2 +-1
 
                 # Update transformation matrix (Jacobian)
-                temp = matrix('{a}; {b}'.format(a=estim[0], b=estim[1]))
-                temp = alpha*temp
-                M[0, 0] = temp[0, 0]
-                M[1, 0] = temp[1, 0]
+                for i in range(3):
+                    estim[i] = (init_pos_m[i] - microscope.position(i)) / (init_pos_a[0] - arm.position(0))
+
+                M[0, 0] = estim[0]
+                M[1, 0] = estim[1]
                 M[2, 0] = estim[2]
 
                 # Resetting values used in calibration for the calibration of next axis
@@ -262,7 +264,7 @@ while 1:
                     arm.absolute_move(init_pos_a[i], i)
                     microscope.absolute_move(init_pos_m[i], i)
 
-                sleep(1)
+                sleep(2)
 
                 # Update the frame
                 frame = getImg(devtype, microscope, cv2cap=cap, update=1)
@@ -285,10 +287,11 @@ while 1:
 
             if nstep == maxnstep:
 
-                temp = matrix('{a}; {b}'.format(a=estim[0], b=estim[1]))
-                temp = alpha * temp
-                M[0, 1] = temp[0, 0]
-                M[1, 1] = temp[1, 0]
+                for i in range(3):
+                    estim[i] = (init_pos_m[i] - microscope.position(i)) / (init_pos_a[1] - arm.position(1))
+
+                M[0, 1] = estim[0]
+                M[1, 1] = estim[1]
                 M[2, 1] = estim[2]
 
                 estim = [0., 0., 0.]
@@ -300,11 +303,11 @@ while 1:
                     arm.absolute_move(init_pos_a[i], i)
                     microscope.absolute_move(init_pos_m[i], i)
 
-                sleep(1)
+                sleep(3)
 
                 frame = getImg(devtype, microscope, cv2cap=cap, update=1)
                 cv2.imshow('Camera', frame)
-                cv2.waitKey(1)
+                cv2.waitKey(10)
 
                 step += 1
 
@@ -323,10 +326,11 @@ while 1:
 
             if nstep == maxnstep:
 
-                temp = matrix('{a}; {b}'.format(a=estim[0], b=estim[1]))
-                temp = alpha * temp
-                M[0, 2] = temp[0, 0]
-                M[1, 2] = temp[1, 0]
+                for i in range(3):
+                    estim[i] = (init_pos_m[i] - microscope.position(i)) / (init_pos_a[2] - arm.position(2))
+
+                M[0, 2] = estim[0]
+                M[1, 2] = estim[1]
                 M[2, 2] = estim[2]
 
                 estim = [0., 0., 0.]
@@ -337,11 +341,11 @@ while 1:
                     arm.absolute_move(init_pos_a[i], i)
                     microscope.absolute_move(init_pos_m[i], i)
 
-                sleep(1)
+                sleep(2)
 
                 frame = getImg(devtype, microscope, cv2cap=cap, update=1)
                 cv2.imshow('Camera', frame)
-                cv2.waitKey(1)
+                cv2.waitKey(10)
 
                 step += 1
                 print 'Calibrated z axis'
