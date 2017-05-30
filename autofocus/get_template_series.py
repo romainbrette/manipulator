@@ -19,7 +19,7 @@ def get_template_series(devtype, microscope, nb_images, cap):
     template = frame[height/2-3*height/ratio:height/2+3*height/ratio, width/2-3*width/ratio:width/2+3*width/ratio]
     height, width = template.shape[:2]
     weight = []
-    template = cv2.bilateralFilter(template,9,75,75)
+    template = cv2.bilateralFilter(template, 9, 75, 75)
     for i in range(3):
         for j in range(3):
             temp = template[i*height/4:height/2+i*height/4, j*width/4:width/2+j*width/4]

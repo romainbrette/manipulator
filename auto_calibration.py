@@ -11,6 +11,7 @@ from autofocus import *
 import numpy as np
 from numpy import matrix
 from numpy.linalg import inv
+from time import sleep
 
 # Type of used controller, either 'SM5' or 'SM10 for L&N SM-5 or L&N SM-10
 devtype = 'SM10'
@@ -128,7 +129,7 @@ while 1:
 
             # Moving the microscope
             microscope.relative_move(100, 0)
-            cv2.waitKey(1000)
+            sleep(1)
 
             # Refreshing the frame after the move
             frame = getImg(devtype, microscope, cv2cap=cap, update=1)
@@ -148,7 +149,7 @@ while 1:
 
             # Resetting position of microscope
             microscope.relative_move(-100, 0)
-            cv2.waitKey(1000)
+            sleep(1)
 
             # Refreshing frame
             frame = getImg(devtype, microscope, cv2cap=cap, update=1)
@@ -157,7 +158,7 @@ while 1:
 
             # Moving the microscope
             microscope.relative_move(100, 1)
-            cv2.waitKey(1000)
+            sleep(1)
 
             # Refreshing the frame after the move
             frame = getImg(devtype, microscope, cv2cap=cap, update=1)
@@ -174,7 +175,7 @@ while 1:
 
             # Resetting position of microscope
             microscope.relative_move(-100, 1)
-            cv2.waitKey(1000)
+            sleep(1)
 
             # Refreshing frame
             frame = getImg(devtype, microscope, cv2cap=cap, update=1)
@@ -215,7 +216,7 @@ while 1:
                     arm.absolute_move(init_pos_a[i], i)
                     microscope.absolute_move(init_pos_m[i], i)
 
-                cv2.waitKey(1000)
+                sleep(1)
 
                 # Update the frame
                 frame = getImg(devtype, microscope, cv2cap=cap, update=1)
@@ -253,11 +254,11 @@ while 1:
                     arm.absolute_move(init_pos_a[i], i)
                     microscope.absolute_move(init_pos_m[i], i)
 
-                cv2.waitKey(1000)
+                sleep(1)
 
                 frame = getImg(devtype, microscope, cv2cap=cap, update=1)
                 cv2.imshow('Camera', frame)
-                cv2.waitKey(1000)
+                cv2.waitKey(1)
 
                 step += 1
 
@@ -290,7 +291,7 @@ while 1:
                     arm.absolute_move(init_pos_a[i], i)
                     microscope.absolute_move(init_pos_m[i], i)
 
-                cv2.waitKey(1000)
+                sleep(1)
 
                 frame = getImg(devtype, microscope, cv2cap=cap, update=1)
                 cv2.imshow('Camera', frame)

@@ -8,6 +8,7 @@ from template_matching import *
 from get_img import *
 from numpy import matrix
 import cv2
+from time import sleep
 
 
 __all__ = ['focus_track']
@@ -28,7 +29,7 @@ def focus_track(devtype, microscope, arm, template, step, axis, alpha, um_px, es
 
     # Move the arm
     arm.relative_move(step, axis)
-    cv2.waitKey(1000)
+    sleep(1)
     frame = getImg(devtype, microscope, cv2cap=cap, update=1)
     cv2.imshow('Camera', frame)
     cv2.waitKey(1)
@@ -38,7 +39,7 @@ def focus_track(devtype, microscope, arm, template, step, axis, alpha, um_px, es
     move = alpha*delta
     for i in range(2):
         microscope.relative_move(move[i, 0], i)
-    cv2.waitKey(1000)
+    sleep(1)
 
     # Update the frame.
     frame = getImg(devtype, microscope, cv2cap=cap, update=1)
@@ -48,7 +49,7 @@ def focus_track(devtype, microscope, arm, template, step, axis, alpha, um_px, es
     # Move the microscope
     frame = getImg(devtype, microscope, pos + estim[2] * step, cv2cap=cap)
     cv2.imshow('Camera', frame)
-    cv2.waitKey(5)
+    cv2.waitKey(1)
 
     # Focus around the estimated focus height
     _, estim_temp, loc, frame = focus(devtype, microscope, template, cap)
@@ -59,7 +60,7 @@ def focus_track(devtype, microscope, arm, template, step, axis, alpha, um_px, es
     for i in range(2):
         microscope.relative_move(move[i, 0], i)
 
-    cv2.waitKey(1000)
+    sleep(1)
 
     # Update frame
     frame = getImg(devtype, microscope, cv2cap=cap, update=1)
