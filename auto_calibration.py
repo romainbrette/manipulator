@@ -8,7 +8,6 @@ Quit with key 'q'
 """
 
 from autofocus import *
-import numpy as np
 from numpy import matrix
 from numpy.linalg import inv
 from time import sleep
@@ -29,6 +28,7 @@ cv2.namedWindow('Camera', flags=cv2.WINDOW_NORMAL)
 template = 0
 calibrate = 0
 calibrate_succeeded = 0
+recal = 0
 
 # Actual step in calibration
 step = 0
@@ -58,6 +58,8 @@ alpha = matrix('0. 0.; 0. 0.')
 M = matrix('0. 0. 0.; 0. 0. 0.; 0. 0. 0.')
 M_inv = M
 
+x_init, y_init = 0, 0
+
 # GUI loop with image processing
 while 1:
 
@@ -86,7 +88,7 @@ while 1:
             cap.setExposure(exposure)
 
     if key & 0xFF == ord('f'):
-        if isinstance(template, np.ndarray):
+        if isinstance(template, list):
             _, _, _, frame = focus(devtype, microscope, template, cap)
             print 'Auto-focus done.'
         else:
@@ -112,11 +114,50 @@ while 1:
     if key & 0xFF == ord('a'):
         microscope.relative_move(-100, 0)
 
+    if key & 0xFF == ord('r'):
+        if calibrate_succeeded:
+            # Recalibration to change pipette
+            arm.relative_move(-5000000, 0)
+            sleep(1)
+            frame = getImg(devtype, microscope, cv2cap=cap, update=1)
+            cv2.imshow('Camera', frame)
+            cv2.waitKey(0)
+            arm.relative_move(3000000, 0)
+            sleep(1)
+            frame = getImg(devtype, microscope, cv2cap=cap, update=1)
+            cv2.imshow('Camera', frame)
+            cv2.waitKey(1)
+            recal = 1
+        else:
+            print 'Calibration must be done beforehand.'
+
+    if recal:
+        arm.relative_move(100, 0)
+        sleep(1)
+        frame = getImg(devtype, microscope, cv2cap=cap, update=1)
+        height, width = frame.shape[:2]
+        ratio = 32
+        img = frame[height/2-3*height/ratio:height/2+3*height/ratio, width/2-3*width/ratio:width/2+3*width/ratio]
+        isin, val, loc = templatematching(img, template[len(template)/2])
+        if isin:
+            while val < 0.98:
+                val, _, loc, frame = focus(devtype, microscope, template, cap)
+                cv2.imshow('Camera', frame)
+                cv2.waitKey(1)
+            delta = matrix('{a}; {b}'.format(a=(x_init-loc[0])*um_px, b=(y_init-loc[1])*um_px))
+            move = alpha*delta
+            for i in range(2):
+                arm.relative_move(move[i, 0], i)
+            sleep(1)
+            init_pos_a = [arm.position(i) for i in range(2)]
+            init_pos_m = [microscope.position(i) for i in range(2)]
+            recal = 0
+
     if calibrate:
         if step == 0:
             # Saving initial position of the arm and the microscope
-            init_pos_a = [arm.position(0), arm.position(1), arm.position(2)]
-            init_pos_m = [microscope.position(0), microscope.position(1), microscope.position(2)]
+            init_pos_a = [arm.position(i) for i in range(2)]
+            init_pos_m = [microscope.position(i) for i in range(2)]
 
             # Get a series of template images for auto focus
             template = get_template_series(devtype, microscope, 5, cap)
@@ -315,7 +356,7 @@ while 1:
 
     # Our operations on the frame come here
 
-    if not isinstance(template, np.ndarray):
+    if not isinstance(template, list):
         # Display a rectangle where the template will be taken
         frame = disp_template_zone(frame)
 
