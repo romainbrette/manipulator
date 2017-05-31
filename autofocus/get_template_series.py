@@ -29,6 +29,7 @@ def get_template_series(devtype, microscope, nb_images, cap):
     index = weight.index(max(weight))
     j = index % 3
     i = index // 3
+    template_loc = [temp.shape[1] * (1 - j/2.), temp.shape[0] * (1 - i/2.)]
 
     pos = microscope.position(2)
 
@@ -46,7 +47,7 @@ def get_template_series(devtype, microscope, nb_images, cap):
 
     cv2.imshow('template', template_series[2])
 
-    return template_series
+    return template_series, template_loc
 
 
 def disp_template_zone(img):

@@ -62,8 +62,7 @@ x_init, y_init = 0, 0
 um_px = 0.
 init_pos_m = [0., 0., 0.]
 init_pos_a = [0., 0., 0.]
-
-#cv2.setMouseCallback('Camera', clic_position, [calibrate_succeeded, M_inv, x_init, y_init, um_px, microscope, arm, init_pos_m, init_pos_a])
+template_loc = [0., 0.]
 
 # GUI loop with image processing
 while 1:
@@ -166,7 +165,7 @@ while 1:
             init_pos_m = [microscope.position(i) for i in range(3)]
 
             # Get a series of template images for auto focus
-            template = get_template_series(devtype, microscope, 5, cap)
+            template, template_loc = get_template_series(devtype, microscope, 5, cap)
 
             # Saving initial position of the tip on the screen
             _, _, loc = templatematching(frame, template[len(template)/2])
@@ -372,7 +371,13 @@ while 1:
     # Display a red centered cross
     frame = disp_centered_cross(frame)
 
+    # Parameters for mouse callbacks
+    param = {'calibrated': calibrate_succeeded, 'mat': M_inv, 'x_init': x_init, 'y_init': y_init, 'um_px': um_px,
+             'mic': microscope, 'arm': arm, 'init_mic': init_pos_m, 'init_arm': init_pos_a, 'alpha': alpha,
+             'loc': template_loc}
+
     cv2.imshow('Camera', frame)
+    cv2.setMouseCallback('Camera', clic_position, param)
     cv2.waitKey(1)
 
 # When everything done, release the capture
