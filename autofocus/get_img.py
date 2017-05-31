@@ -1,65 +1,40 @@
 """
-Read the frame of a video capture at given absolute height of the microscope
-Encode the frame to make it usable for some functions (cornerHarris)
+Read the last frame taken by a camera at given absolute height of the microscope
 """
 
 import cv2
 import numpy as np
 from time import sleep
 
-__all__ = ['getImg']
+__all__ = ['get_img']
 
 
-def getImg(devtype, microscope, z=None, cv2cap=None, update=0):
+def get_img(microscope, cam, z=None):
 
     """
     get an image from the microscope at given height z
-    :param devtype: type of device controller, either 'SM5' or 'SM10'.
     :param microscope: class instance controlling the microscope
     :param z: desired absolute height of the microscope
-    :param cv2cap: video capture from cv2, used when devtype='SM10'
-    :param update: indicating if the user wants the next frame or not 
-    :return frame: image taken directly from the video capture
+    :param cam: micro manager camera
+    :return frame: image taken from camera
     """
 
-    frame = 0
-    if devtype == 'SM5':
+    # Move the microscope if an height has been specify
+    if z:
+        microscope.absolute_move(z, 2)
+        sleep(1)
 
-        # Move the microscope if an height has been specify
-        if z:
-            microscope.absolute_move(z, 2)
-            sleep(1)
-            update = 1
+    # capture frame
 
-        # Capture frame
+    if cam.getRemainingImageCount() > 0:
 
-        if cv2cap.getRemainingImageCount() > 0:
+        frame = cam.getLastImage()
+        frame = np.float32(frame/(1.0*frame.max()))
 
-            frame = cv2cap.getLastImage()
-            frame = np.float32(frame/(1.0*frame.max()))
-
-    elif devtype == 'SM10':
-
-        # Move the microscope if an height has been specify
-        if z:
-            microscope.absolute_move(z, 2)
-            update = 1
-
-        #if update:
-        #    _, frame = cv2cap.retrieve()
-
-        # Capture frame
-
-        #ret, frame = cv2cap.read()
-        if cv2cap.getRemainingImageCount() > 0:
-
-            frame = cv2cap.getLastImage()
-            frame = np.float32(frame/(1.0*frame.max()))
-
+    if isinstance(frame, np.ndarray):
+        frame = cv2.flip(frame, 2)
     else:
-        raise TypeError('Unknown device. Should be either "SM5" or "SM10".')
-
-    frame = cv2.flip(frame, 2)
+        raise TypeError('Could not read image from camera.')
 
     return frame
 
@@ -79,9 +54,9 @@ if __name__ == '__main__':
     mmc.startContinuousSequenceAcquisition(1)
     cv2.namedWindow('Camera')
     while 1:
-        buffer = mmc.getLastImage()
-        frame = getImg('SM5', mmc)
-        cv2.imshow("Camera", frame)
+        buf = mmc.getLastImage()
+        img = get_img('SM5', mmc)
+        cv2.imshow("Camera", img)
         key = cv2.waitKey(1)
         if key & 0xFF == ord('q'):
             break

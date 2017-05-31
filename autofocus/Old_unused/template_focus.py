@@ -2,10 +2,11 @@
 Autofocusing on the tip using template matching
 First user must put the tip on focus to get the template
 Template matching is not scale nor rotation invariant
+NOT USED ANYMORE
 """
 
-from template_matching import *
-from get_img import *
+from autofocus.template_matching import *
+from autofocus.get_img import *
 import cv2
 
 __all__ = ['dfocus']
@@ -23,7 +24,7 @@ def dfocus(devtype, microscope, template, cv2cap=None, rng=1):
 
     # Getting the microscope height according to the used controller
     if devtype == 'SM5':
-        current_z = microscope.getPosition()
+        current_z = microscope.Position(2)
     elif devtype == 'SM10':
         current_z = microscope.position(2)
     else:
@@ -37,7 +38,7 @@ def dfocus(devtype, microscope, template, cv2cap=None, rng=1):
     for i in range(rng*2+1):
 
         height = current_z + (rng - i)
-        frame = getImg(devtype, microscope, height, cv2cap)
+        frame = get_img(microscope, cv2cap, height)
         res, val, loc = templatematching(frame, template)
         cv2.imshow('Camera', frame)
         cv2.waitKey(1)
@@ -58,7 +59,7 @@ def dfocus(devtype, microscope, template, cv2cap=None, rng=1):
         index = vals.index(maxval)
         loc = locs[index]
         focus_height = current_z + (rng - index)
-        frame, _ = getImg(devtype, microscope, focus_height, cv2cap)
+        frame, _ = get_img(microscope, cv2cap, focus_height)
         cv2.imshow('Camera', frame)
         cv2.waitKey(1)
         dep = (rng - index)

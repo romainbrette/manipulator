@@ -5,14 +5,18 @@ from get_img import *
 __all__ = ['get_template_series', 'disp_template_zone', 'disp_centered_cross']
 
 
-def get_template_series(devtype, microscope, nb_images, cap):
+def get_template_series(microscope, nb_images, cam):
     """
     Get a series of template images of the tip around the center of an image for any angle of the tip.
+    :param microscope: XYZUnit device controlling the microscope
+    :param nb_images: number of template images to take, must be odd so an even number of images at each side is taken
+    :param cam: micro manager camera
     """
 
     template_series = []
+    temp = []
 
-    frame = getImg(devtype, microscope, cv2cap=cap, update=1)
+    frame = get_img(microscope, cam)
     height, width = frame.shape[:2]
     ratio = 32
 
@@ -34,16 +38,17 @@ def get_template_series(devtype, microscope, nb_images, cap):
     pos = microscope.position(2)
 
     for k in range(nb_images):
-        frame = getImg(devtype, microscope, pos-(nb_images-1)/2+k, cap)
+        frame = get_img(microscope, cam, pos-(nb_images-1)/2+k)
         height, width = frame.shape[:2]
         cv2.imshow('Camera', frame)
         cv2.waitKey(1)
-        img = frame[height / 2 - 3 * height / ratio:height / 2 + 3 * height / ratio, width / 2 - 3 * width / ratio:width / 2 + 3 * width / ratio]
+        img = frame[height / 2 - 3 * height / ratio:height / 2 + 3 * height / ratio,
+                    width / 2 - 3 * width / ratio:width / 2 + 3 * width / ratio]
         height, width = img.shape[:2]
         img = img[i * height / 4:height / 2 + i * height / 4, j * width / 4:width / 2 + j * width / 4]
         template_series += [img]
 
-    _ = getImg(devtype, microscope, pos, cap)
+    _ = get_img(microscope, cam, pos)
 
     cv2.imshow('template', template_series[2])
 
@@ -77,11 +82,10 @@ if __name__ == '__main__':
     from matplotlib import pyplot as plt
 
     img = cv2.imread('template.jpg', 0)
-    img = cv2.Canny(img[0:43,0:43], 100, 200)
+    img = cv2.Canny(img[0:43, 0:43], 100, 200)
     histo, _ = np.histogram(img.flatten())
     print img.argmax()
     cv2.imshow('test', img)
     plt.plot(histo)
     plt.show()
     cv2.destroyAllWindows()
-

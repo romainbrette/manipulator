@@ -5,15 +5,14 @@ __all__ = ['clic_position']
 
 
 def clic_position(event, x, y, flags, param):
-    '''
-    
+    """
     :param event: 
     :param x: 
     :param y: 
     :param flags: 
     :param param: {calibrated, mat, x_init, y_init, um_px, microscope, arm, init_pos_m, init_pos_a})
     :return: 
-    '''
+    """
 
     if param['calibrated']:
         if event == cv2.EVENT_LBUTTONUP:

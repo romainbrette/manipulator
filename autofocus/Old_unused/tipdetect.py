@@ -3,6 +3,7 @@ Pipette tip detection.
 
 Adapted from Wu et al. (2011). Robust Automatic Focus Algorithm for Low Contrast Images
 Using a New Contrast Measure
+NOT USED ANYMORE
 '''
 
 import cv2

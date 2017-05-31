@@ -14,7 +14,7 @@ from time import sleep
 __all__ = ['focus_track']
 
 
-def focus_track(devtype, microscope, arm, template, step, axis, alpha, um_px, estim=(0., 0., 0.), cap=None):
+def focus_track(microscope, arm, template, step, axis, alpha, um_px, estim, cam):
     """
     Focus after a move of the arm
     """
@@ -22,7 +22,7 @@ def focus_track(devtype, microscope, arm, template, step, axis, alpha, um_px, es
     pos = microscope.position(2)
 
     # Update frame just in case
-    frame = getImg(devtype, microscope, cv2cap=cap, update=1)
+    frame = get_img(microscope, cam)
 
     # Get initial location of the tip
     _, _, initloc = templatematching(frame, template[len(template)/2])
@@ -30,7 +30,7 @@ def focus_track(devtype, microscope, arm, template, step, axis, alpha, um_px, es
     # Move the arm
     arm.relative_move(step, axis)
     sleep(1)
-    frame = getImg(devtype, microscope, cv2cap=cap, update=1)
+    frame = get_img(microscope, cam)
     cv2.imshow('Camera', frame)
     cv2.waitKey(1)
 
@@ -42,17 +42,17 @@ def focus_track(devtype, microscope, arm, template, step, axis, alpha, um_px, es
     sleep(1)
 
     # Update the frame.
-    frame = getImg(devtype, microscope, cv2cap=cap, update=1)
+    frame = get_img(microscope, cam)
     cv2.imshow('Camera', frame)
     cv2.waitKey(1)
 
     # Move the microscope
-    frame = getImg(devtype, microscope, pos + estim[2] * step, cv2cap=cap)
+    frame = get_img(microscope, cam, pos + estim[2] * step)
     cv2.imshow('Camera', frame)
     cv2.waitKey(1)
 
     # Focus around the estimated focus height
-    _, estim_temp, loc, frame = focus(devtype, microscope, template, cap)
+    _, estim_temp, loc, frame = focus(microscope, template, cam)
 
     # Move the platform for compensation
     delta = matrix('{a}; {b}'.format(a=(initloc[0] - loc[0])*um_px, b=(initloc[1] - loc[1])*um_px))
@@ -63,7 +63,7 @@ def focus_track(devtype, microscope, arm, template, step, axis, alpha, um_px, es
     sleep(1)
 
     # Update frame
-    frame = getImg(devtype, microscope, cv2cap=cap, update=1)
+    frame = get_img(microscope, cam)
     cv2.imshow('Camera', frame)
     cv2.waitKey(1)
 

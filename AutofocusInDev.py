@@ -45,7 +45,7 @@ while(True):
     # Capture a frame from video
     buffer = cap.getLastImage()
 
-    frame = getImg(devtype, microscope, cv2cap=cap)
+    frame = get_img(microscope, cap)
 
     # Keyboards controls:
     # 'q' to quit,
@@ -59,7 +59,7 @@ while(True):
     if key & 0xFF == ord('f'):
         try:
             #maxval, _, _, frame = focus(devtype, microscope, template, cap, 4)
-            print maxval
+            #print maxval
             print 'Autofocus done.'
         except TypeError:
             print 'Template image has not been taken yet.'
@@ -79,11 +79,11 @@ while(True):
         track ^= 1
 
     if key & 0xff == ord('g'):
-        frame = getImg(devtype, microscope, cv2cap=cap)
+        frame = get_img(microscope, cap)
         cv2.imshow('before', frame)
         cv2.waitKey(1)
         arm.relative_move(100, 0)
-        frame = getImg(devtype, microscope, cv2cap=cap, update=1)
+        frame = get_img(microscope, cap)
         cv2.imshow('after', frame)
         cv2.waitKey(1)
 
@@ -100,7 +100,7 @@ while(True):
     # Tracking while moving
     if track != 0:
         arm.relative_move(step, 0)
-        maxval, _, _, frame = dfocus(devtype, microscope, template, cap, step)
+        #maxval, _, _, frame = focus(devtype, microscope, template, cap, step)
         track += 1
     if track == nsteps:
         track = 0
@@ -121,4 +121,4 @@ while(True):
     cv2.imshow('Camera', frame)
 
 # When everything done, release the capture
-stop_device(devtype, dev, microscope, cap)
+stop_device(dev, microscope, cap)

@@ -11,19 +11,22 @@ import cv2
 __all__ = ['focus']
 
 
-def focus(devtype, microscope, template, cv2cap=None):
+def focus(microscope, template, cam):
     """
-    Autofocus by searching the best template match in the image around the current height
-    :param devtype: type of used controller
-    :param microscope: device controlling the microscope
-    :param template: tab of template images to look for
-    :param cv2cap: video capture from cv2, unnecessary if devtype='SM5' 
+    Autofocus by searching the best template match in the image.
+    :param microscope: XYZUnit device controlling the microscope
+    :param template: tab of template images at different height
+    :param cam: micro manager camera
+    :return maxval: percentage rate of how close the current image is to one of the template image
+    :return dep: displacement made to focus
+    :return loc: tab location of the detected template image
+    :return frame: frame of the camera after focusing
     """
 
     # Getting the microscope height according to the used controller
     current_z = microscope.position(2)
 
-    frame = getImg(devtype, microscope, cv2cap=cv2cap, update=1)
+    frame = get_img(microscope, cam)
     # Tabs of maxval and their location during the process
     vals = []
     locs = []
@@ -49,7 +52,7 @@ def focus(devtype, microscope, template, cv2cap=None):
         index = vals.index(maxval)
         loc = locs[index]
         focus_height = current_z + len(template)/2 - index
-        frame = getImg(devtype, microscope, focus_height, cv2cap)
+        frame = get_img(microscope, cam, focus_height)
         cv2.imshow('Camera', frame)
         cv2.waitKey(5)
         dep = len(template)/2 - index

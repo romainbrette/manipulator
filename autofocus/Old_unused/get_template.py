@@ -1,3 +1,7 @@
+"""
+NOT USED ANYMORE TAKE ONE IMAGE WITHOUT RETURNING TIP POSITION 
+"""
+
 import cv2
 import numpy as np
 

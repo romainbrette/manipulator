@@ -16,7 +16,7 @@ from time import sleep
 devtype = 'SM5'
 
 # Initializing the device, camera and microscope according to the used controller
-dev, microscope, arm, cap = init_device(devtype, 'dev1')
+dev, microscope, arm, cam = init_device(devtype, 'dev1')
 
 # Exposure for the camera when using MicroManager
 exposure = 15
@@ -45,13 +45,7 @@ track_step = 2.
 # Initial estimation (displacement microscope)/(displ moved axis), in um/um
 estim = [0., 0., 0.]
 
-# Orientation
-'''
-if devtype == 'SM5':
-    alpha = [-1., 1., 1.]
-else:
-    alpha = [1., -1., 1.]
-'''
+# Rotation of the platform compared to the camera
 alpha = matrix('0. 0.; 0. 0.')
 
 # Initializing transformation matrix (Jacobian)
@@ -68,9 +62,9 @@ template_loc = [0., 0.]
 while 1:
 
     # Capture a frame from video
-    buf = cap.getLastImage()
+    buf = cam.getLastImage()
 
-    frame = getImg(devtype, microscope, cv2cap=cap)
+    frame = get_img(microscope, cam)
 
     # Keyboards controls:
     # 'q' to quit,
@@ -84,16 +78,16 @@ while 1:
     if key & 0xFF == ord('+'):
         if devtype == 'SM5':
             exposure += 1
-            cap.setExposure(exposure)
+            cam.setExposure(exposure)
 
     if key & 0xFF == ord('-'):
         if devtype == 'SM5':
             exposure -= 1
-            cap.setExposure(exposure)
+            cam.setExposure(exposure)
 
     if key & 0xFF == ord('f'):
         if isinstance(template, list):
-            _, _, _, frame = focus(devtype, microscope, template, cap)
+            _, _, _, frame = focus(microscope, template, cam)
             print 'Auto-focus done.'
         else:
             print 'Template image has not been taken yet.'
@@ -124,12 +118,12 @@ while 1:
             # Recalibration to change pipette
             arm.relative_move(-5000000, 0)
             sleep(1)
-            frame = getImg(devtype, microscope, cv2cap=cap, update=1)
+            frame = get_img(microscope, cam)
             cv2.imshow('Camera', frame)
             cv2.waitKey(0)
             arm.relative_move(3000000, 0)
             sleep(1)
-            frame = getImg(devtype, microscope, cv2cap=cap, update=1)
+            frame = get_img(microscope, cam)
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
             recal = 1
@@ -139,14 +133,14 @@ while 1:
     if recal:
         arm.relative_move(100, 0)
         sleep(1)
-        frame = getImg(devtype, microscope, cv2cap=cap, update=1)
+        frame = get_img(microscope, cam)
         height, width = frame.shape[:2]
         ratio = 32
         img = frame[height/2-3*height/ratio:height/2+3*height/ratio, width/2-3*width/ratio:width/2+3*width/ratio]
         isin, val, loc = templatematching(img, template[len(template)/2])
         if isin:
             while val < 0.98:
-                val, _, loc, frame = focus(devtype, microscope, template, cap)
+                val, _, loc, frame = focus(microscope, template, cam)
                 cv2.imshow('Camera', frame)
                 cv2.waitKey(1)
             delta = matrix('{a}; {b}'.format(a=(x_init-loc[0])*um_px, b=(y_init-loc[1])*um_px))
@@ -165,7 +159,7 @@ while 1:
             init_pos_m = [microscope.position(i) for i in range(3)]
 
             # Get a series of template images for auto focus
-            template, template_loc = get_template_series(devtype, microscope, 5, cap)
+            template, template_loc = get_template_series(microscope, 5, cam)
 
             # Saving initial position of the tip on the screen
             _, _, loc = templatematching(frame, template[len(template)/2])
@@ -178,7 +172,7 @@ while 1:
             sleep(1)
 
             # Refreshing the frame after the move
-            frame = getImg(devtype, microscope, cv2cap=cap, update=1)
+            frame = get_img(microscope, cam)
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
 
@@ -198,7 +192,7 @@ while 1:
             sleep(1)
 
             # Refreshing frame
-            frame = getImg(devtype, microscope, cv2cap=cap, update=1)
+            frame = get_img(microscope, cam)
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
 
@@ -207,7 +201,7 @@ while 1:
             sleep(1)
 
             # Refreshing the frame after the move
-            frame = getImg(devtype, microscope, cv2cap=cap, update=1)
+            frame = get_img(microscope, cam)
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
 
@@ -224,7 +218,7 @@ while 1:
             sleep(1)
 
             # Refreshing frame
-            frame = getImg(devtype, microscope, cv2cap=cap, update=1)
+            frame = get_img(microscope, cam)
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
 
@@ -236,7 +230,7 @@ while 1:
             # calibrate arm x axis using exponential moves:
             # moves the arm, recenter the tip and refocus.
             # displacements are saved
-            estim, frame = focus_track(devtype, microscope, arm, template, track_step, 0, alpha, um_px, estim, cap)
+            estim, frame = focus_track(microscope, arm, template, track_step, 0, alpha, um_px, estim, cam)
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
 
@@ -266,7 +260,7 @@ while 1:
                 sleep(2)
 
                 # Update the frame
-                frame = getImg(devtype, microscope, cv2cap=cap, update=1)
+                frame = get_img(microscope, cam)
                 cv2.imshow('Camera', frame)
                 cv2.waitKey(10)
 
@@ -280,7 +274,7 @@ while 1:
 
         elif step == 2:
             # calibrate arm y axis
-            estim, frame = focus_track(devtype, microscope, arm, template, track_step, 1, alpha, um_px, estim, cap)
+            estim, frame = focus_track(microscope, arm, template, track_step, 1, alpha, um_px, estim, cam)
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
 
@@ -304,7 +298,7 @@ while 1:
 
                 sleep(3)
 
-                frame = getImg(devtype, microscope, cv2cap=cap, update=1)
+                frame = get_img(microscope, cam)
                 cv2.imshow('Camera', frame)
                 cv2.waitKey(10)
 
@@ -318,7 +312,7 @@ while 1:
 
         elif step == 3:
             # calibrate arm z axis
-            estim, frame = focus_track(devtype, microscope, arm, template, track_step, 2, alpha, um_px, estim, cap)
+            estim, frame = focus_track(microscope, arm, template, track_step, 2, alpha, um_px, estim, cam)
 
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
@@ -342,7 +336,7 @@ while 1:
 
                 sleep(2)
 
-                frame = getImg(devtype, microscope, cv2cap=cap, update=1)
+                frame = get_img(microscope, cam)
                 cv2.imshow('Camera', frame)
                 cv2.waitKey(10)
 
@@ -381,4 +375,4 @@ while 1:
     cv2.waitKey(1)
 
 # When everything done, release the capture
-stop_device(devtype, dev, microscope, cap)
+stop_device(dev, microscope, cam)
