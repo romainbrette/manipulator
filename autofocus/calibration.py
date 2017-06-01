@@ -7,8 +7,45 @@ from template_matching import *
 from focus_template_series import *
 from numpy import matrix
 
+__all__ = ['calibrate_platform', 'calibrate', 'pipettechange']
 
-__all__ = ['calibrate', 'pipettechange']
+
+def calibrate_platform(microscope, template, x_init, y_init, cam):
+
+    alpha = matrix('0. 0.; 0. 0.')
+    um_px = 0
+
+    for i in range(2):
+        # Moving the microscope
+        microscope.relative_move(200, i)
+        sleep(1)
+
+        # Refreshing the frame after the move
+        frame = get_img(microscope, cam)
+        cv2.imshow('Camera', frame)
+        cv2.waitKey(1)
+
+        # Getting the displacement, in pixels, of the tip on the screen
+        _, _, loc = templatematching(frame, template[len(template)/2])
+        dx = loc[0] - x_init
+        dy = loc[1] - y_init
+
+        # Determination of um_px
+        um_px = 200./((dx**2 + dy**2)**0.5)
+
+        alpha[0, i] = dx*um_px/200.
+        alpha[1, i] = dy*um_px/200.
+
+        # Resetting position of microscope
+        microscope.relative_move(-200, i)
+        sleep(1)
+
+        # Refreshing frame
+        frame = get_img(microscope, cam)
+        cv2.imshow('Camera', frame)
+        cv2.waitKey(1)
+
+    return alpha, um_px
 
 
 def calibrate(microscope, arm, mat, init_pos_m, init_pos_a, axis, first_step, maxdistance, template, alpha, um_px, cam):

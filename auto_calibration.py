@@ -129,62 +129,9 @@ while 1:
             _, _, loc = templatematching(frame, template[len(template)/2])
             x_init, y_init = loc[:2]
 
-            # Getting the ratio um per pixels by moving the microscope by 100 um along x axis:
+            # Getting the ratio um per pixels and the rotation of the platform
 
-            # Moving the microscope
-            microscope.relative_move(100, 0)
-            sleep(1)
-
-            # Refreshing the frame after the move
-            frame = get_img(microscope, cam)
-            cv2.imshow('Camera', frame)
-            cv2.waitKey(1)
-
-            # Getting the displacement, in pixels, of the tip on the screen
-            _, _, loc = templatematching(frame, template[len(template)/2])
-            dx = loc[0] - x_init
-            dy = loc[1] - y_init
-
-            # Determination of um_px
-            um_px = 100./((dx**2 + dy**2)**0.5)
-
-            alpha[0, 0] = dx*um_px/100.
-            alpha[1, 0] = dy*um_px/100.
-
-            # Resetting position of microscope
-            microscope.relative_move(-100, 0)
-            sleep(1)
-
-            # Refreshing frame
-            frame = get_img(microscope, cam)
-            cv2.imshow('Camera', frame)
-            cv2.waitKey(1)
-
-            # Moving the microscope
-            microscope.relative_move(100, 1)
-            sleep(1)
-
-            # Refreshing the frame after the move
-            frame = get_img(microscope, cam)
-            cv2.imshow('Camera', frame)
-            cv2.waitKey(1)
-
-            # Getting the displacement, in pixels, of the tip on the screen
-            _, _, loc = templatematching(frame, template[len(template)/2])
-            dx = loc[0] - x_init
-            dy = loc[1] - y_init
-
-            alpha[0, 1] = dx*um_px/100.
-            alpha[1, 1] = dy*um_px/100.
-
-            # Resetting position of microscope
-            microscope.relative_move(-100, 1)
-            sleep(1)
-
-            # Refreshing frame
-            frame = get_img(microscope, cam)
-            cv2.imshow('Camera', frame)
-            cv2.waitKey(1)
+            alpha, um_px = calibrate_platform(microscope, template, x_init, y_init, cam)
 
             step += 1
 
