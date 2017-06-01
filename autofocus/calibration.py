@@ -2,8 +2,12 @@ import cv2
 from get_img import *
 from focustracking import *
 from time import sleep
+from math import fabs
+from template_matching import *
+from focus_template_series import *
+from numpy import matrix
 
-__all__ = ['calibrate']
+__all__ = ['calibrate', 'pipettechange']
 
 
 def calibrate(microscope, arm, mat, init_pos_m, init_pos_a, axis, first_step, maxdistance, template, alpha, um_px, cam):
@@ -64,3 +68,72 @@ def calibrate(microscope, arm, mat, init_pos_m, init_pos_a, axis, first_step, ma
             calibrated = 1
 
     return mat, stop, frame
+
+
+def pipettechange(microscope, arm, mat, template, template_loc, x_init, y_init, um_px, alpha, cam):
+
+    """
+    Change pipette & recalibration
+    :param microscope: 
+    :param arm: 
+    :param mat: 
+    :param template: 
+    :param template_loc: 
+    :param x_init: 
+    :param y_init: 
+    :param um_px: 
+    :param alpha: 
+    :param cam: 
+    :return: 
+    """
+    ratio = fabs(mat[0, 0] / mat[1, 0])
+
+    if ratio > 1:
+        i = 0
+    else:
+        i = 1
+
+    if template_loc[i] ^ (mat[i, 0] > 0):
+        sign = -1
+    else:
+        sign = 1
+
+    arm.relative_move(sign*5000000, 0)
+    sleep(1)
+    frame = get_img(microscope, cam)
+    cv2.imshow('Camera', frame)
+    cv2.waitKey(0)
+    arm.relative_move(-sign*3000000, 0)
+    sleep(1)
+    frame = get_img(microscope, cam)
+    cv2.imshow('Camera', frame)
+    cv2.waitKey(1)
+
+    while 1:
+        arm.relative_move(100, 0)
+        sleep(1)
+        frame = get_img(microscope, cam)
+        cv2.imshow('Camera', frame)
+        cv2.waitKey(1)
+        height, width = frame.shape[:2]
+        ratio = 32
+        img = frame[height/2-3*height/ratio:height/2+3*height/ratio, width/2-3*width/ratio:width/2+3*width/ratio]
+        isin, val, loc = templatematching(img, template[len(template)/2])
+        if isin:
+            while val < 0.98:
+                val, _, loc, frame = focus(microscope, template, cam)
+                cv2.imshow('Camera', frame)
+                cv2.waitKey(1)
+            delta = matrix('{a}; {b}'.format(a=(x_init-loc[0])*um_px, b=(y_init-loc[1])*um_px))
+            move = alpha*delta
+            for i in range(2):
+                arm.relative_move(move[i, 0], i)
+            sleep(1)
+            frame = get_img(microscope, cam)
+            cv2.imshow('Camera', frame)
+            cv2.waitKey(1)
+            init_pos_a = [arm.position(i) for i in range(3)]
+            init_pos_m = [microscope.position(i) for i in range(3)]
+            break
+
+    return init_pos_m, init_pos_a

@@ -28,7 +28,6 @@ cv2.namedWindow('Camera', flags=cv2.WINDOW_NORMAL)
 template = 0
 calibrating = 0
 calibrate_succeeded = 0
-recal = 0
 
 # Actual step in calibration
 step = 0
@@ -113,41 +112,8 @@ while 1:
     if key & 0xFF == ord('r'):
         if calibrate_succeeded:
             # Recalibration to change pipette
-            arm.relative_move(-5000000, 0)
-            sleep(1)
-            frame = get_img(microscope, cam)
-            cv2.imshow('Camera', frame)
-            cv2.waitKey(0)
-            arm.relative_move(3000000, 0)
-            sleep(1)
-            frame = get_img(microscope, cam)
-            cv2.imshow('Camera', frame)
-            cv2.waitKey(1)
-            recal = 1
-        else:
-            print 'Calibration must be done beforehand.'
-
-    if recal:
-        arm.relative_move(100, 0)
-        sleep(1)
-        frame = get_img(microscope, cam)
-        height, width = frame.shape[:2]
-        ratio = 32
-        img = frame[height/2-3*height/ratio:height/2+3*height/ratio, width/2-3*width/ratio:width/2+3*width/ratio]
-        isin, val, loc = templatematching(img, template[len(template)/2])
-        if isin:
-            while val < 0.98:
-                val, _, loc, frame = focus(microscope, template, cam)
-                cv2.imshow('Camera', frame)
-                cv2.waitKey(1)
-            delta = matrix('{a}; {b}'.format(a=(x_init-loc[0])*um_px, b=(y_init-loc[1])*um_px))
-            move = alpha*delta
-            for i in range(2):
-                arm.relative_move(move[i, 0], i)
-            sleep(1)
-            init_pos_a = [arm.position(i) for i in range(3)]
-            init_pos_m = [microscope.position(i) for i in range(3)]
-            recal = 0
+            init_pos_m, init_pos_a = pipettechange(microscope, arm, M, template, template_loc, x_init, y_init, um_px,
+                                                   alpha, cam)
 
     if calibrating:
         if step == 0:
@@ -247,7 +213,7 @@ while 1:
 
         elif step == 3:
             # calibrate arm z axis
-            M, stop, frame = calibrate(microscope, arm, M, init_pos_m, init_pos_a, z, first_step, maxdist, template,
+            M, stop, frame = calibrate(microscope, arm, M, init_pos_m, init_pos_a, 2, first_step, maxdist, template,
                                        alpha, um_px, cam)
 
             if stop:
