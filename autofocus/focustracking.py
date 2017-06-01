@@ -7,6 +7,7 @@ from focus_template_series import *
 from template_matching import *
 from get_img import *
 from numpy import matrix
+from numpy.linalg import inv
 import cv2
 from time import sleep
 
@@ -20,7 +21,7 @@ def focus_track(microscope, arm, template, step, axis, alpha, um_px, estim, cam)
     """
 
     pos = microscope.position(2)
-
+    apos = arm.position(axis)
     # Update frame just in case
     frame = get_img(microscope, cam)
 
@@ -33,10 +34,12 @@ def focus_track(microscope, arm, template, step, axis, alpha, um_px, estim, cam)
     frame = get_img(microscope, cam)
     cv2.imshow('Camera', frame)
     cv2.waitKey(1)
+    print step
+    print arm.position(axis) - apos
 
     # Move the platform to center the tip
     delta = matrix('{a}; {b}'.format(a=estim[0]*step, b=estim[1]*step))
-    move = alpha*delta
+    move = inv(alpha)*delta
     for i in range(2):
         microscope.relative_move(move[i, 0], i)
     sleep(1)
@@ -56,7 +59,7 @@ def focus_track(microscope, arm, template, step, axis, alpha, um_px, estim, cam)
 
     # Move the platform for compensation
     delta = matrix('{a}; {b}'.format(a=(initloc[0] - loc[0])*um_px, b=(initloc[1] - loc[1])*um_px))
-    move = alpha * delta
+    move = inv(alpha) * delta
     for i in range(2):
         microscope.relative_move(move[i, 0], i)
 

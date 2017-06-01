@@ -1,5 +1,6 @@
 import cv2
 from numpy import matrix
+from numpy.linalg import inv
 
 __all__ = ['clic_position']
 
@@ -22,7 +23,7 @@ def clic_position(event, x, y, flags, param):
 
             temp = matrix([[(param['x_init'] - x + param['loc'][0]) * param['um_px']],
                            [(param['y_init'] - y + param['loc'][1]) * param['um_px']]])
-            temp = param['alpha']*temp
+            temp = inv(param['alpha'])*temp
             pos[0, 0] += temp[0, 0]
             pos[1, 0] += temp[1, 0]
 

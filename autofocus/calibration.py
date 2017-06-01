@@ -6,6 +6,7 @@ from math import fabs
 from template_matching import *
 from focus_template_series import *
 from numpy import matrix
+from numpy.linalg import inv
 
 __all__ = ['calibrate', 'pipettechange']
 
@@ -93,24 +94,24 @@ def pipettechange(microscope, arm, mat, template, template_loc, x_init, y_init, 
     else:
         i = 1
 
-    if template_loc[i] ^ (mat[i, 0] > 0):
-        sign = -1
-    else:
+    if (template_loc[i] != 0) ^ (mat[i, 0] > 0):
         sign = 1
+    else:
+        sign = -1
 
-    arm.relative_move(sign*5000000, 0)
+    arm.relative_move(sign*20000, 0)
     sleep(1)
     frame = get_img(microscope, cam)
     cv2.imshow('Camera', frame)
     cv2.waitKey(0)
-    arm.relative_move(-sign*3000000, 0)
+    arm.relative_move(-sign*15000, 0)
     sleep(1)
     frame = get_img(microscope, cam)
     cv2.imshow('Camera', frame)
     cv2.waitKey(1)
 
     while 1:
-        arm.relative_move(100, 0)
+        arm.relative_move(-sign*100, 0)
         sleep(1)
         frame = get_img(microscope, cam)
         cv2.imshow('Camera', frame)
@@ -125,7 +126,7 @@ def pipettechange(microscope, arm, mat, template, template_loc, x_init, y_init, 
                 cv2.imshow('Camera', frame)
                 cv2.waitKey(1)
             delta = matrix('{a}; {b}'.format(a=(x_init-loc[0])*um_px, b=(y_init-loc[1])*um_px))
-            move = alpha*delta
+            move = inv(alpha)*delta
             for i in range(2):
                 arm.relative_move(move[i, 0], i)
             sleep(1)
