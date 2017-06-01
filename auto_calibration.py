@@ -10,6 +10,7 @@ Quit with key 'q'
 from autofocus import *
 from numpy import matrix
 from numpy.linalg import inv
+import numpy as np
 from time import sleep
 
 # Type of used controller, either 'SM5' or 'SM10 for L&N SM-5 or L&N SM-10
@@ -232,22 +233,22 @@ while 1:
             print 'Calibration finished'
 
     # Our operations on the frame come here
+    if isinstance(frame, np.ndarray):
+        if not isinstance(template, list):
+            # Display a rectangle where the template will be taken
+            frame = disp_template_zone(frame)
 
-    if not isinstance(template, list):
-        # Display a rectangle where the template will be taken
-        frame = disp_template_zone(frame)
+        # Display a red centered cross
+        frame = disp_centered_cross(frame)
 
-    # Display a red centered cross
-    frame = disp_centered_cross(frame)
+        # Parameters for mouse callbacks
+        param = {'calibrated': calibrate_succeeded, 'mat': M_inv, 'x_init': x_init, 'y_init': y_init, 'um_px': um_px,
+                 'mic': microscope, 'arm': arm, 'init_mic': init_pos_m, 'init_arm': init_pos_a, 'alpha': alpha,
+                 'loc': template_loc}
 
-    # Parameters for mouse callbacks
-    param = {'calibrated': calibrate_succeeded, 'mat': M_inv, 'x_init': x_init, 'y_init': y_init, 'um_px': um_px,
-             'mic': microscope, 'arm': arm, 'init_mic': init_pos_m, 'init_arm': init_pos_a, 'alpha': alpha,
-             'loc': template_loc}
-
-    cv2.imshow('Camera', frame)
-    cv2.setMouseCallback('Camera', clic_position, param)
-    cv2.waitKey(1)
+        cv2.imshow('Camera', frame)
+        cv2.setMouseCallback('Camera', clic_position, param)
+        cv2.waitKey(1)
 
 # When everything done, release the capture
 stop_device(dev, microscope, cam)

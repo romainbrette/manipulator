@@ -7,6 +7,7 @@ from template_matching import *
 from focus_template_series import *
 from numpy import matrix
 
+
 __all__ = ['calibrate', 'pipettechange']
 
 
@@ -93,17 +94,17 @@ def pipettechange(microscope, arm, mat, template, template_loc, x_init, y_init, 
     else:
         i = 1
 
-    if template_loc[i] ^ (mat[i, 0] > 0):
-        sign = -1
-    else:
+    if (template_loc[i] != 0) ^ (mat[i, 0] > 0):
         sign = 1
+    else:
+        sign = -1
 
-    arm.relative_move(sign*5000000, 0)
+    arm.relative_move(sign*20000, 0)
     sleep(1)
     frame = get_img(microscope, cam)
     cv2.imshow('Camera', frame)
     cv2.waitKey(0)
-    arm.relative_move(-sign*3000000, 0)
+    arm.relative_move(-sign*17000, 0)
     sleep(1)
     frame = get_img(microscope, cam)
     cv2.imshow('Camera', frame)

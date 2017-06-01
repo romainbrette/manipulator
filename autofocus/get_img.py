@@ -19,6 +19,7 @@ def get_img(microscope, cam, z=None):
     :return frame: image taken from camera
     """
 
+    frame = 0
     # Move the microscope if an height has been specify
     if z:
         microscope.absolute_move(z, 2)
@@ -31,10 +32,10 @@ def get_img(microscope, cam, z=None):
         frame = cam.getLastImage()
         frame = np.float32(frame/(1.0*frame.max()))
 
-    if isinstance(frame, np.ndarray):
-        frame = cv2.flip(frame, 2)
-    else:
-        raise TypeError('Could not read image from camera.')
+        if isinstance(frame, np.ndarray):
+            frame = cv2.flip(frame, 2)
+        else:
+            raise TypeError('Could not read image from camera.')
 
     return frame
 
