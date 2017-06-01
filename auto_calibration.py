@@ -117,67 +117,59 @@ while 1:
                 init_pos_m, init_pos_a = pos_m, pos_a
 
     if calibrating:
-        if step == 0:
-            # Saving initial position of the arm and the microscope
-            init_pos_a = [arm.position(i) for i in range(3)]
-            init_pos_m = [microscope.position(i) for i in range(3)]
 
-            # Get a series of template images for auto focus
-            template, template_loc = get_template_series(microscope, 5, cam)
+        # Saving initial position of the arm and the microscope
+        init_pos_a = [arm.position(i) for i in range(3)]
+        init_pos_m = [microscope.position(i) for i in range(3)]
 
-            # Saving initial position of the tip on the screen
-            _, _, loc = templatematching(frame, template[len(template)/2])
-            x_init, y_init = loc[:2]
+        # Get a series of template images for auto focus
+        template, template_loc = get_template_series(microscope, 5, cam)
 
-            # Getting the ratio um per pixels and the rotation of the platform
+        # Saving initial position of the tip on the screen
+        _, _, loc = templatematching(frame, template[len(template)/2])
+        x_init, y_init = loc[:2]
 
-            alpha, um_px = calibrate_platform(microscope, template, x_init, y_init, cam)
+        # Getting the ratio um per pixels and the rotation of the platform
 
-            step += 1
+        alpha, um_px = calibrate_platform(microscope, template, x_init, y_init, cam)
 
-            print 'Calibrated platform'
+        step += 1
 
-        elif step == 1:
-            # calibrate arm y axis
-            M, stop, frame = calibrate(microscope, arm, M, init_pos_m, init_pos_a, 0, first_step, maxdist, template,
-                                       alpha, um_px, cam)
+        print 'Calibrated platform'
 
-            if stop:
-                calibrating = 0
-            else:
-                print 'Calibrated x axis'
-                step += 1
+        # calibrate arm y axis
+        M, stop, frame = calibrate(microscope, arm, M, init_pos_m, init_pos_a, 0, first_step, maxdist, template, alpha,
+                                   um_px, cam)
 
-        elif step == 2:
-            # calibrate arm y axis
-            M, stop, frame = calibrate(microscope, arm, M, init_pos_m, init_pos_a, 1, first_step, maxdist, template,
-                                       alpha, um_px, cam)
-
-            if stop:
-                calibrating = 0
-            else:
-                print 'Calibrated y axis'
-                step += 1
-
-        elif step == 3:
-            # calibrate arm z axis
-            M, stop, frame = calibrate(microscope, arm, M, init_pos_m, init_pos_a, 2, first_step, maxdist, template,
-                                       alpha, um_px, cam)
-
-            if stop:
-                calibrating = 0
-            else:
-                print 'Calibrated z axis'
-                step += 1
-
-        elif step == 4:
-
-            print M
-            M_inv = inv(M)
-            print M_inv
+        if stop:
             calibrating = 0
-            calibrate_succeeded = 1
-            print 'Calibration finished'
+        else:
+            print 'Calibrated x axis'
+
+        # calibrate arm y axis
+        M, stop, frame = calibrate(microscope, arm, M, init_pos_m, init_pos_a, 1, first_step, maxdist, template, alpha,
+                                   um_px, cam)
+
+        if stop:
+            calibrating = 0
+        else:
+            print 'Calibrated y axis'
+
+        # calibrate arm z axis
+        M, stop, frame = calibrate(microscope, arm, M, init_pos_m, init_pos_a, 2, first_step, maxdist, template, alpha,
+                                   um_px, cam)
+
+        if stop:
+            calibrating = 0
+        else:
+            print 'Calibrated z axis'
+
+        print M
+        M_inv = inv(M)
+        print M_inv
+        calibrating = 0
+        calibrate_succeeded = 1
+        print 'Calibration finished'
 
     # Our operations on the frame come here
     if isinstance(frame, np.ndarray):
