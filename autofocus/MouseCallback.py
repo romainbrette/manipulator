@@ -28,7 +28,9 @@ def clic_position(event, x, y, flags, param):
             pos[1, 0] += temp[1, 0]
 
             move = param['mat']*pos
-            for i in range(3):
+            reversedrange = range(3)
+            reversedrange.reverse()
+            for i in reversedrange:
                 param['arm'].absolute_move(param['init_arm'][i]+move[i], i)
 
     pass
