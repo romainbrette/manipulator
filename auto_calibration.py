@@ -26,21 +26,18 @@ cv2.namedWindow('Camera', flags=cv2.WINDOW_NORMAL)
 
 # Booleans for template, calibration
 template = 0
-calibrate = 0
+calibrating = 0
 calibrate_succeeded = 0
 recal = 0
 
 # Actual step in calibration
 step = 0
 
-# Number of steps made for displacements of the arm during calibration
-nstep = 1
-
 # Maximum number of steps to do
-maxnstep = 9
+maxdist = 600
 
 # Initial displacement of the arm to do, in um
-track_step = 2.
+first_step = 2.
 
 # Initial estimation (displacement microscope)/(displ moved axis), in um/um
 estim = [0., 0., 0.]
@@ -93,7 +90,7 @@ while 1:
             print 'Template image has not been taken yet.'
 
     if key & 0xFF == ord('b'):
-        calibrate ^= 1
+        calibrating ^= 1
         calibrate_succeeded = 0
         template = 0
         step = 0
@@ -152,7 +149,7 @@ while 1:
             init_pos_m = [microscope.position(i) for i in range(3)]
             recal = 0
 
-    if calibrate:
+    if calibrating:
         if step == 0:
             # Saving initial position of the arm and the microscope
             init_pos_a = [arm.position(i) for i in range(3)]
@@ -227,132 +224,44 @@ while 1:
             print 'Calibrated platform'
 
         elif step == 1:
-            # calibrate arm x axis using exponential moves:
-            # moves the arm, recenter the tip and refocus.
-            # displacements are saved
-            estim, frame = focus_track(microscope, arm, template, track_step, 0, alpha, um_px, estim, cam)
-            cv2.imshow('Camera', frame)
-            cv2.waitKey(1)
+            # calibrate arm y axis
+            M, stop, frame = calibrate(microscope, arm, M, init_pos_m, init_pos_a, 0, first_step, maxdist, template,
+                                       alpha, um_px, cam)
 
-            if nstep == maxnstep:
-
-                # When the moves are finished:
-                # Accuracy along z axis = total displacement +- 1um = 2**(maxnstep-1)-2 +-1
-
-                # Update transformation matrix (Jacobian)
-                for i in range(3):
-                    estim[i] = (init_pos_m[i] - microscope.position(i)) / (init_pos_a[0] - arm.position(0))
-
-                M[0, 0] = estim[0]
-                M[1, 0] = estim[1]
-                M[2, 0] = estim[2]
-
-                # Resetting values used in calibration for the calibration of next axis
-                estim = [0., 0., 0.]
-                track_step = 2.
-                nstep = 1
-
-                # Resetting position of arm and microscope so no error gets to the next axis calibration
-                for i in range(3):
-                    arm.absolute_move(init_pos_a[i], i)
-                    microscope.absolute_move(init_pos_m[i], i)
-
-                sleep(2)
-
-                # Update the frame
-                frame = get_img(microscope, cam)
-                cv2.imshow('Camera', frame)
-                cv2.waitKey(10)
-
-                step += 1
-
-                print 'Calibrated x axis'
-
+            if stop:
+                calibrating = 0
             else:
-                nstep += 1
-                track_step *= 2
+                print 'Calibrated x axis'
+                step += 1
 
         elif step == 2:
             # calibrate arm y axis
-            estim, frame = focus_track(microscope, arm, template, track_step, 1, alpha, um_px, estim, cam)
-            cv2.imshow('Camera', frame)
-            cv2.waitKey(1)
+            M, stop, frame = calibrate(microscope, arm, M, init_pos_m, init_pos_a, 1, first_step, maxdist, template,
+                                       alpha, um_px, cam)
 
-            if nstep == maxnstep:
-
-                for i in range(3):
-                    estim[i] = (init_pos_m[i] - microscope.position(i)) / (init_pos_a[1] - arm.position(1))
-
-                M[0, 1] = estim[0]
-                M[1, 1] = estim[1]
-                M[2, 1] = estim[2]
-
-                estim = [0., 0., 0.]
-                nstep = 1
-                track_step = 2.
-                estloc = [0., 0.]
-
-                for i in range(3):
-                    arm.absolute_move(init_pos_a[i], i)
-                    microscope.absolute_move(init_pos_m[i], i)
-
-                sleep(3)
-
-                frame = get_img(microscope, cam)
-                cv2.imshow('Camera', frame)
-                cv2.waitKey(10)
-
-                step += 1
-
-                print 'Calibrated y axis'
-
+            if stop:
+                calibrating = 0
             else:
-                nstep += 1
-                track_step *= 2
+                print 'Calibrated y axis'
+                step += 1
 
         elif step == 3:
             # calibrate arm z axis
-            estim, frame = focus_track(microscope, arm, template, track_step, 2, alpha, um_px, estim, cam)
+            M, stop, frame = calibrate(microscope, arm, M, init_pos_m, init_pos_a, z, first_step, maxdist, template,
+                                       alpha, um_px, cam)
 
-            cv2.imshow('Camera', frame)
-            cv2.waitKey(1)
-
-            if nstep == maxnstep:
-
-                for i in range(3):
-                    estim[i] = (init_pos_m[i] - microscope.position(i)) / (init_pos_a[2] - arm.position(2))
-
-                M[0, 2] = estim[0]
-                M[1, 2] = estim[1]
-                M[2, 2] = estim[2]
-
-                estim = [0., 0., 0.]
-                nstep = 1
-                track_step = 2.
-
-                for i in range(3):
-                    arm.absolute_move(init_pos_a[i], i)
-                    microscope.absolute_move(init_pos_m[i], i)
-
-                sleep(2)
-
-                frame = get_img(microscope, cam)
-                cv2.imshow('Camera', frame)
-                cv2.waitKey(10)
-
-                step += 1
-                print 'Calibrated z axis'
-
+            if stop:
+                calibrating = 0
             else:
-                nstep += 1
-                track_step *= 2
+                print 'Calibrated z axis'
+                step += 1
 
         elif step == 4:
 
             print M
             M_inv = inv(M)
             print M_inv
-            calibrate = 0
+            calibrating = 0
             calibrate_succeeded = 1
             print 'Calibration finished'
 
