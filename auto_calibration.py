@@ -11,7 +11,6 @@ from autofocus import *
 from numpy import matrix
 from numpy.linalg import inv
 import numpy as np
-from time import sleep
 
 # Type of used controller, either 'SM5' or 'SM10 for L&N SM-5 or L&N SM-10
 devtype = 'SM5'
@@ -113,8 +112,9 @@ while 1:
     if key & 0xFF == ord('r'):
         if calibrate_succeeded:
             # Recalibration to change pipette
-            init_pos_m, init_pos_a = pipettechange(microscope, arm, M, template, template_loc, x_init, y_init, um_px,
-                                                   alpha, cam)
+            pos_m, pos_a = pipettechange(microscope, arm, M, template, template_loc, x_init, y_init, um_px, alpha, cam)
+            if not isinstance(pos_m, int):
+                init_pos_m, init_pos_a = pos_m, pos_a
 
     if calibrating:
         if step == 0:

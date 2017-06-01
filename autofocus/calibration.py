@@ -140,7 +140,9 @@ def pipettechange(microscope, arm, mat, template, template_loc, x_init, y_init, 
     sleep(1)
     frame = get_img(microscope, cam)
     cv2.imshow('Camera', frame)
-    cv2.waitKey(0)
+    key = cv2.waitKey(0)
+    if key & 0xFF == ord('q'):
+        return 0, 0
     arm.relative_move(-sign*17000, 0)
     sleep(1)
     frame = get_img(microscope, cam)
@@ -152,7 +154,9 @@ def pipettechange(microscope, arm, mat, template, template_loc, x_init, y_init, 
         sleep(1)
         frame = get_img(microscope, cam)
         cv2.imshow('Camera', frame)
-        cv2.waitKey(1)
+        key = cv2.waitKey(1)
+        if key & 0xFF == ord('q'):
+            return 0, 0
         height, width = frame.shape[:2]
         ratio = 32
         img = frame[height/2-3*height/ratio:height/2+3*height/ratio, width/2-3*width/ratio:width/2+3*width/ratio]
@@ -161,7 +165,9 @@ def pipettechange(microscope, arm, mat, template, template_loc, x_init, y_init, 
             while val < 0.98:
                 val, _, loc, frame = focus(microscope, template, cam)
                 cv2.imshow('Camera', frame)
-                cv2.waitKey(1)
+                key = cv2.waitKey(1)
+                if key & 0xFF == ord('q'):
+                    return 0, 0
             delta = matrix('{a}; {b}'.format(a=(x_init-loc[0])*um_px, b=(y_init-loc[1])*um_px))
             move = alpha*delta
             for i in range(2):
