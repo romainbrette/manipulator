@@ -34,8 +34,6 @@ def focus_track(microscope, arm, template, step, axis, alpha, um_px, estim, cam)
     frame = get_img(microscope, cam)
     cv2.imshow('Camera', frame)
     cv2.waitKey(1)
-    print step
-    print arm.position(axis) - apos
 
     # Move the platform to center the tip
     delta = matrix('{a}; {b}'.format(a=estim[0]*step, b=estim[1]*step))
