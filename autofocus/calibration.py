@@ -5,15 +5,32 @@ from time import sleep
 from math import fabs
 from template_matching import *
 from focus_template_series import *
+from get_template_series import *
 from numpy import matrix
+from numpy.linalg import inv
 
-__all__ = ['calibrate_platform', 'calibrate', 'pipettechange']
+__all__ = ['calibrate_platform', 'calibrate_arm', 'calibrate', 'pipettechange']
 
 
-def calibrate_platform(microscope, template, x_init, y_init, cam):
+def calibrate_platform(microscope, arm, cam):
 
     alpha = matrix('0. 0.; 0. 0.')
     um_px = 0
+
+    frame = get_img(microscope, cam)
+
+    # Saving initial position of the arm and the microscope
+    init_pos_a = [arm.position(i) for i in range(3)]
+    init_pos_m = [microscope.position(i) for i in range(3)]
+
+    # Get a series of template images for auto focus
+    template, template_loc = get_template_series(microscope, 5, cam)
+
+    # Saving initial position of the tip on the screen
+    _, _, loc = templatematching(frame, template[len(template) / 2])
+    x_init, y_init = loc[:2]
+
+    # Getting the ratio um per pixels and the rotation of the platform
 
     for i in range(2):
         # Moving the microscope
@@ -45,10 +62,11 @@ def calibrate_platform(microscope, template, x_init, y_init, cam):
         cv2.imshow('Camera', frame)
         cv2.waitKey(1)
 
-    return alpha, um_px
+    return init_pos_m, init_pos_a, x_init, y_init, alpha, um_px
 
 
-def calibrate(microscope, arm, mat, init_pos_m, init_pos_a, axis, first_step, maxdistance, template, alpha, um_px, cam):
+def calibrate_arm(microscope, arm, mat, init_pos_m, init_pos_a, axis, first_step, maxdistance, template, alpha, um_px,
+                  cam):
 
     estim = [0., 0., 0.]
     totaldistance = 0
@@ -106,6 +124,46 @@ def calibrate(microscope, arm, mat, init_pos_m, init_pos_a, axis, first_step, ma
             calibrated = 1
 
     return mat, stop, frame
+
+
+def calibrate(microscope, arm, template, first_step, maxdist, mat, cam):
+
+    init_pos_m, init_pos_a, x_init, y_init, alpha, um_px = calibrate_platform(microscope, arm, cam)
+
+    print 'Calibrated platform'
+
+    # calibrate arm y axis
+    mat, stop, frame = calibrate_arm(microscope, arm, mat, init_pos_m, init_pos_a, 0, first_step, maxdist, template,
+                                     alpha, um_px, cam)
+
+    if stop:
+        return 0
+    else:
+        print 'Calibrated x axis'
+
+    # calibrate arm y axis
+    mat, stop, frame = calibrate_arm(microscope, arm, mat, init_pos_m, init_pos_a, 1, first_step, maxdist, template,
+                                     alpha, um_px, cam)
+
+    if stop:
+        return 0
+    else:
+        print 'Calibrated y axis'
+
+    # calibrate arm z axis
+    mat, stop, frame = calibrate_arm(microscope, arm, mat, init_pos_m, init_pos_a, 2, first_step, maxdist, template,
+                                     alpha, um_px, cam)
+
+    if stop:
+        return 0
+    else:
+        print 'Calibrated z axis'
+
+    print mat
+    mat_inv = inv(mat)
+    print mat_inv
+    print 'Calibration finished'
+    return 1
 
 
 def pipettechange(microscope, arm, mat, template, template_loc, x_init, y_init, um_px, alpha, cam):

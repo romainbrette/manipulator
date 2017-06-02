@@ -25,7 +25,7 @@ exposure = 15
 cv2.namedWindow('Camera', flags=cv2.WINDOW_NORMAL)
 
 # Booleans for template, calibration
-template = 0
+template = []
 calibrating = 0
 calibrate_succeeded = 0
 
@@ -91,7 +91,7 @@ while 1:
     if key & 0xFF == ord('b'):
         calibrating ^= 1
         calibrate_succeeded = 0
-        template = 0
+        template = []
         step = 0
 
     if key & 0xFF == ord('p'):
@@ -118,28 +118,13 @@ while 1:
 
     if calibrating:
 
-        # Saving initial position of the arm and the microscope
-        init_pos_a = [arm.position(i) for i in range(3)]
-        init_pos_m = [microscope.position(i) for i in range(3)]
-
-        # Get a series of template images for auto focus
-        template, template_loc = get_template_series(microscope, 5, cam)
-
-        # Saving initial position of the tip on the screen
-        _, _, loc = templatematching(frame, template[len(template)/2])
-        x_init, y_init = loc[:2]
-
-        # Getting the ratio um per pixels and the rotation of the platform
-
-        alpha, um_px = calibrate_platform(microscope, template, x_init, y_init, cam)
-
-        step += 1
+        init_pos_m, init_pos_a, x_init, y_init, alpha, um_px = calibrate_platform(microscope, arm, cam)
 
         print 'Calibrated platform'
 
         # calibrate arm y axis
-        M, stop, frame = calibrate(microscope, arm, M, init_pos_m, init_pos_a, 0, first_step, maxdist, template, alpha,
-                                   um_px, cam)
+        M, stop, frame = calibrate_arm(microscope, arm, M, init_pos_m, init_pos_a, 0, first_step, maxdist, template,
+                                       alpha, um_px, cam)
 
         if stop:
             calibrating = 0
@@ -147,8 +132,8 @@ while 1:
             print 'Calibrated x axis'
 
         # calibrate arm y axis
-        M, stop, frame = calibrate(microscope, arm, M, init_pos_m, init_pos_a, 1, first_step, maxdist, template, alpha,
-                                   um_px, cam)
+        M, stop, frame = calibrate_arm(microscope, arm, M, init_pos_m, init_pos_a, 1, first_step, maxdist, template,
+                                       alpha, um_px, cam)
 
         if stop:
             calibrating = 0
@@ -156,8 +141,8 @@ while 1:
             print 'Calibrated y axis'
 
         # calibrate arm z axis
-        M, stop, frame = calibrate(microscope, arm, M, init_pos_m, init_pos_a, 2, first_step, maxdist, template, alpha,
-                                   um_px, cam)
+        M, stop, frame = calibrate_arm(microscope, arm, M, init_pos_m, init_pos_a, 2, first_step, maxdist, template,
+                                       alpha, um_px, cam)
 
         if stop:
             calibrating = 0
@@ -173,7 +158,7 @@ while 1:
 
     # Our operations on the frame come here
     if isinstance(frame, np.ndarray):
-        if not isinstance(template, list):
+        if not template:
             # Display a rectangle where the template will be taken
             frame = disp_template_zone(frame)
 
