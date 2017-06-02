@@ -22,25 +22,32 @@ class Application(Frame):
         self.disconnection = None
         self.connection = None
         self.controllist = None
+        self.armlist = None
         self.calibrate = None
         self.pack()
         self.createwidgets()
 
     def connect(self):
         self.controller = self.controllist.get()
+        self.arm = self.armlist.get()
         if not self.controller:
             print 'Please specify a controller.'
         else:
-            self.controllist['state'] = 'disabled'
-            self.robot = PatchClampRobot(self.controller, self.arm)
-            self.connection.config(state='disabled')
-            self.disconnection.config(state='normal')
-            self.after(10, self.show)
+            if not self.arm:
+                print 'Please specify a device for the arm.'
+            else:
+                self.controllist['state'] = 'disabled'
+                self.armlist['state'] = 'disabled'
+                self.robot = PatchClampRobot(self.controller, self.arm)
+                self.connection.config(state='disabled')
+                self.disconnection.config(state='normal')
+                self.after(10, self.show)
         pass
 
     def disconnect(self):
         del self.robot
         self.controllist['state'] = "readonly"
+        self.armlist['state'] = 'readonly'
         self.connection.config(state='normal')
         self.disconnection.config(state='disabled')
         pass
@@ -59,16 +66,19 @@ class Application(Frame):
         self.controllist = ttk.Combobox(self, state='readonly', values='SM5 SM10')
         self.controllist.grid(row=0, column=0, columnspan=2, padx=2, pady=2)
 
+        self.armlist = ttk.Combobox(self, state='readonly', values='dev1 dev2')
+        self.armlist.grid(row=1, column=0, columnspan=2, padx=2, pady=2)
+
         self.connection = Button(self, text='Connect', command=self.connect)
-        self.connection.grid(row=1, column=0)
+        self.connection.grid(row=2, column=0)
 
         self.disconnection = Button(self, text='Disconnect', command=self.disconnect, state='disable')
-        self.disconnection.grid(row=1, column=1)
+        self.disconnection.grid(row=2, column=1)
 
         self.calibrate = Button(self, text='Calibrate', command=self.robot.calibrate)
 
         self.QUIT = Button(self, text='QUIT', fg='red', command=self.exit)
-        self.QUIT.grid(row=2, column=0)
+        self.QUIT.grid(row=3, column=0)
 
 
 root = Tk()
