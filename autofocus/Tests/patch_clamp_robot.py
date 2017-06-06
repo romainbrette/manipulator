@@ -429,7 +429,7 @@ class PatchClampRobot:
                     pos[i, 0] = self.microscope.position(i)
 
                 temp = inv(self.alpha) * matrix([[(self.x_init - x + self.template_loc[0]) * self.um_px],
-                                                 [(self.y_init - y + self.template_loc[0]) * self.um_px]])
+                                                 [(self.y_init - y + self.template_loc[1]) * self.um_px]])
                 pos[0, 0] += temp[0, 0]
                 pos[1, 0] += temp[1, 0]
 

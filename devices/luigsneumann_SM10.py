@@ -197,6 +197,5 @@ class LuigsNeumann_SM10(SerialDevice):
         """
         res = 1
         while res:
-            res = self.send_command('0120', [axis], 8)
-            res = res[5]
-            print res
+            res = self.send_command('0120', [axis], 7)
+            res = int(binascii.hexlify(struct.unpack('s', res[5])[0])[1])
