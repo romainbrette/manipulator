@@ -76,9 +76,10 @@ class Application(Frame):
         self.disconnection.grid(row=2, column=1)
 
         self.calibrate = Button(self, text='Calibrate', command=self.robot.calibrate)
+        self.calibrate.grid(row=3, column=0)
 
         self.QUIT = Button(self, text='QUIT', fg='red', command=self.exit)
-        self.QUIT.grid(row=3, column=0)
+        self.QUIT.grid(row=4, column=0)
 
 
 root = Tk()

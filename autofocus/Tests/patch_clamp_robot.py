@@ -43,7 +43,9 @@ class PatchClampRobot:
 
         frame = self.get_img()
 
-        # TODO Make current position the home position
+        # Make current position the zero position
+        self.arm.set_to_zero([0, 1, 2])
+        self.microscope.set_to_zero([0, 1, 2])
 
         # Get a series of template images for auto focus
         self.get_template_series(5)
@@ -219,7 +221,9 @@ class PatchClampRobot:
                     self.arm.relative_move(move[i, 0], i)
                 sleep(1)
                 self.show()
-                # TODO change home position to current position
+                # Change zero position to current position
+                self.arm.set_to_zero([0, 1, 2])
+                self.microscope.set_to_zero([0, 1, 2])
                 break
         pass
 
