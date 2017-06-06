@@ -122,7 +122,7 @@ class XYMicUnit(Device):
         :return: 
         """
         if axis == 2:
-            print('test')
+            self.dev_mic.wait_motor_stop()
         else:
             self.dev.wait_motor_stop(self.axes[axis])
 

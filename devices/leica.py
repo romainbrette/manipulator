@@ -24,6 +24,8 @@ class Leica(Device):
         Device.__init__(self)
         self.memory = dict() # A dictionary of positions
 
+        self.zero_position = 0
+
         self.port_name = name
         mmc = MMCorePy.CMMCore()
         self.mmc = mmc
@@ -60,7 +62,7 @@ class Leica(Device):
         -------
         The current position of the device axis in um.
         '''
-        return self.mmc.getPosition()
+        return self.zero_position - self.mmc.getPosition()
 
     def absolute_move(self, x, axis = None):
         '''
@@ -71,7 +73,7 @@ class Leica(Device):
         axis : this is ignored
         x : target position in um.
         '''
-        self.mmc.setPosition(x)
+        self.mmc.setPosition(self.zero_position + x)
 
     def relative_move(self, x, axis = None):
         '''
@@ -89,6 +91,12 @@ class Leica(Device):
 
     def load(self, name):
         self.absolute_move(self.memory[name])
+
+    def wait_motor_stop(self):
+        self.mmc.waitForSystem()
+
+    def set_to_zero(self):
+        self.zero_position = self.mmc.getPosition()
 
 
 if __name__ == '__main__':
