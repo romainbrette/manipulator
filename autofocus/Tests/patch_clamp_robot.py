@@ -348,6 +348,10 @@ class PatchClampRobot:
 
         # Move the microscope
         self.show(pos + estim[2] * step)
+        # self.arm.wait_motor_stop(axis)
+        # self.microscope.wait_motor(0)
+        # self.microscope.wait_motor(1)
+
 
         # Focus around the estimated focus height
         _, estim_temp, loc = self.focus()
