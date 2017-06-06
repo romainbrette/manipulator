@@ -149,8 +149,10 @@ class LuigsNeumann_SM5(SerialDevice):
         :return: 
         """
         res = 1
-        res = self.send_command('0120', [axis], 6)
-        print res[6]
+        while res:
+            res = self.send_command('0120', [axis], 6)
+            res = res(6)
+            print res
 
 if __name__ == '__main__':
     sm5 = LuigsNeumann_SM5('COM3')

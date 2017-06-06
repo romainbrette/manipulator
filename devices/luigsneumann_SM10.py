@@ -200,5 +200,7 @@ class LuigsNeumann_SM10(SerialDevice):
         :return: 
         """
         res = 1
-        res = self.send_command('0120', [axis], 8)
-        print res[5]
+        while res:
+            res = self.send_command('0120', [axis], 8)
+            res = res[5]
+            print res
