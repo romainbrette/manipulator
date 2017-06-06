@@ -18,6 +18,7 @@ def get_img(microscope, cam, z=None):
     :param cam: micro manager camera
     :return frame: image taken from camera
     """
+
     frame = 0
     # Move the microscope if an height has been specify
     if z:

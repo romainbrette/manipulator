@@ -100,6 +100,32 @@ class XYMicUnit(Device):
             else:
                 self.dev.stop(self.axes[axis])
 
+    def set_to_zero(self, axis):
+        """
+        Set the current position of the axis as the zero position
+        :param axis: 
+        :return: 
+        """
+        if isinstance(axis, list):
+            for i in axis:
+                self.set_to_zero(i)
+        else:
+            if axis == 2:
+                print 'test'
+            else:
+                self.dev.set_to_zero(self.axes[axis])
+
+    def wait_motor_stop(self, axis):
+        """
+        Wait for the motor to stop
+        :param axis: 
+        :return: 
+        """
+        if axis == 2:
+            print('test')
+        else:
+            self.dev.wait_motor_stop(self.axes[axis])
+
 if __name__ == '__main__':
     from luigsneumann_SM5 import *
     from leica import *

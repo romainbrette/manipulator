@@ -124,12 +124,31 @@ class LuigsNeumann_SM5(SerialDevice):
         data = [axis, int(x_hex[6:], 16), int(x_hex[4:6], 16), int(x_hex[2:4], 16), int(x_hex[:2], 16)]
         self.send_command('004A', data, 0)
 
-
     def stop(self, axis):
         """
         Stop current movements.
         """
         self.send_command('00FF', [axis], 0)
+
+    def set_to_zero(self, axis):
+        """
+        Set the current position of the axis as the zero position
+        :param axis: 
+        :return: 
+        """
+        self.send_command('00f0', [axis], 0)
+
+    def wait_motor_stop(self, axis):
+        """
+        Wait for the motor to stop
+        :param axis: 
+        :return: 
+        """
+        res = 1
+        while res:
+            res = self.send_command('0120', [axis], 6)
+            res = res(6)
+            print res
 
 if __name__ == '__main__':
     sm5 = LuigsNeumann_SM5('COM3')

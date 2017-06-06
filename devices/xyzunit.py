@@ -90,3 +90,23 @@ class XYZUnit(Device):
                 self.dev.stop(axis)
         else:
             self.dev.stop(self.axes[axis])
+
+    def set_to_zero(self, axis):
+        """
+        Set the current position of the axis as the zero position
+        :param axis: 
+        :return: 
+        """
+        if isinstance(axis, list):
+            for i in axis:
+                self.dev.set_to_zero(self.axes[i])
+        else:
+            self.dev.set_to_zero(self.axes[axis])
+
+    def wait_motor_stop(self, axis):
+        """
+        Wait for the motor to stop
+        :param axis: 
+        :return: 
+        """
+        self.dev.wait_motor_stop(self.axes[axis])

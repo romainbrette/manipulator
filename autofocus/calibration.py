@@ -5,13 +5,68 @@ from time import sleep
 from math import fabs
 from template_matching import *
 from focus_template_series import *
+from get_template_series import *
 from numpy import matrix
 from numpy.linalg import inv
 
-__all__ = ['calibrate', 'pipettechange']
+__all__ = ['calibrate_platform', 'calibrate_arm', 'calibrate', 'pipettechange']
 
 
-def calibrate(microscope, arm, mat, init_pos_m, init_pos_a, axis, first_step, maxdistance, template, alpha, um_px, cam):
+def calibrate_platform(microscope, arm, cam):
+
+    alpha = matrix('0. 0.; 0. 0.')
+    um_px = 0
+
+    frame = get_img(microscope, cam)
+
+    # Saving initial position of the arm and the microscope
+    init_pos_a = [arm.position(i) for i in range(3)]
+    init_pos_m = [microscope.position(i) for i in range(3)]
+
+    # Get a series of template images for auto focus
+    template, template_loc = get_template_series(microscope, 5, cam)
+
+    # Saving initial position of the tip on the screen
+    _, _, loc = templatematching(frame, template[len(template) / 2])
+    x_init, y_init = loc[:2]
+
+    # Getting the ratio um per pixels and the rotation of the platform
+
+    for i in range(2):
+        # Moving the microscope
+        microscope.relative_move(200, i)
+        sleep(1)
+
+        # Refreshing the frame after the move
+        frame = get_img(microscope, cam)
+        cv2.imshow('Camera', frame)
+        cv2.waitKey(1)
+
+        # Getting the displacement, in pixels, of the tip on the screen
+        _, _, loc = templatematching(frame, template[len(template)/2])
+        dx = loc[0] - x_init
+        dy = loc[1] - y_init
+
+        # Determination of um_px
+        um_px = 200./((dx**2 + dy**2)**0.5)
+
+        alpha[0, i] = dx*um_px/200.
+        alpha[1, i] = dy*um_px/200.
+
+        # Resetting position of microscope
+        microscope.relative_move(-200, i)
+        sleep(1)
+
+        # Refreshing frame
+        frame = get_img(microscope, cam)
+        cv2.imshow('Camera', frame)
+        cv2.waitKey(1)
+
+    return init_pos_m, init_pos_a, x_init, y_init, alpha, um_px
+
+
+def calibrate_arm(microscope, arm, mat, init_pos_m, init_pos_a, axis, first_step, maxdistance, template, alpha, um_px,
+                  cam):
 
     estim = [0., 0., 0.]
     totaldistance = 0
@@ -71,6 +126,46 @@ def calibrate(microscope, arm, mat, init_pos_m, init_pos_a, axis, first_step, ma
     return mat, stop, frame
 
 
+def calibrate(microscope, arm, template, first_step, maxdist, mat, cam):
+
+    init_pos_m, init_pos_a, x_init, y_init, alpha, um_px = calibrate_platform(microscope, arm, cam)
+
+    print 'Calibrated platform'
+
+    # calibrate arm y axis
+    mat, stop, frame = calibrate_arm(microscope, arm, mat, init_pos_m, init_pos_a, 0, first_step, maxdist, template,
+                                     alpha, um_px, cam)
+
+    if stop:
+        return 0
+    else:
+        print 'Calibrated x axis'
+
+    # calibrate arm y axis
+    mat, stop, frame = calibrate_arm(microscope, arm, mat, init_pos_m, init_pos_a, 1, first_step, maxdist, template,
+                                     alpha, um_px, cam)
+
+    if stop:
+        return 0
+    else:
+        print 'Calibrated y axis'
+
+    # calibrate arm z axis
+    mat, stop, frame = calibrate_arm(microscope, arm, mat, init_pos_m, init_pos_a, 2, first_step, maxdist, template,
+                                     alpha, um_px, cam)
+
+    if stop:
+        return 0
+    else:
+        print 'Calibrated z axis'
+
+    print mat
+    mat_inv = inv(mat)
+    print mat_inv
+    print 'Calibration finished'
+    return 1
+
+
 def pipettechange(microscope, arm, mat, template, template_loc, x_init, y_init, um_px, alpha, cam):
 
     """
@@ -103,19 +198,23 @@ def pipettechange(microscope, arm, mat, template, template_loc, x_init, y_init, 
     sleep(1)
     frame = get_img(microscope, cam)
     cv2.imshow('Camera', frame)
-    cv2.waitKey(0)
-    arm.relative_move(-sign*15000, 0)
+    key = cv2.waitKey(0)
+    if key & 0xFF == ord('q'):
+        return 0, 0
+    arm.relative_move(-sign*17000, 0)
     sleep(1)
     frame = get_img(microscope, cam)
     cv2.imshow('Camera', frame)
     cv2.waitKey(1)
 
     while 1:
-        arm.relative_move(-sign*100, 0)
+        arm.relative_move(100, 0)
         sleep(1)
         frame = get_img(microscope, cam)
         cv2.imshow('Camera', frame)
-        cv2.waitKey(1)
+        key = cv2.waitKey(1)
+        if key & 0xFF == ord('q'):
+            return 0, 0
         height, width = frame.shape[:2]
         ratio = 32
         img = frame[height/2-3*height/ratio:height/2+3*height/ratio, width/2-3*width/ratio:width/2+3*width/ratio]
@@ -124,9 +223,11 @@ def pipettechange(microscope, arm, mat, template, template_loc, x_init, y_init, 
             while val < 0.98:
                 val, _, loc, frame = focus(microscope, template, cam)
                 cv2.imshow('Camera', frame)
-                cv2.waitKey(1)
+                key = cv2.waitKey(1)
+                if key & 0xFF == ord('q'):
+                    return 0, 0
             delta = matrix('{a}; {b}'.format(a=(x_init-loc[0])*um_px, b=(y_init-loc[1])*um_px))
-            move = inv(alpha)*delta
+            move = alpha*delta
             for i in range(2):
                 arm.relative_move(move[i, 0], i)
             sleep(1)

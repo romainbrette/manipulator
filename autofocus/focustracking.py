@@ -10,6 +10,7 @@ from numpy import matrix
 from numpy.linalg import inv
 import cv2
 from time import sleep
+from numpy.linalg import inv
 
 
 __all__ = ['focus_track']

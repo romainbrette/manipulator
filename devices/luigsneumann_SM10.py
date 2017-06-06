@@ -180,3 +180,23 @@ class LuigsNeumann_SM10(SerialDevice):
         Stop current movements.
         """
         self.send_command('00FF', [axis], 0)
+
+    def set_to_zero(self, axis):
+        """
+        Set the current position of the axis as the zero position
+        :param axis: 
+        :return: 
+        """
+        self.send_command('00F0', [axis], 0)
+
+    def wait_motor_stop(self, axis):
+        """
+        Wait for the motor to stop
+        :param axis: 
+        :return: 
+        """
+        res = 1
+        while res:
+            res = self.send_command('0120', [axis], 8)
+            res = res[5]
+            print res
