@@ -39,6 +39,7 @@ class Application(Frame):
                 self.controllist['state'] = 'disabled'
                 self.armlist['state'] = 'disabled'
                 self.robot = PatchClampRobot(self.controller, self.arm)
+                self.calibrate['command'] = self.buf
                 self.connection.config(state='disabled')
                 self.disconnection.config(state='normal')
                 self.after(10, self.show)
@@ -46,16 +47,22 @@ class Application(Frame):
 
     def disconnect(self):
         del self.robot
+        self.robot = None
+        self.calibrate['command'] = None
         self.controllist['state'] = "readonly"
         self.armlist['state'] = 'readonly'
         self.connection.config(state='normal')
         self.disconnection.config(state='disabled')
         pass
 
+    def buf(self):
+        buf = self.robot.calibrate()
+
     def show(self):
-        self.robot.show()
-        self.robot.enable_clic_position()
-        self.after(10, self.show)
+        if self.robot:
+            self.robot.show()
+            self.robot.enable_clic_position()
+            self.after(10, self.show)
 
     def exit(self):
         del self.robot
@@ -75,7 +82,7 @@ class Application(Frame):
         self.disconnection = Button(self, text='Disconnect', command=self.disconnect, state='disable')
         self.disconnection.grid(row=2, column=1)
 
-        self.calibrate = Button(self, text='Calibrate', command=self.robot.calibrate)
+        self.calibrate = Button(self, text='Calibrate')
         self.calibrate.grid(row=3, column=0)
 
         self.QUIT = Button(self, text='QUIT', fg='red', command=self.exit)

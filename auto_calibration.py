@@ -118,7 +118,8 @@ while 1:
 
     if calibrating:
 
-        init_pos_m, init_pos_a, x_init, y_init, alpha, um_px = calibrate_platform(microscope, arm, cam)
+        template, template_loc, init_pos_m, init_pos_a, x_init, y_init, alpha, um_px = calibrate_platform(microscope,
+                                                                                                          arm, cam)
 
         print 'Calibrated platform'
 

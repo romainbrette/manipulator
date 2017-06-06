@@ -5,6 +5,7 @@ Communication through serial COM port.
 import warnings
 from device import *
 import sys
+import time
 sys.path.append('C:\\Program Files\\Micro-Manager-1.4') # This is not good!
 try:
     import MMCorePy
@@ -62,7 +63,7 @@ class Leica(Device):
         -------
         The current position of the device axis in um.
         '''
-        return self.zero_position - self.mmc.getPosition()
+        return self.mmc.getPosition() - self.zero_position
 
     def absolute_move(self, x, axis = None):
         '''
@@ -94,6 +95,7 @@ class Leica(Device):
 
     def wait_motor_stop(self):
         self.mmc.waitForSystem()
+        time.sleep(1)
 
     def set_to_zero(self):
         self.zero_position = self.mmc.getPosition()

@@ -34,7 +34,7 @@ def calibrate_platform(microscope, arm, cam):
 
     for i in range(2):
         # Moving the microscope
-        microscope.relative_move(200, i)
+        microscope.relative_move(150, i)
         sleep(1)
 
         # Refreshing the frame after the move
@@ -48,13 +48,13 @@ def calibrate_platform(microscope, arm, cam):
         dy = loc[1] - y_init
 
         # Determination of um_px
-        um_px = 200./((dx**2 + dy**2)**0.5)
+        um_px = 150./((dx**2 + dy**2)**0.5)
 
-        alpha[0, i] = dx*um_px/200.
-        alpha[1, i] = dy*um_px/200.
+        alpha[0, i] = dx*um_px/150.
+        alpha[1, i] = dy*um_px/150.
 
         # Resetting position of microscope
-        microscope.relative_move(-200, i)
+        microscope.relative_move(-150, i)
         sleep(1)
 
         # Refreshing frame
@@ -62,7 +62,7 @@ def calibrate_platform(microscope, arm, cam):
         cv2.imshow('Camera', frame)
         cv2.waitKey(1)
 
-    return init_pos_m, init_pos_a, x_init, y_init, alpha, um_px
+    return template, template_loc, init_pos_m, init_pos_a, x_init, y_init, alpha, um_px
 
 
 def calibrate_arm(microscope, arm, mat, init_pos_m, init_pos_a, axis, first_step, maxdistance, template, alpha, um_px,

@@ -111,7 +111,7 @@ class XYMicUnit(Device):
                 self.set_to_zero(i)
         else:
             if axis == 2:
-                print 'test'
+                self.dev_mic.set_to_zero()
             else:
                 self.dev.set_to_zero(self.axes[axis])
 
@@ -121,10 +121,14 @@ class XYMicUnit(Device):
         :param axis: 
         :return: 
         """
-        if axis == 2:
-            self.dev_mic.wait_motor_stop()
+        if isinstance(axis, list):
+            for i in axis:
+                self.wait_motor_stop(i)
         else:
-            self.dev.wait_motor_stop(self.axes[axis])
+            if axis == 2:
+                self.dev_mic.wait_motor_stop()
+            else:
+                self.dev.wait_motor_stop(self.axes[axis])
 
 if __name__ == '__main__':
     from luigsneumann_SM5 import *

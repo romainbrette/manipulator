@@ -1,12 +1,11 @@
 import cv2
 from autofocus import init_device, templatematching
 from autofocus.Hamamatsu_camera import *
+from img_functions import *
 from numpy import matrix
 from numpy.linalg import inv
 import numpy as np
 from math import fabs
-from time import sleep
-
 
 class PatchClampRobot:
 
@@ -16,6 +15,7 @@ class PatchClampRobot:
         self.dev, self.microscope, self.arm, self.cam = init_device(controller, arm)
         self.win_name = 'Camera'
         cv2.namedWindow(self.win_name, flags=cv2.WINDOW_NORMAL)
+        self.frame = 0
 
         # Booleans for template, calibration
         self.template = []
@@ -41,7 +41,7 @@ class PatchClampRobot:
 
     def calibrate_platform(self):
 
-        frame = self.get_img()
+        self.show()
 
         # Make current position the zero position
         self.arm.set_to_zero([0, 1, 2])
@@ -51,33 +51,33 @@ class PatchClampRobot:
         self.get_template_series(5)
 
         # Saving initial position of the tip on the screen
-        _, _, loc = templatematching(frame, self.template[len(self.template) / 2])
+        _, _, loc = templatematching(self.frame, self.template[len(self.template) / 2])
         self.x_init, self.y_init = loc[:2]
 
         # Getting the ratio um per pixels and the rotation of the platform
 
         for i in range(2):
             # Moving the microscope
-            self.microscope.relative_move(200, i)
-            sleep(1)
+            self.microscope.relative_move(150, i)
+            self.microscope.wait_motor_stop(i)
 
             # Refreshing the frame after the move
             self.show()
 
             # Getting the displacement, in pixels, of the tip on the screen
-            _, _, loc = templatematching(frame, self.template[len(self.template) / 2])
+            _, _, loc = templatematching(self.frame, self.template[len(self.template) / 2])
             dx = loc[0] - self.x_init
             dy = loc[1] - self.y_init
 
             # Determination of um_px
-            self.um_px = 200. / ((dx ** 2 + dy ** 2) ** 0.5)
+            self.um_px = 150. / ((dx ** 2 + dy ** 2) ** 0.5)
 
-            self.alpha[0, i] = dx * self.um_px / 200.
-            self.alpha[1, i] = dy * self.um_px / 200.
+            self.alpha[0, i] = dx * self.um_px / 150.
+            self.alpha[1, i] = dy * self.um_px / 150.
 
             # Resetting position of microscope
-            self.microscope.relative_move(-200, i)
-            sleep(1)
+            self.microscope.relative_move(-150, i)
+            self.microscope.wait_motor_stop(i)
 
             # Refreshing frame
             self.show()
@@ -105,7 +105,12 @@ class PatchClampRobot:
                 # calibrate arm axis using exponential moves:
                 # moves the arm, recenter the tip and refocus.
                 # displacements are saved
-                estim = self.focus_track(step, axis, estim)
+                try :
+                    estim = self.focus_track(step, axis, estim)
+                except EnvironmentError:
+                    print 'Could not track the tip.'
+                    return 0
+
                 totaldistance += step
                 step *= 2
 
@@ -123,7 +128,8 @@ class PatchClampRobot:
                     self.arm.absolute_move(0, i)
                     self.microscope.absolute_move(0, i)
 
-                sleep(2)
+                self.arm.wait_motor_stop([0, 1, 2])
+                self.microscope.wait_motor_stop([0, 1, 2])
 
                 # Update the frame
                 self.show()
@@ -139,6 +145,7 @@ class PatchClampRobot:
         print 'Calibrated platform'
 
         # calibrate arm y axis
+
         calibrated = self.calibrate_arm(0)
 
         if not calibrated:
@@ -166,6 +173,7 @@ class PatchClampRobot:
         self.inv_mat = inv(self.mat)
         print self.inv_mat
         print 'Calibration finished'
+        self.calibrated = 1
         return 1
 
     def pipettechange(self):
@@ -186,26 +194,26 @@ class PatchClampRobot:
             sign = -1
 
         self.arm.relative_move(sign * 20000, 0)
-        sleep(1)
+        self.arm.wait_motor_stop(0)
         self.show()
         key = cv2.waitKey(0)
         if key & 0xFF == ord('q'):
             return 0, 0
         self.arm.relative_move(-sign * 17000, 0)
-        sleep(1)
+        self.arm.wait_motor_stop(0)
         self.show()
 
         while 1:
             self.arm.relative_move(100, 0)
-            sleep(1)
-            frame = self.get_img()
+            self.arm.wait_motor_stop(0)
+            self.get_img()
             key = cv2.waitKey(1)
             if key & 0xFF == ord('q'):
                 return 0, 0
-            height, width = frame.shape[:2]
+            height, width = self.frame.shape[:2]
             ratio = 32
-            img = frame[height / 2 - 3 * height / ratio:height / 2 + 3 * height / ratio,
-                        width / 2 - 3 * width / ratio:width / 2 + 3 * width / ratio]
+            img = self.frame[height / 2 - 3 * height / ratio:height / 2 + 3 * height / ratio,
+                             width / 2 - 3 * width / ratio:width / 2 + 3 * width / ratio]
 
             isin, val, loc = templatematching(img, self.template[len(self.template) / 2])
 
@@ -219,7 +227,7 @@ class PatchClampRobot:
                 move = inv(self.alpha) * delta
                 for i in range(2):
                     self.arm.relative_move(move[i, 0], i)
-                sleep(1)
+                self.arm.wait_motor_stop([0, 1])
                 self.show()
                 # Change zero position to current position
                 self.arm.set_to_zero([0, 1, 2])
@@ -235,12 +243,12 @@ class PatchClampRobot:
         self.template = []
         temp = []
 
-        frame = self.get_img()
-        height, width = frame.shape[:2]
+        self.get_img()
+        height, width = self.frame.shape[:2]
         ratio = 32
 
-        template = frame[height / 2 - 3 * height / ratio:height / 2 + 3 * height / ratio,
-                         width / 2 - 3 * width / ratio:width / 2 + 3 * width / ratio]
+        template = self.frame[height / 2 - 3 * height / ratio:height / 2 + 3 * height / ratio,
+                              width / 2 - 3 * width / ratio:width / 2 + 3 * width / ratio]
         height, width = template.shape[:2]
         weight = []
         template = cv2.bilateralFilter(template, 9, 75, 75)
@@ -254,23 +262,23 @@ class PatchClampRobot:
         j = index % 3
         i = index // 3
         self.template_loc = [temp.shape[1] * (1 - j / 2.), temp.shape[0] * (1 - i / 2.)]
+        print self.template_loc
+        print temp.shape
 
         pos = self.microscope.position(2)
 
         for k in range(nb_images):
-            frame = self.get_img(pos - (nb_images - 1) / 2 + k)
-            height, width = frame.shape[:2]
-            cv2.imshow(self.win_name, frame)
-            cv2.waitKey(1)
-            img = frame[height / 2 - 3 * height / ratio:height / 2 + 3 * height / ratio,
-                        width / 2 - 3 * width / ratio:width / 2 + 3 * width / ratio]
+            self.show(pos - (nb_images - 1) / 2 + k)
+            height, width = self.frame.shape[:2]
+            img = self.frame[height / 2 - 3 * height / ratio:height / 2 + 3 * height / ratio,
+                             width / 2 - 3 * width / ratio:width / 2 + 3 * width / ratio]
             height, width = img.shape[:2]
             img = img[i * height / 4:height / 2 + i * height / 4, j * width / 4:width / 2 + j * width / 4]
             self.template += [img]
 
         self.show(pos)
 
-        cv2.imshow('template', self.template[2])
+        cv2.imshow('template', self.template[len(self.template)/2])
         pass
 
     def focus(self):
@@ -284,7 +292,7 @@ class PatchClampRobot:
         # Getting the microscope height according to the used controller
         current_z = self.microscope.position(2)
 
-        frame = self.get_img()
+        self.get_img()
         # Tabs of maxval and their location during the process
         vals = []
         locs = []
@@ -292,7 +300,7 @@ class PatchClampRobot:
         # Getting the maxvals and their locations
         for i in self.template:
 
-            res, val, loc = templatematching(frame, i)
+            res, val, loc = templatematching(self.frame, i)
             locs += [loc]
 
             if res:
@@ -326,35 +334,33 @@ class PatchClampRobot:
         pos = self.microscope.position(2)
 
         # Update frame just in case
-        frame = self.get_img()
+        self.get_img()
 
         # Get initial location of the tip
-        _, _, initloc = templatematching(frame, self.template[len(self.template) / 2])
+        initloc = [self.x_init, self.y_init]
 
         # Move the arm
         self.arm.relative_move(step, axis)
-        sleep(1)
-        self.show()
 
         # Move the platform to center the tip
         delta = matrix('{a}; {b}'.format(a=estim[0] * step, b=estim[1] * step))
         move = inv(self.alpha) * delta
         for i in range(2):
             self.microscope.relative_move(move[i, 0], i)
-        sleep(1)
+
+        # Move the microscope
+        self.show(pos + estim[2] * step)
+        self.arm.wait_motor_stop(axis)
+        self.microscope.wait_motor_stop([0, 1])
 
         # Update the frame.
         self.show()
 
-        # Move the microscope
-        self.show(pos + estim[2] * step)
-        # self.arm.wait_motor_stop(axis)
-        # self.microscope.wait_motor(0)
-        # self.microscope.wait_motor(1)
-
-
         # Focus around the estimated focus height
-        _, estim_temp, loc = self.focus()
+        try :
+            _, estim_temp, loc = self.focus()
+        except ValueError:
+            raise EnvironmentError('Could not focus on the tip')
 
         # Move the platform for compensation
         delta = matrix('{a}; {b}'.format(a=(initloc[0] - loc[0]) * self.um_px, b=(initloc[1] - loc[1]) * self.um_px))
@@ -362,7 +368,7 @@ class PatchClampRobot:
         for i in range(2):
             self.microscope.relative_move(move[i, 0], i)
 
-        sleep(1)
+        self.microscope.wait_motor_stop([0, 1])
 
         # Update frame
         self.show()
@@ -375,8 +381,12 @@ class PatchClampRobot:
         return estim
 
     def show(self, z=None):
-        frame = self.get_img(z)
-        if isinstance(frame, np.ndarray):
+        self.get_img(z)
+        if isinstance(self.frame, np.ndarray):
+            frame = disp_centered_cross(self.frame)
+            if not self.template:
+                frame = disp_template_zone(frame)
+
             cv2.imshow(self.win_name, frame)
             cv2.waitKey(1)
         pass
@@ -388,22 +398,19 @@ class PatchClampRobot:
         :param z: desired absolute height of the microscope
         :return frame: image taken from camera
         """
-
-        frame = 0
+        buf = self.cam.getLastImage()
         # Move the microscope if an height has been specify
         if z:
             self.microscope.absolute_move(z, 2)
-            sleep(1)
+            self.microscope.wait_motor_stop(2)
 
         # capture frame
 
         if self.cam.getRemainingImageCount() > 0:
 
-            frame = self.cam.getLastImage()
-            frame = np.float32(frame/(1.0*frame.max()))
-            frame = cv2.flip(frame, 2)
-
-        return frame
+            self.frame = self.cam.getLastImage()
+            self.frame = np.float32(self.frame/(1.0*self.frame.max()))
+            self.frame = cv2.flip(self.frame, 2)
 
     def clic_position(self, event, x, y, flags, param):
         """
@@ -414,19 +421,19 @@ class PatchClampRobot:
         :param param:
         :return: 
         """
-
         if self.calibrated:
             if event == cv2.EVENT_LBUTTONUP:
+                print 'in clic position'
                 pos = matrix('0.; 0.; 0.')
                 for i in range(3):
                     pos[i, 0] = self.microscope.position(i)
 
                 temp = inv(self.alpha) * matrix([[(self.x_init - x + self.template_loc[0]) * self.um_px],
-                                                [(self.y_init - y + self.template_loc[0]) * self.um_px]])
+                                                 [(self.y_init - y + self.template_loc[0]) * self.um_px]])
                 pos[0, 0] += temp[0, 0]
                 pos[1, 0] += temp[1, 0]
 
-                move = self.mat * pos
+                move = self.inv_mat * pos
                 reversedrange = range(3)
                 reversedrange.reverse()
                 for i in reversedrange:
