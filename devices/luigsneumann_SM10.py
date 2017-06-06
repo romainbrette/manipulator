@@ -192,3 +192,13 @@ class LuigsNeumann_SM10(SerialDevice):
                 self.send_command('00F0', [i], 0)
         else:
             self.send_command('00F0', [axis], 0)
+
+    def wait_motor_stop(self, axis):
+        """
+        Wait for the motor to stop
+        :param axis: 
+        :return: 
+        """
+        res = 1
+        res = self.send_command('0120', [axis], 8)
+        print res[5]

@@ -142,6 +142,16 @@ class LuigsNeumann_SM5(SerialDevice):
         else:
             self.send_command('00f0', [axis], 0)
 
+    def wait_motor_stop(self, axis):
+        """
+        Wait for the motor to stop
+        :param axis: 
+        :return: 
+        """
+        res = 1
+        res = self.send_command('0120', [axis], 6)
+        print res[6]
+
 if __name__ == '__main__':
     sm5 = LuigsNeumann_SM5('COM3')
 
