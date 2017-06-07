@@ -33,7 +33,7 @@ calibrate_succeeded = 0
 step = 0
 
 # Maximum number of steps to do
-maxdist = 600
+maxdist = 500
 
 # Initial displacement of the arm to do, in um
 first_step = 2.

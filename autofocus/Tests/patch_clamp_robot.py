@@ -28,10 +28,11 @@ class PatchClampRobot:
         self.calibrated = 0
 
         # Maximum distance from initial position allowed
-        self.maxdist = 600
+        self.maxdist = 500
 
         # Initial displacement of the arm to do during autocalibration, in um
         self.first_step = 2.
+        self.step = 0
 
         # Rotation matrix of the platform compared to the camera
         self.rot = matrix('0. 0.; 0. 0.')
@@ -328,16 +329,17 @@ class PatchClampRobot:
         self.get_img()
 
         if self.arm.position(axis) == 0:
-            step = self.first_step
+            self.step = self.first_step
         else:
-            step = 2.*self.arm.position(axis)
+            self.step *= 2.
 
+        print self.step
         # Move the arm
-        self.arm.relative_move(step, axis)
+        self.arm.relative_move(self.step, axis)
 
         # Move the platform to center the tip
         for i in range(3):
-            self.microscope.relative_move(self.mat[i, axis] * step, i)
+            self.microscope.relative_move(self.mat[i, axis] * self.step, i)
 
         # Waiting for motors to stop
         self.arm.wait_motor_stop(axis)
@@ -482,8 +484,9 @@ class PatchClampRobot:
                 pos[1, 0] += temp[1, 0]
 
                 move = self.inv_mat * pos
+
                 for i in [2, 1, 0]:
-                    self.arm.absolute_move(move[i], i)
+                    self.arm.absolute_move(move[i, 0], i)
 
         pass
 
