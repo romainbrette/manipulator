@@ -10,6 +10,15 @@ while 1:
     if key & 0xFF == ord('q'):
         break
 
+    if key & 0xFF == ord('t'):
+        if robot.template:
+            for i in robot.template:
+                _, val, _ = templatematching(robot.frame, i)
+                print val
+
+    if key & 0xFF == ord('z'):
+        robot.go_to_zero()
+
     if key & 0xFF == ord('b'):
         calibrated = robot.calibrate()
         if not calibrated:

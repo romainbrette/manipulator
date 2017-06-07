@@ -271,8 +271,6 @@ class PatchClampRobot:
             height, width = img.shape[:2]
             img = img[i * height / 4:height / 2 + i * height / 4, j * width / 4:width / 2 + j * width / 4]
             self.template += [img]
-            cv2.imshow('template{i}'.format(i=k), img)
-
         self.show(pos)
         pass
 
@@ -426,8 +424,8 @@ class PatchClampRobot:
         for i in range(3):
             temp = 0
             for j in range(3):
-                temp += self.mat[j, i]
-            acc[i] = temp
+                temp += self.mat[j, i]**2
+            acc[i] = temp**0.5
         return acc
 
     def show(self, z=None):
@@ -474,13 +472,12 @@ class PatchClampRobot:
         """
         if self.calibrated:
             if event == cv2.EVENT_LBUTTONUP:
-                print 'in clic position'
                 pos = matrix('0.; 0.; 0.')
                 for i in range(3):
                     pos[i, 0] = self.microscope.position(i)
 
                 temp = self.rot_inv * matrix([[(self.x_init - x + self.template_loc[0]) * self.um_px],
-                                                [(self.y_init - y + self.template_loc[1]) * self.um_px]])
+                                              [(self.y_init - y + self.template_loc[1]) * self.um_px]])
                 pos[0, 0] += temp[0, 0]
                 pos[1, 0] += temp[1, 0]
 

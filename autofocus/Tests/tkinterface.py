@@ -2,7 +2,6 @@ from Tkinter import *
 import ttk
 from patch_clamp_robot import *
 
-
 class Application(Frame):
 
     def __init__(self, master=None):
@@ -41,7 +40,7 @@ class Application(Frame):
                 self.armlist['state'] = 'disabled'
                 self.robot = PatchClampRobot(self.controller, self.arm)
                 self.calibrate.config(state='normal')
-                self.calibrate['command'] = self.calibrate
+                self.calibrate.config(command=self.calibration)
                 self.zero.config(state='normal')
                 self.connection.config(state='disabled')
                 self.disconnection.config(state='normal')
@@ -51,7 +50,7 @@ class Application(Frame):
     def disconnect(self):
         del self.robot
         self.robot = None
-        self.calibrate['command'] = None
+        self.calibrate.config(command=None)
         self.calibrate.config(state='disable')
         self.zero.config(state='disable')
         self.controllist['state'] = "readonly"
@@ -60,7 +59,7 @@ class Application(Frame):
         self.disconnection.config(state='disabled')
         pass
 
-    def calibrate(self):
+    def calibration(self):
         calibrate = self.robot.calibrate()
         if calibrate:
             print 'Calibration succesfull.'
