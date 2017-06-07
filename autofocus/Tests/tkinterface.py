@@ -24,6 +24,7 @@ class Application(Frame):
         self.controllist = None
         self.armlist = None
         self.calibrate = None
+        self.zero = None
         self.pack()
         self.createwidgets()
 
@@ -39,7 +40,9 @@ class Application(Frame):
                 self.controllist['state'] = 'disabled'
                 self.armlist['state'] = 'disabled'
                 self.robot = PatchClampRobot(self.controller, self.arm)
-                self.calibrate['command'] = self.buf
+                self.calibrate.config(state='normal')
+                self.calibrate['command'] = self.calibrate
+                self.zero.config(state='normal')
                 self.connection.config(state='disabled')
                 self.disconnection.config(state='normal')
                 self.after(10, self.show)
@@ -49,14 +52,26 @@ class Application(Frame):
         del self.robot
         self.robot = None
         self.calibrate['command'] = None
+        self.calibrate.config(state='disable')
+        self.zero.config(state='disable')
         self.controllist['state'] = "readonly"
         self.armlist['state'] = 'readonly'
         self.connection.config(state='normal')
         self.disconnection.config(state='disabled')
         pass
 
-    def buf(self):
-        buf = self.robot.calibrate()
+    def calibrate(self):
+        calibrate = self.robot.calibrate()
+        if calibrate:
+            print 'Calibration succesfull.'
+        else:
+            print 'Calibration canceled.'
+        pass
+
+    def reset_pos(self):
+        if self.robot:
+            self.robot.go_to_zero()
+        pass
 
     def show(self):
         if self.robot:
@@ -82,8 +97,11 @@ class Application(Frame):
         self.disconnection = Button(self, text='Disconnect', command=self.disconnect, state='disable')
         self.disconnection.grid(row=2, column=1)
 
-        self.calibrate = Button(self, text='Calibrate')
+        self.calibrate = Button(self, text='Calibrate', state='disable')
         self.calibrate.grid(row=3, column=0)
+
+        self.zero = Button(self, text='Go to zero', command=self.reset_pos, state='disable')
+        self.zero.grid(row=3, column=1)
 
         self.QUIT = Button(self, text='QUIT', fg='red', command=self.exit)
         self.QUIT.grid(row=4, column=0)

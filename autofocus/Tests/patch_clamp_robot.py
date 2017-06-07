@@ -13,32 +13,41 @@ class PatchClampRobot:
 
         # devices
         self.dev, self.microscope, self.arm, self.cam = init_device(controller, arm)
+
+        # Camera
         self.win_name = 'Camera'
         cv2.namedWindow(self.win_name, flags=cv2.WINDOW_NORMAL)
         self.frame = 0
         self.width = 50
         self.height = 50
 
-        # Booleans for template, calibration
+        # Tab for template images
         self.template = []
+
+        # Boolean for calibrated state
         self.calibrated = 0
 
-        # Maximum number of steps to do
+        # Maximum distance from initial position allowed
         self.maxdist = 600
 
-        # Initial displacement of the arm to do, in um
+        # Initial displacement of the arm to do during autocalibration, in um
         self.first_step = 2.
 
-        # Rotation of the platform compared to the camera
-        self.alpha = matrix('0. 0.; 0. 0.')
-        self.alpha_inv = matrix('0. 0.; 0. 0.')
+        # Rotation matrix of the platform compared to the camera
+        self.rot = matrix('0. 0.; 0. 0.')
+        self.rot_inv = matrix('0. 0.; 0. 0.')
 
-        # Initializing transformation matrix (Jacobian)
+        # Initializing transformation matrix (Jacobian) between the camera and the tip
         self.mat = matrix('0. 0. 0.; 0. 0. 0.; 0. 0. 0.')
         self.inv_mat = matrix('0. 0. 0.; 0. 0. 0.; 0. 0. 0.')
 
+        # Initial position of the tip in the image, before calibration
         self.x_init, self.y_init = 0, 0
+
+        # Ratio um/pixel of the camera
         self.um_px = 0.
+
+        # Position of the tip in the template image
         self.template_loc = [0., 0.]
         pass
 
@@ -85,8 +94,8 @@ class PatchClampRobot:
             dist = (dx ** 2 + dy ** 2) ** 0.5
             self.um_px = 150. / dist
 
-            self.alpha[0, i] = dx / dist
-            self.alpha[1, i] = dy / dist
+            self.rot[0, i] = dx / dist
+            self.rot[1, i] = dy / dist
 
             # Resetting position of microscope
             self.microscope.relative_move(-150, i)
@@ -95,53 +104,39 @@ class PatchClampRobot:
             # Refreshing frame
             self.show()
 
-        self.alpha_inv = inv(self.alpha)
+        self.rot_inv = inv(self.rot)
         pass
 
     def calibrate_arm(self, axis):
 
-        calibrated = 0
-
         self.show()
 
-        while not calibrated:
+        while self.arm.position(axis) < self.maxdist:
 
             self.show()
             key = cv2.waitKey(1)
 
             if key & 0xFF == ord('q'):
-                break
+                return 0
 
-            if self.arm.position(axis) < self.maxdist:
+            # calibrate arm axis using exponential moves:
+            # moves the arm, recenter the tip and refocus.
+            # displacements are saved
+            try:
+                self.exp_focus_track(axis)
+            except EnvironmentError:
+                print 'Could not track the tip.'
+                return 0
 
-                # calibrate arm axis using exponential moves:
-                # moves the arm, recenter the tip and refocus.
-                # displacements are saved
-                try:
-                    self.exp_focus_track(axis)
-                except EnvironmentError:
-                    print 'Could not track the tip.'
-                    return 0
+        # When calibration is finished:
 
-            else:
+        # Resetting position of arm and microscope so no error gets to the next axis calibration
+        self.go_to_zero()
 
-                # When calibration is finished:
-                # Accuracy along z axis = total displacement +- 1um = 2**(maxnstep-1)-2 +-1
+        # Update the frame
+        self.show()
 
-                # Resetting position of arm and microscope so no error gets to the next axis calibration
-                for i in range(3):
-                    self.arm.absolute_move(0, i)
-                    self.microscope.absolute_move(0, i)
-
-                self.arm.wait_motor_stop([0, 1, 2])
-                self.microscope.wait_motor_stop([0, 1, 2])
-
-                # Update the frame
-                self.show()
-
-                calibrated = 1
-
-        return calibrated
+        return 1
 
     def calibrate(self):
 
@@ -175,6 +170,7 @@ class PatchClampRobot:
             print 'Calibrated z axis'
 
         print self.mat
+        print self.matrix_accuracy()
         self.inv_mat = inv(self.mat)
         print self.inv_mat
         print 'Calibration finished'
@@ -228,7 +224,7 @@ class PatchClampRobot:
 
                 delta = matrix('{a}; {b}'.format(a=(self.x_init - loc[0]) * self.um_px,
                                                  b=(self.y_init - loc[1]) * self.um_px))
-                move = self.alpha_inv * delta
+                move = self.rot_inv * delta
                 for i in range(2):
                     self.arm.relative_move(move[i, 0], i)
                 self.arm.wait_motor_stop([0, 1])
@@ -360,7 +356,7 @@ class PatchClampRobot:
 
         # Move the platform for compensation
         delta = matrix('{a}; {b}'.format(a=(self.x_init - loc[0]) * self.um_px, b=(self.y_init - loc[1]) * self.um_px))
-        move = self.alpha_inv * delta
+        move = self.rot_inv * delta
         for i in range(2):
             self.microscope.relative_move(move[i, 0], i)
 
@@ -388,7 +384,7 @@ class PatchClampRobot:
 
         # Move the platform to center the tip
         #delta = matrix('{a}; {b}'.format(a=estim[0] * step, b=estim[1] * step))
-        #move = self.alpha_inv * delta
+        #move = self.rot_inv * delta
         for i in range(3):
             self.microscope.relative_move(self.mat[i, axis] * step, i)
 
@@ -407,7 +403,7 @@ class PatchClampRobot:
 
         # Move the platform for compensation
         delta = matrix('{a}; {b}'.format(a=(self.x_init - loc[0]) * self.um_px, b=(self.y_init - loc[1]) * self.um_px))
-        move = self.alpha_inv * delta
+        move = self.rot_inv * delta
         for i in range(2):
             self.microscope.relative_move(move[i, 0], i)
 
@@ -421,6 +417,18 @@ class PatchClampRobot:
             self.mat[i, axis] = self.microscope.position(i)/self.arm.position(axis)
 
         pass
+
+    def matrix_accuracy(self):
+        """
+        Compute the accuracy of the transformation matrix
+        """
+        acc = [0, 0, 0]
+        for i in range(3):
+            temp = 0
+            for j in range(3):
+                temp += self.mat[j, i]
+            acc[i] = temp
+        return acc
 
     def show(self, z=None):
         self.get_img(z)
@@ -471,7 +479,7 @@ class PatchClampRobot:
                 for i in range(3):
                     pos[i, 0] = self.microscope.position(i)
 
-                temp = self.alpha_inv * matrix([[(self.x_init - x + self.template_loc[0]) * self.um_px],
+                temp = self.rot_inv * matrix([[(self.x_init - x + self.template_loc[0]) * self.um_px],
                                                 [(self.y_init - y + self.template_loc[1]) * self.um_px]])
                 pos[0, 0] += temp[0, 0]
                 pos[1, 0] += temp[1, 0]
