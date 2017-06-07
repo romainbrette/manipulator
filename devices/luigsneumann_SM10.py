@@ -196,6 +196,8 @@ class LuigsNeumann_SM10(SerialDevice):
         :return: 
         """
         res = 1
-        while res:
-            res = self.send_command('0120', [axis], 7)
-            res = int(binascii.hexlify(struct.unpack('s', res[5])[0])[1])
+
+        res = self.send_command('0120', [axis], 7)
+        res = [struct.unpack('s', i) for i in res]
+        print res
+            #res = int(binascii.hexlify(struct.unpack('s', res[5])[0])[1])
