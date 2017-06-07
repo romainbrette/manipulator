@@ -42,6 +42,15 @@ class PatchClampRobot:
         self.template_loc = [0., 0.]
         pass
 
+    def go_to_zero(self):
+        for i in range(3):
+            self.arm.absolute_move(0, i)
+            self.microscope.absolute_move(0, i)
+
+        self.arm.wait_motor_stop([0, 1, 2])
+        self.microscope.wait_motor_stop([0, 1, 2])
+        pass
+
     def calibrate_platform(self):
 
         self.show()
