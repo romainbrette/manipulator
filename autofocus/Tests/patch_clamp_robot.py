@@ -28,7 +28,7 @@ class PatchClampRobot:
         self.calibrated = 0
 
         # Maximum distance from initial position allowed
-        self.maxdist = 500
+        self.maxdist = 200
 
         # Initial displacement of the arm to do during autocalibration, in um
         self.first_step = 2.
