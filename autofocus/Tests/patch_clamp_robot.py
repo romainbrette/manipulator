@@ -465,11 +465,13 @@ class PatchClampRobot:
 
     def clic_position(self, event, x, y, flags, param):
         """
-        :param event: 
-        :param x: 
-        :param y: 
-        :param flags: 
-        :param param:
+        Position the tip where the user has clic on the window image.
+        Shall be used along cv2.setMouseCallback
+        :param event: Type of mouse interaction with the window (auto) 
+        :param x: position x of the event (auto)
+        :param y: position y of the event (auto)
+        :param flags: extra flags (auto)
+        :param param: extra parameters (auto)
         :return: 
         """
         if self.calibrated:
@@ -478,8 +480,8 @@ class PatchClampRobot:
                 for i in range(3):
                     pos[i, 0] = self.microscope.position(i)
 
-                temp = self.rot_inv * matrix([[(self.x_init - x + self.template_loc[0]) * self.um_px],
-                                              [(self.y_init - y + self.template_loc[1]) * self.um_px]])
+                temp = self.rot_inv * matrix([[(self.x_init - (x - self.template_loc[0])) * self.um_px],
+                                              [(self.y_init - (y - self.template_loc[1])) * self.um_px]])
                 pos[0, 0] += temp[0, 0]
                 pos[1, 0] += temp[1, 0]
 
@@ -502,3 +504,32 @@ class PatchClampRobot:
         cv2.destroyAllWindows()
         del self.dev
         pass
+
+if __name__ == '__main__':
+    robot = PatchClampRobot('SM5', 'dev1')
+    calibrated = 0
+    while 1:
+
+        robot.show()
+        key = cv2.waitKey(1)
+
+        if key & 0xFF == ord('q'):
+            break
+
+        if key & 0xFF == ord('t'):
+            if robot.template:
+                for i in robot.template:
+                    _, val, _ = templatematching(robot.frame, i)
+                    print val
+
+        if key & 0xFF == ord('z'):
+            robot.go_to_zero()
+
+        if key & 0xFF == ord('b'):
+            calibrated = robot.calibrate()
+            if not calibrated:
+                print 'Calibration canceled.'
+        if calibrated:
+            robot.enable_clic_position()
+
+    del robot
