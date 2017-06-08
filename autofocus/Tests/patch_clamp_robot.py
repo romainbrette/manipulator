@@ -13,6 +13,7 @@ class PatchClampRobot:
 
         # devices
         self.dev, self.microscope, self.arm, self.cam = init_device(controller, arm)
+        self.controller = controller
 
         # Camera
         self.win_name = 'Camera'
@@ -442,6 +443,13 @@ class PatchClampRobot:
             cv2.waitKey(1)
         pass
 
+    def reverse(self):
+        if self.controller == 'SM5':
+            self.frame = cv2.flip(self.frame, 2)
+        elif self.controller == 'SM10':
+            self.frame = cv2.flip(self.frame, 0)
+
+
     def get_img(self, z=None):
 
         """
@@ -461,7 +469,7 @@ class PatchClampRobot:
 
             self.frame = self.cam.getLastImage()
             self.frame = np.float32(self.frame/(1.0*self.frame.max()))
-            self.frame = cv2.flip(self.frame, 2)
+            self.reverse()
 
     def clic_position(self, event, x, y, flags, param):
         """

@@ -192,10 +192,14 @@ class LuigsNeumann_SM10(SerialDevice):
     def wait_motor_stop(self, axis):
         """
         Wait for the motor to stop
+        On SM10, motors' commands seems to block
         :param axis: 
         :return: 
         """
-        res = 1
-        while res:
-            res = self.send_command('0120', [axis], 9)
-            res = int(binascii.hexlify(struct.unpack('s', res[6])[0])[1])
+        #time.sleep(1)
+        #res = 1
+        #while res:
+        # The response of this command is VERY slow, do not use
+        #    res = self.send_command('0120', [axis], 9)
+        #    res = int(binascii.hexlify(struct.unpack('s', res[6])[0])[1])
+        pass
