@@ -30,7 +30,7 @@ class PatchClampRobot:
         self.calibrated = 0
 
         # Maximum distance from initial position allowed
-        self.maxdist = 200
+        self.maxdist = 500
 
         # Initial displacement of the arm to do during autocalibration, in um
         self.first_step = 2.
@@ -78,12 +78,13 @@ class PatchClampRobot:
         # Saving initial position of the tip on the screen
         _, _, loc = templatematching(self.frame, self.template[len(self.template) / 2])
         self.x_init, self.y_init = loc[:2]
+        print self.x_init, self.y_init
 
         # Getting the ratio um per pixels and the rotation of the platform
 
         for i in range(2):
             # Moving the microscope
-            self.microscope.relative_move(150, i)
+            self.microscope.relative_move(120, i)
             self.microscope.wait_motor_stop(i)
             sleep(.5)
 
@@ -92,12 +93,14 @@ class PatchClampRobot:
 
             # Getting the displacement, in pixels, of the tip on the screen
             _, _, loc = templatematching(self.frame, self.template[len(self.template) / 2])
+            print loc[0], loc[1]
             dx = loc[0] - self.x_init
             dy = loc[1] - self.y_init
+            print dx, dy
 
             # Determination of um_px
             dist = (dx ** 2 + dy ** 2) ** 0.5
-            self.um_px = 150. / dist
+            self.um_px = 120. / dist
 
             self.rot[0, i] = dx / dist
             self.rot[1, i] = dy / dist
@@ -353,6 +356,7 @@ class PatchClampRobot:
 
         # Focus around the estimated focus height
         try:
+            _, _, loc = self.focus()
             _, _, loc = self.focus()
         except ValueError:
             raise EnvironmentError('Could not focus on the tip')
