@@ -61,6 +61,7 @@ class PatchClampRobot:
 
         self.arm.wait_motor_stop([0, 1, 2])
         self.microscope.wait_motor_stop([0, 1, 2])
+        sleep(.5)
         pass
 
     def calibrate_platform(self):
@@ -103,7 +104,6 @@ class PatchClampRobot:
 
             # Resetting position of microscope
             self.go_to_zero()
-            sleep(.5)
 
             # Refreshing frame
             self.show()
