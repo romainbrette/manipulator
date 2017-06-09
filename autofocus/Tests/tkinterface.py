@@ -2,6 +2,7 @@ from Tkinter import *
 import ttk
 from patch_clamp_robot import *
 
+
 class Application(Frame):
 
     def __init__(self, master=None):
@@ -60,6 +61,7 @@ class Application(Frame):
         pass
 
     def calibration(self):
+
         calibrate = self.robot.calibrate()
         if calibrate:
             print 'Calibration succesfull.'
