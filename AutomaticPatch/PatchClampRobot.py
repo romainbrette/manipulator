@@ -37,7 +37,7 @@ class PatchClampRobot:
         self.step = 0
 
         # Rotation matrix of the platform compared to the camera
-        self.rot = matrix('0. 0.; 0. 0.')
+        self.rot = matrix('0. 0.; 0. 0.') # zeros() ?
         self.rot_inv = matrix('0. 0.; 0. 0.')
 
         # Initializing transformation matrix (Jacobian) between the camera and the tip
@@ -55,7 +55,7 @@ class PatchClampRobot:
         pass
 
     def go_to_zero(self):
-        for i in range(3):
+        for i in range(3): # TODO: use group movements instead
             self.arm.absolute_move(0, i)
             self.microscope.absolute_move(0, i)
 
@@ -149,7 +149,7 @@ class PatchClampRobot:
 
         print 'Calibrated platform'
 
-        # calibrate arm y axis
+        # calibrate arm x axis
 
         calibrated = self.calibrate_arm(0)
 

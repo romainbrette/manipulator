@@ -1,6 +1,8 @@
 """
 Functions for camera
 Use Micro Manager Py
+
+Initialization of the cameras with micro manager
 """
 
 import time
