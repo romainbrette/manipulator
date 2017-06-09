@@ -5,7 +5,6 @@ from numpy import matrix
 from numpy.linalg import inv
 import numpy as np
 from math import fabs
-from time import sleep
 
 
 class PatchClampRobot:
@@ -84,7 +83,6 @@ class PatchClampRobot:
             # Moving the microscope
             self.microscope.relative_move(150, i)
             self.microscope.wait_motor_stop(i)
-            sleep(.5)
 
             # Refreshing the frame after the move
             self.show()
@@ -102,9 +100,7 @@ class PatchClampRobot:
             self.rot[1, i] = dy / dist
 
             # Resetting position of microscope
-            self.microscope.relative_move(-150, i)
-            self.microscope.wait_motor_stop(i)
-            sleep(.5)
+            self.go_to_zero()
 
             # Refreshing frame
             self.show()
@@ -452,6 +448,7 @@ class PatchClampRobot:
         elif self.controller == 'SM10':
             self.frame = cv2.flip(self.frame, 0)
 
+
     def get_img(self, z=None):
 
         """
@@ -534,9 +531,6 @@ if __name__ == '__main__':
 
         if key & 0xFF == ord('z'):
             robot.go_to_zero()
-
-        if key & 0xFF == ord('p'):
-            robot.pipettechange()
 
         if key & 0xFF == ord('b'):
             calibrated = robot.calibrate()
