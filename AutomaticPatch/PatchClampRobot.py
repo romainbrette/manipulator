@@ -18,8 +18,9 @@ class PatchClampRobot:
 
         # Camera
         self.win_name = 'Camera'
-        cv2.namedWindow(self.win_name, flags=cv2.WINDOW_NORMAL)
+        cv2.namedWindow(self.win_name, flags=cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO | cv2.WINDOW_GUI_EXPANDED)
         self.frame = 0
+        self.n_img = 0
         self.width = 50
         self.height = 50
 
@@ -37,7 +38,7 @@ class PatchClampRobot:
         self.step = 0
 
         # Rotation matrix of the platform compared to the camera
-        self.rot = matrix('0. 0.; 0. 0.') # zeros() ?
+        self.rot = matrix('0. 0.; 0. 0.')
         self.rot_inv = matrix('0. 0.; 0. 0.')
 
         # Initializing transformation matrix (Jacobian) between the camera and the tip
@@ -55,7 +56,10 @@ class PatchClampRobot:
         pass
 
     def go_to_zero(self):
-        for i in range(3): # TODO: use group movements instead
+        """
+        Make the arm and platform go to the origin: state before the calibration
+        """
+        for i in range(3):
             self.arm.absolute_move(0, i)
             self.microscope.absolute_move(0, i)
 
@@ -65,6 +69,11 @@ class PatchClampRobot:
         pass
 
     def calibrate_platform(self):
+        """
+        Calibrate the platform:
+        Reset zero position to current position
+        Compute rotation matrix between the platform and camera 
+        """
 
         self.show()
 
@@ -78,11 +87,10 @@ class PatchClampRobot:
         # Saving initial position of the tip on the screen
         _, _, loc = templatematching(self.frame, self.template[len(self.template) / 2])
         self.x_init, self.y_init = loc[:2]
-        print self.x_init, self.y_init
 
-        # Getting the ratio um per pixels and the rotation of the platform
-
+        # Getting the rotation matrix between the platform and the camera
         for i in range(2):
+
             # Moving the microscope
             self.microscope.relative_move(120, i)
             self.microscope.wait_motor_stop(i)
@@ -100,6 +108,7 @@ class PatchClampRobot:
             dist = (dx ** 2 + dy ** 2) ** 0.5
             self.um_px = 120. / dist
 
+            # Compute the rotation matrix
             self.rot[0, i] = dx / dist
             self.rot[1, i] = dy / dist
 
@@ -109,10 +118,16 @@ class PatchClampRobot:
             # Refreshing frame
             self.show()
 
+        # Inverse rotation matrix for future use
         self.rot_inv = inv(self.rot)
         pass
 
     def calibrate_arm(self, axis):
+        """
+        Calibrate the arm along axis.
+        :param axis: axis to calibrate
+        :return: 0 if calibration failed, 1 otherwise
+        """
 
         self.show()
 
@@ -144,13 +159,16 @@ class PatchClampRobot:
         return 1
 
     def calibrate(self):
+        """
+        Calibrate the entire Robot
+        :return: 0 if calibration failed, 1 otherwise
+        """
 
         self.calibrate_platform()
 
         print 'Calibrated platform'
 
         # calibrate arm x axis
-
         calibrated = self.calibrate_arm(0)
 
         if not calibrated:
@@ -177,7 +195,6 @@ class PatchClampRobot:
         print self.mat
         print self.matrix_accuracy()
         self.inv_mat = inv(self.mat)
-        print self.inv_mat
         print 'Calibration finished'
         self.calibrated = 1
         return 1
@@ -187,6 +204,8 @@ class PatchClampRobot:
         """
         Change pipette & recalibration
         """
+
+        # Get the direction to get the pipette out
         ratio = fabs(self.mat[0, 0] / self.mat[1, 0])
 
         if ratio > 1:
@@ -199,12 +218,17 @@ class PatchClampRobot:
         else:
             sign = -1
 
+        # Get the pipette out
         self.arm.relative_move(sign * 20000, 0)
         self.arm.wait_motor_stop(0)
         self.show()
+
+        # Wait until the user change the pipette and press a key
         key = cv2.waitKey(0)
         if key & 0xFF == ord('q'):
             return 0, 0
+
+        # Approching the pipette until on screen
         self.arm.relative_move(-sign * 17000, 0)
         self.arm.wait_motor_stop(0)
         self.show()
@@ -326,7 +350,7 @@ class PatchClampRobot:
 
     def exp_focus_track(self, axis):
         """
-        Focus after a move of the arm
+        Focus after a move of the arm along axis
         """
 
         # Update frame just in case
@@ -337,7 +361,6 @@ class PatchClampRobot:
         else:
             self.step *= 2.
 
-        print self.step
         # Move the arm
         self.arm.relative_move(self.step, axis)
 
@@ -353,6 +376,7 @@ class PatchClampRobot:
         self.show()
 
         # Focus around the estimated focus height
+        # Focus two times to minimize error
         try:
             _, _, loc = self.focus()
             _, _, loc = self.focus()
@@ -447,7 +471,8 @@ class PatchClampRobot:
             cv2.waitKey(1)
         pass
 
-    def reverse(self):
+    def reverse_img(self):
+        # Reverse the frame depending on the type of machine used
         if self.controller == 'SM5':
             self.frame = cv2.flip(self.frame, 2)
         elif self.controller == 'SM10':
@@ -472,7 +497,12 @@ class PatchClampRobot:
 
             self.frame = self.cam.getLastImage()
             self.frame = np.float32(self.frame/(1.0*self.frame.max()))
-            self.reverse()
+            self.reverse_img()
+
+    def save_img(self):
+        cv2.imwrite('./{i}/screenshots/screenshot{n}'.format(i=self.controller, n=self.n_img), self.frame)
+        self.n_img += 1
+        pass
 
     def clic_position(self, event, x, y, flags, param):
         """
