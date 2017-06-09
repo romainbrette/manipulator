@@ -174,14 +174,12 @@ class LuigsNeumann_SM10(SerialDevice):
         self.send_command(ID, [0xA0] + axes4 + pos, -1)
 
     def single_step(self, axis, steps):
-        if not -127 < steps < 127:
-            raise ValueError('Steps argument has to be between '
-                             '-127 and 127 (was {})'.format(steps))
-        if steps < 0:
-            steps += 256 # two complement
-        ID = '0147'
-        data = (axis, steps)
-        self.send_command(ID, data, 0)
+        if steps > 0:
+            ID = '0140'
+        else:
+            ID = '0141'
+        for _ in range(abs(steps)):
+            self.send_command(ID, [axis], 0)
 
     def set_single_step_resolution(self, axis, micro_steps):
         if not 0 < micro_steps < 255:
@@ -242,23 +240,26 @@ if __name__ == '__main__':
     sm10 = LuigsNeumann_SM10('COM3')
     sm10.set_single_step_resolution(1, 10)
 
-    # sm10.absolute_move(1000, 1)
-    # sm10.wait_motor_stop([1])
-    print sm10.position_group([1, 2, 3])
-
-    sm10.single_step(1, 1)
+    sm10.absolute_move(1000, 1)
     sm10.wait_motor_stop([1])
     print sm10.position_group([1, 2, 3])
 
+    sm10.single_step(1, 1)
+    sm10.single_step(2, 1)
     sm10.single_step(1, -1)
     sm10.wait_motor_stop([1])
     print sm10.position_group([1, 2, 3])
-
     sm10.single_step(1, 1)
-    sm10.single_step(1, 1)
+    sm10.single_step(1, -1)
+    sm10.single_step(2, -1)
     sm10.wait_motor_stop([1])
     print sm10.position_group([1, 2, 3])
 
-    sm10.single_step(1, -2)
+    sm10.single_step(1, 1)
+    sm10.single_step(2, 1)
+    sm10.single_step(1, -1)
+    sm10.single_step(1, 1)
+    sm10.single_step(1, -1)
+    sm10.single_step(2, -1)
     sm10.wait_motor_stop([1])
     print sm10.position_group([1, 2, 3])
