@@ -93,10 +93,8 @@ class PatchClampRobot:
 
             # Getting the displacement, in pixels, of the tip on the screen
             _, _, loc = templatematching(self.frame, self.template[len(self.template) / 2])
-            print loc[0], loc[1]
             dx = loc[0] - self.x_init
             dy = loc[1] - self.y_init
-            print dx, dy
 
             # Determination of um_px
             dist = (dx ** 2 + dy ** 2) ** 0.5
