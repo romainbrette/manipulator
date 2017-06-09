@@ -174,6 +174,13 @@ class LuigsNeumann_SM10(SerialDevice):
         self.send_command(ID, [0xA0] + axes4 + pos, -1)
 
     def single_step(self, axis, steps):
+        '''
+        Moves the given axis using the StepIncrement or StepDecrement command.
+        Using a steps argument different from 1 (or -1) simply sends multiple
+        StepIncrement/StepDecrement commands.
+        Uses distance and velocity set by `set_single_step_distance` resp.
+        `set_single_step_velocity`.
+        '''
         if steps > 0:
             ID = '0140'
         else:
@@ -181,12 +188,17 @@ class LuigsNeumann_SM10(SerialDevice):
         for _ in range(abs(steps)):
             self.send_command(ID, [axis], 0)
 
-    def set_single_step_resolution(self, axis, micro_steps):
-        if not 0 < micro_steps < 255:
-            raise ValueError('Micro steps argument has to be between '
-                             '0 and 255 (was {})'.format(micro_steps))
-        ID = '0146'
-        data = (axis, micro_steps)
+    def set_single_step_distance(self, axis, distance):
+        '''
+        Distance (in um) for `single_step`.
+        '''
+        ID = '044F'
+        data = [axis] + list(bytearray(struct.pack('f', distance)))
+        self.send_command(ID, data, 0)
+
+    def set_single_step_velocity(self, axis, velocity):
+        ID = '0158'
+        data = (axis, velocity)
         self.send_command(ID, data, 0)
 
     def stop(self, axis):
@@ -238,28 +250,12 @@ if __name__ == '__main__':
     print(''.join(['%x' % a for a in group_address([3, 6, 9, 12, 15, 18])]))
     print(''.join(['%x' % a for a in group_address([4, 5, 6, 7, 8, 9, 10, 11, 12])]))
     sm10 = LuigsNeumann_SM10('COM3')
-    sm10.set_single_step_resolution(1, 10)
-
+    sm10.set_single_step_distance(1, 0.5)
     sm10.absolute_move(1000, 1)
     sm10.wait_motor_stop([1])
-    print sm10.position_group([1, 2, 3])
-
     sm10.single_step(1, 1)
-    sm10.single_step(2, 1)
-    sm10.single_step(1, -1)
-    sm10.wait_motor_stop([1])
-    print sm10.position_group([1, 2, 3])
-    sm10.single_step(1, 1)
-    sm10.single_step(1, -1)
-    sm10.single_step(2, -1)
-    sm10.wait_motor_stop([1])
-    print sm10.position_group([1, 2, 3])
-
-    sm10.single_step(1, 1)
-    sm10.single_step(2, 1)
-    sm10.single_step(1, -1)
-    sm10.single_step(1, 1)
-    sm10.single_step(1, -1)
-    sm10.single_step(2, -1)
-    sm10.wait_motor_stop([1])
-    print sm10.position_group([1, 2, 3])
+    time.sleep(1)
+    sm10.single_step(1, 2)
+    time.sleep(1)
+    sm10.single_step(1, 3)
+    time.sleep(1)
