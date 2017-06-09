@@ -24,6 +24,7 @@ class Application(Frame):
         self.controllist = None
         self.armlist = None
         self.calibrate = None
+        self.imgsave = None
         self.zero = None
         self.pack()
         self.createwidgets()
@@ -40,8 +41,8 @@ class Application(Frame):
                 self.controllist['state'] = 'disabled'
                 self.armlist['state'] = 'disabled'
                 self.robot = PatchClampRobot(self.controller, self.arm)
-                self.calibrate.config(state='normal')
-                self.calibrate.config(command=self.calibration)
+                self.imgsave.config(state='normal', command=self.robot.save_img)
+                self.calibrate.config(state='normal', command=self.calibration)
                 self.zero.config(state='normal')
                 self.connection.config(state='disabled')
                 self.disconnection.config(state='normal')
@@ -51,8 +52,8 @@ class Application(Frame):
     def disconnect(self):
         del self.robot
         self.robot = None
-        self.calibrate.config(command=None)
-        self.calibrate.config(state='disable')
+        self.calibrate.config(command=None, state='disable')
+        self.imgsave.config(state='disable', command=None)
         self.zero.config(state='disable')
         self.controllist['state'] = "readonly"
         self.armlist['state'] = 'readonly'
@@ -103,6 +104,9 @@ class Application(Frame):
 
         self.zero = Button(self, text='Go to zero', command=self.reset_pos, state='disable')
         self.zero.grid(row=3, column=1)
+
+        self.imgsave = Button(self, text='Screenshot', state='disable')
+        self.imgsave.grid(row=4, column=1)
 
         self.QUIT = Button(self, text='QUIT', fg='red', command=self.exit)
         self.QUIT.grid(row=4, column=0)
