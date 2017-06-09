@@ -55,14 +55,14 @@ class LuigsNeumann_SM10(SerialDevice):
         send += '%0.2X%0.2X' % (high, low)
         # Convert hex string to bytes
         sendbytes = binascii.unhexlify(send)
-        self.write(sendbytes)
+        self.port.write(sendbytes)
 
         if nbytes_answer >= 0:
             # Expected response: <ACK><ID><byte number><data><CRC>
             # We just check the first two bytes
             expected = binascii.unhexlify('06' + ID)
 
-            answer = self.read(nbytes_answer + 6)
+            answer = self.port.read(nbytes_answer + 6)
             if answer[:len(expected)] != expected:
                 msg = "Expected answer '%s', got '%s' " \
                       "instead" % (binascii.hexlify(expected),
@@ -89,10 +89,9 @@ class LuigsNeumann_SM10(SerialDevice):
         res = self.send_command('0101', [axis], 4)
         return struct.unpack('f', res)[0]
 
-    def absolute_move(self, x, axis):
+    def absolute_move(self, x, axis, fast=True):
         '''
         Moves the device axis to position x.
-        It uses the fast movement command.
 
         Parameters
         ----------
@@ -100,21 +99,18 @@ class LuigsNeumann_SM10(SerialDevice):
         x : target position in um.
         speed : optional speed in um/s.
         '''
-        data = [axis] + [b for p in x for b in bytearray(struct.pack('f', p))]
-        self.send_command('0048', data, 0)
+        self.absolute_move_group([x], [axis], fast=fast)
 
-    def relative_move(self, x, axis):
+    def relative_move(self, x, axis, fast=True):
         '''
         Moves the device axis by relative amount x in um.
-        It uses the fast command.
 
         Parameters
         ----------
         axis: axis number
         x : position shift in um.
         '''
-        data = [axis] + [b for p in x for b in bytearray(struct.pack('f', p))]
-        self.send_command('004A', data, 0)
+        self.relative_move_group([x], [axis], fast=fast)
 
     def position_group(self, axes):
         '''
@@ -131,7 +127,7 @@ class LuigsNeumann_SM10(SerialDevice):
         # First fill in zeros to make 4 axes
         axes4 = [0, 0, 0, 0]
         axes4[:len(axes)] = axes
-        ret = struct.unpack('4b4f', self.send('A101', [0xA0] + axes4, 20))
+        ret = struct.unpack('4b4f', self.send_command('A101', [0xA0] + axes4, 20))
         assert all(r == a for r, a in zip(ret[:3], axes))
         return ret[4:7]
 
@@ -154,7 +150,7 @@ class LuigsNeumann_SM10(SerialDevice):
         pos = [b for p in pos4 for b in bytearray(struct.pack('f', p))]
 
         # Send move command
-        self.send(ID, [0xA0] + axes + [0] + pos, -1)
+        self.send_command(ID, [0xA0] + axes4 + pos, -1)
 
     def relative_move_group(self, x, axes, fast=True):
         '''
@@ -175,15 +171,16 @@ class LuigsNeumann_SM10(SerialDevice):
         pos = [b for p in pos4 for b in bytearray(struct.pack('f', p))]
 
         # Send move command
-        self.send(ID, [0xA0] + axes + [0] + pos, -1)
+        self.send_command(ID, [0xA0] + axes4 + pos, -1)
 
-    def stop(self, axes):
+    def stop(self, axis):
         """
-        Stop current movements.
+        Stop current movements on one axis.
         """
-        ID = 'A0FF'
-        address = group_address(axes)
-        self.send(ID, address, -1)
+        # Note that the "collection command" STOP (A0FF) only stops
+        # a move started with "Procedure + ucVelocity"
+        ID = '00FF'
+        self.send_command(ID, [axis], 0)
 
     def set_to_zero(self, axes):
         """
@@ -191,9 +188,13 @@ class LuigsNeumann_SM10(SerialDevice):
         :param axes:
         :return: 
         """
-        ID = 'A0F0'
-        address = group_address(axes)
-        self.send(ID, address, -1)
+        # # collection command does not seem to work...
+        # ID = 'A0F0'
+        # address = group_address(axes)
+        # self.send_command(ID, address, -1)
+        ID = '00F0'
+        for axis in axes:
+            self.send_command(ID, [axis], 0)
 
     def wait_motor_stop(self, axes):
         """
@@ -205,11 +206,13 @@ class LuigsNeumann_SM10(SerialDevice):
         axes4 = [0, 0, 0, 0]
         axes4[:len(axes)] = axes
         data = [0xA0] + axes + [0]
-        ret = struct.unpack('20B', self.send('A120', data, 20))
+        time.sleep(0.05)  # right after a motor command the motors are not moving yet
+        ret = struct.unpack('20B', self.send_command('A120', data, 20))
         moving = [ret[6 + i*4] for i in range(len(axes))]
         is_moving = any(moving)
         while is_moving:
-            ret = struct.unpack('20B', self.send('A120', data, 20))
+            time.sleep(0.05)
+            ret = struct.unpack('20B', self.send_command('A120', data, 20))
             moving = [ret[6 + i * 4] for i in range(len(axes))]
             is_moving = any(moving)
 
@@ -218,3 +221,5 @@ if __name__ == '__main__':
     print(''.join(['%x' % a for a in group_address([1])]))
     print(''.join(['%x' % a for a in group_address([3, 6, 9, 12, 15, 18])]))
     print(''.join(['%x' % a for a in group_address([4, 5, 6, 7, 8, 9, 10, 11, 12])]))
+    sm10 = LuigsNeumann_SM10('COM3')
+    print sm10.position([1, 2, 3])
