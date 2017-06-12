@@ -541,6 +541,55 @@ class PatchClampRobot:
         cv2.setMouseCallback(self.cam.winname, self.clic_position)
         pass
 
+    def save_calibration(self):
+
+        with open("./{i}/mat.txt".format(i=self.controller), 'wt') as f:
+            for i in range(3):
+                f.write('{a},{b},{c}\n'.format(a=self.mat[i, 0], b=self.mat[i, 1], c=self.mat[i, 2]))
+
+        with open("./{i}/rotmat.txt".format(i=self.controller), 'wt') as f:
+            for i in range(3):
+                f.write('{a},{b},{c}\n'.format(a=self.rot[i, 0], b=self.rot[i, 1], c=self.rot[i, 2]))
+
+        with open('./{i}/data'.format(i=self.controller), 'wt') as f:
+            f.write('{d}\n'.format(d=self.um_px))
+            f.write('{d}\n'.format(d=self.x_init))
+            f.write('{d}\n'.format(d=self.y_init))
+            f.write('{d}\n'.format(d=self.template_loc[0]))
+            f.write('{d}\n'.format(d=self.template_loc[1]))
+
+    def load_calibration(self):
+        try:
+            with open("./{i}/mat.txt".format(i=self.controller), 'rt') as f:
+                i = 0
+                for line in f:
+                    line = line.split(',')
+                    for j in range(3):
+                        self.mat[i, j] = float(line[j])
+                        i += 1
+                self.inv_mat = inv(self.mat)
+
+            with open("./{i}/rotmat.txt".format(i=self.controller), 'rt') as f:
+                i = 0
+                for line in f:
+                    line = line.split(',')
+                    for j in range(3):
+                        self.rot[i, j] = float(line[j])
+                        i += 1
+                self.rot_inv = inv(self.rot)
+
+            with open('./{i}/data'.format(i=self.controller), 'rt') as f:
+                self.um_px = float(f.readline())
+                self.x_init = float(f.readline())
+                self.y_init = float(f.readline())
+                self.template_loc[0] = float(f.readline())
+                self.template_loc[1] = float(f.readline())
+
+            self.calibrated = 1
+
+        except IOError:
+            print '{i} has not been calibrated.'.format(i=self.controller)
+
     def __del__(self):
         self.cam.cam.stopSequenceAcquisition()
         camera_unload(self.cam.cam)
