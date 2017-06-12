@@ -17,13 +17,15 @@ class PatchClampRobot:
         self.controller = controller
 
         # Camera
+        '''
         self.win_name = 'Camera'
         cv2.namedWindow(self.win_name, flags=cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO | cv2.WINDOW_GUI_EXPANDED)
         self.frame = 0
         self.n_img = 0
         self.width = 50
         self.height = 50
-
+        '''
+        self.n_img = 0
         # Tab for template images
         self.template = []
 
@@ -240,9 +242,7 @@ class PatchClampRobot:
             key = cv2.waitKey(1)
             if key & 0xFF == ord('q'):
                 return 0
-            ratio = 32
-            img = self.frame[self.height / 2 - 3 * self.height / ratio:self.height / 2 + 3 * self.height / ratio,
-                             self.width / 2 - 3 * self.width / ratio:self.width / 2 + 3 * self.width / ratio]
+            img = self.template_zone()
 
             isin, val, loc = templatematching(img, self.template[len(self.template) / 2])
 
@@ -273,10 +273,7 @@ class PatchClampRobot:
         temp = []
 
         self.get_img()
-        ratio = 32
-
-        template = self.frame[self.height / 2 - 3 * self.height / ratio:self.height / 2 + 3 * self.height / ratio,
-                              self.width / 2 - 3 * self.width / ratio:self.width / 2 + 3 * self.width / ratio]
+        template = self.template_zone()
         height, width = template.shape[:2]
         weight = []
         template = cv2.bilateralFilter(template, 9, 75, 75)
@@ -295,8 +292,7 @@ class PatchClampRobot:
 
         for k in range(nb_images):
             self.show(pos - (nb_images - 1) / 2 + k)
-            img = self.frame[self.height / 2 - 3 * self.height / ratio:self.height / 2 + 3 * self.height / ratio,
-                             self.width / 2 - 3 * self.width / ratio:self.width / 2 + 3 * self.width / ratio]
+            img = self.template_zone()
             height, width = img.shape[:2]
             img = img[i * height / 4:height / 2 + i * height / 4, j * width / 4:width / 2 + j * width / 4]
             self.template += [img]
@@ -412,8 +408,6 @@ class PatchClampRobot:
         self.arm.relative_move(step, axis)
 
         # Move the platform to center the tip
-        #delta = matrix('{a}; {b}'.format(a=estim[0] * step, b=estim[1] * step))
-        #move = self.rot_inv * delta
         for i in range(3):
             self.microscope.relative_move(self.mat[i, axis] * step, i)
 
@@ -461,6 +455,7 @@ class PatchClampRobot:
 
     def show(self, z=None):
         self.get_img(z)
+        '''
         if isinstance(self.frame, np.ndarray):
             self.height, self.width = self.frame.shape[:2]
             frame = disp_centered_cross(self.frame)
@@ -469,6 +464,7 @@ class PatchClampRobot:
 
             cv2.imshow(self.win_name, frame)
             cv2.waitKey(1)
+        '''
         pass
 
     def reverse_img(self):
@@ -492,15 +488,23 @@ class PatchClampRobot:
             self.microscope.wait_motor_stop(2)
 
         # capture frame
-
+        '''
         if self.cam.getRemainingImageCount() > 0:
 
             self.frame = self.cam.getLastImage()
             self.frame = np.float32(self.frame/(1.0*self.frame.max()))
             self.reverse_img()
+        '''
+
+    def template_zone(self):
+        ratio = 32
+        shape = [self.cam.height, self.cam.width]
+        img = self.cam.frame[shape[0] / 2 - 3 * shape[0] / ratio:shape[0] / 2 + 3 * shape[0] / ratio,
+                             shape[1] / 2 - 3 * shape[1] / ratio:shape[1] / 2 + 3 * shape[1] / ratio]
+        return img
 
     def save_img(self):
-        cv2.imwrite('./{i}/screenshots/screenshot{n}'.format(i=self.controller, n=self.n_img), self.frame)
+        cv2.imwrite('./{i}/screenshots/screenshot{n}'.format(i=self.controller, n=self.n_img), self.cam.frame)
         self.n_img += 1
         pass
 
@@ -534,13 +538,13 @@ class PatchClampRobot:
         pass
 
     def enable_clic_position(self):
-        cv2.setMouseCallback(self.win_name, self.clic_position)
+        cv2.setMouseCallback(self.cam.winname, self.clic_position)
         pass
 
     def __del__(self):
-        self.cam.stopSequenceAcquisition()
-        camera_unload(self.cam)
-        self.cam.reset()
+        self.cam.cam.stopSequenceAcquisition()
+        camera_unload(self.cam.cam)
+        self.cam.cam.reset()
         del self.microscope
         cv2.destroyAllWindows()
         del self.dev

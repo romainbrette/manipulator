@@ -35,6 +35,8 @@ def camera_init(devtype):
 
     time.sleep(1)  # the microscope gives a wrong position in the very beginning, so wait a bit
 
+    mmc.startContinuousSequenceAcquisition(1)
+
     return mmc
 
 

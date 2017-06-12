@@ -1,6 +1,7 @@
 from devices import *
 from serial import SerialException
 from camera import *
+from CameraThread import *
 
 __all__ = ['init_device']
 
@@ -23,8 +24,8 @@ def init_device(devtype, armdev):
     else:
         raise SerialException("No supported device detected")
 
-    cam = camera_init(devtype)
-    cam.startContinuousSequenceAcquisition(1)
+    cam = CameraThread(devtype)
+    cam.start()
 
     if armdev == 'dev1':
         arm = XYZUnit(dev, [1, 2, 3])
