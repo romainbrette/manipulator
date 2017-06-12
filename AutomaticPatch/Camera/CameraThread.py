@@ -16,7 +16,7 @@ class CameraThread(Thread):
         self.frame = None
         self.width, self.height = None, None
         self.winname = winname
-        cv2.namedWindow(self.winname, flags=cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO | cv2.WINDOW_GUI_EXPANDED)
+        cv2.namedWindow(self.winname, flags=cv2.WINDOW_NORMAL)
         self.n_img = 1
         self.show = 1
 
@@ -25,6 +25,7 @@ class CameraThread(Thread):
             if self.show:
                 self.get_img()
             else:
+                cv2.destroyAllWindows()
                 self.show = 1
                 break
 

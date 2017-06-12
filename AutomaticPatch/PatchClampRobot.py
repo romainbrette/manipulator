@@ -488,6 +488,7 @@ class PatchClampRobot:
             self.microscope.wait_motor_stop(2)
 
         # capture frame
+        self.frame = self.cam.frame
         '''
         if self.cam.getRemainingImageCount() > 0:
 

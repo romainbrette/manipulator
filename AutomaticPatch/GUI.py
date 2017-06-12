@@ -111,8 +111,8 @@ class Application(Frame):
         self.QUIT = Button(self, text='QUIT', fg='red', command=self.exit)
         self.QUIT.grid(row=4, column=0)
 
-
-root = Tk()
-app = Application(master=root)
-app.mainloop()
-root.destroy()
+if __name__ == '__main__':
+    root = Tk()
+    app = Application(master=root)
+    app.mainloop()
+    root.destroy()
