@@ -399,12 +399,76 @@ class MultiClamp(object):
             self.dll.AfxMessageBox(szError, self.dll.MB_ICONSTOP)
         return enable
 
+    @needs_select
+    def set_leak_comp_enable(self, enable):
+        if not self.dll.MCCMSG_SetLeakSubEnable(self.msg_handler,
+                                                ctypes.c_bool(enable),
+                                                ctypes.byref(self.last_error)):
+            szError = ctypes.c_char_p()
+            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
+                                           self.last_error,
+                                           szError,
+                                           ctypes.sizeof(szError))
+            self.dll.AfxMessageBox(szError, self.dll.MB_ICONSTOP)
+
+    @needs_select
+    def get_leak_res(self):
+        res = ctypes.c_double(0.)
+        if not self.dll.MCCMSG_GetLeakSubResist(self.msg_handler,
+                                                ctypes.byref(res),
+                                                ctypes.byref(self.last_error)):
+            szError = ctypes.c_char_p()
+            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
+                                           self.last_error,
+                                           szError,
+                                           ctypes.sizeof(szError))
+            self.dll.AfxMessageBox(szError, self.dll.MB_ICONSTOP)
+        return res
+
+    @needs_select
+    def auto_leak_res(self):
+        if not self.dll.MCCMSG_AutoLeakSub(self.msg_handler,
+                                           ctypes.byref(self.last_error)):
+            szError = ctypes.c_char_p()
+            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
+                                           self.last_error,
+                                           szError,
+                                           ctypes.sizeof(szError))
+            self.dll.AfxMessageBox(szError, self.dll.MB_ICONSTOP)
+
+    @needs_select
+    def set_primary_signal_membcur(self):
+        if not self.dll.MCCMSG_SetPrimarySignal(self.msg_handler,
+                                                ctypes.c_uint(0),
+                                                ctypes.byref(self.last_error)):
+            szError = ctypes.c_char_p()
+            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
+                                           self.last_error,
+                                           szError,
+                                           ctypes.sizeof(szError))
+            self.dll.AfxMessageBox(szError, self.dll.MB_ICONSTOP)
+
+    @needs_select
+    def get_primary_signal_membcur(self):
+        res = ctypes.c_uint(0)
+        if not self.dll.MCCMSG_GetPrimarySignal(self.msg_handler,
+                                                ctypes.byref(res),
+                                                ctypes.byref(self.last_error)):
+            szError = ctypes.c_char_p()
+            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
+                                           self.last_error,
+                                           szError,
+                                           ctypes.sizeof(szError))
+            self.dll.AfxMessageBox(szError, self.dll.MB_ICONSTOP)
+        return res
+
     def close(self):
         self.dll.MCCMSG_DestroyObject(self.msg_handler)
         self.msg_handler = None
 
 
 if __name__ == '__main__':
+    import nidaqmx
 
     print('Connecting to the MultiClamp amplifier')
     mcc = MultiClamp(channel=1)
@@ -428,9 +492,24 @@ if __name__ == '__main__':
     print('Fast: {}'.format(mcc.get_fast_compensation_capacitance()))
     mcc.set_freq_pulse_amplitude(1e-2)
     mcc.set_freq_pulse_frequency(1e-2)
-    mcc.freq_pulse_enable(True)
-    mcc.meter_resist_enable(True)
-    time.sleep(5)
-    mcc.freq_pulse_enable(False)
-    mcc.meter_resist_enable(False)
+    mcc.set_pulse_amplitude(1e-2)
+    mcc.set_pulse_duration(1e-2)
+    #mcc.freq_pulse_enable(True)
+    #mcc.meter_resist_enable(True)
+   # mcc.set_leak_comp_enable(True)
+    #mcc.set_primary_signal_membcur()
+   # mcc.auto_leak_res()
+   # print('Sign: {}'.format(mcc.get_primary_signal_membcur()))
+   # print('Res: {}'.format(mcc.get_leak_res()))
+   # mcc.set_leak_comp_enable(False)
+   # mcc.freq_pulse_enable(False)
+   # mcc.meter_resist_enable(False)
+    with nidaqmx.Task() as task:
+        task.ai_channels.add_ai_voltage_chan("Dev1/ai0")
+        task.ai_channels.add_ai_voltage_chan("Dev1/ai1")
+        for _ in range(50):
+            mcc.pulse()
+            temp = task.read()
+            print temp
+            time.sleep(.5)
     mcc.close()
