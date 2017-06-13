@@ -2,17 +2,19 @@ from Autofocus import *
 from Camera import *
 from numpy import matrix
 from numpy.linalg import inv
+from threading import Thread
 import numpy as np
 import cv2
 from math import fabs
 from time import sleep
 
 
-class PatchClampRobot:
+class PatchClampRobot(Thread):
 
     def __init__(self, controller, arm):
 
         # devices
+        Thread.__init__(self)
         self.dev, self.microscope, self.arm, self.cam = init_device(controller, arm)
         self.controller = controller
 
