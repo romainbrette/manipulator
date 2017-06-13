@@ -484,44 +484,26 @@ if __name__ == '__main__':
 
     print('Connecting to the MultiClamp amplifier')
     mcc = MultiClamp(channel=1)
-    #print('Switching to current clamp')
-    #mcc.current_clamp()
-    #time.sleep(2)
     print('Switching to voltage clamp')
     mcc.voltage_clamp()
-    print('Setting compensation values')
-    mcc.set_slow_compensation_capacitance(1e-12)
-    mcc.set_fast_compensation_capacitance(5e-12)
-    print('Compensation values:')
-    print('Slow: {}'.format(mcc.get_slow_compensation_capacitance()))
-    print('Fast: {}'.format(mcc.get_fast_compensation_capacitance()))
     print('Running automatic slow compensation')
     mcc.auto_slow_compensation()
     print('Running automatic fast compensation')
     mcc.auto_fast_compensation()
-    print('Compensation values:')
-    print('Slow: {}'.format(mcc.get_slow_compensation_capacitance()))
-    print('Fast: {}'.format(mcc.get_fast_compensation_capacitance()))
+
     mcc.set_freq_pulse_amplitude(1e-2)
     mcc.set_freq_pulse_frequency(1e-2)
     mcc.set_pulse_amplitude(1e-2)
     mcc.set_pulse_duration(1e-2)
     time.sleep(1)
+    mcc.auto_pipette_offset()
     with nidaqmx.Task() as task:
         task.ai_channels.add_ai_voltage_chan("Dev1/ai0")
         task.ai_channels.add_ai_voltage_chan("Dev1/ai1")
         init = task.read()
         print init
-    mcc.auto_pipette_offset()
-    mcc.freq_pulse_enable(True)
 
-    #mcc.meter_resist_enable(True)
-   # mcc.set_leak_comp_enable(True)
-    #mcc.set_primary_signal_membcur()
-   # mcc.auto_leak_res()
-   # print('Sign: {}'.format(mcc.get_primary_signal_membcur()))
-   # print('Res: {}'.format(mcc.get_leak_res()))
-   # mcc.set_leak_comp_enable(False)
+    mcc.freq_pulse_enable(True)
 
     with nidaqmx.Task() as task:
         task.ai_channels.add_ai_voltage_chan("Dev1/ai0")
@@ -530,7 +512,6 @@ if __name__ == '__main__':
             temp = task.read()
             if fabs(temp[1] - init[1]) > .1:
                 print fabs((temp[1]/10.)/(temp[0]/0.5))
-
 
     mcc.freq_pulse_enable(False)
     mcc.meter_resist_enable(False)
