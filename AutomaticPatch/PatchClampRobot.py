@@ -89,7 +89,7 @@ class PatchClampRobot(Thread):
         self.get_template_series(5)
 
         # Saving initial position of the tip on the screen
-        _, _, loc = templatematching(self.frame, self.template[len(self.template) / 2])
+        _, _, loc = templatematching(self.cam.frame, self.template[len(self.template) / 2])
         self.x_init, self.y_init = loc[:2]
 
         # Getting the rotation matrix between the platform and the camera
@@ -104,7 +104,7 @@ class PatchClampRobot(Thread):
             self.show()
 
             # Getting the displacement, in pixels, of the tip on the screen
-            _, _, loc = templatematching(self.frame, self.template[len(self.template) / 2])
+            _, _, loc = templatematching(self.cam.frame, self.template[len(self.template) / 2])
             dx = loc[0] - self.x_init
             dy = loc[1] - self.y_init
 
@@ -320,7 +320,7 @@ class PatchClampRobot(Thread):
         # Getting the maxvals and their locations
         for i in self.template:
 
-            res, val, loc = templatematching(self.frame, i)
+            res, val, loc = templatematching(self.cam.frame, i)
             locs += [loc]
 
             if res:
@@ -471,10 +471,11 @@ class PatchClampRobot(Thread):
 
     def reverse_img(self):
         # Reverse the frame depending on the type of machine used
-        if self.controller == 'SM5':
-            self.frame = cv2.flip(self.frame, 2)
-        elif self.controller == 'SM10':
-            self.frame = cv2.flip(self.frame, 0)
+        #if self.controller == 'SM5':
+            #self.frame = cv2.flip(self.frame, 2)
+        #elif self.controller == 'SM10':
+            #self.frame = cv2.flip(self.frame, 0)
+        pass
 
     def get_img(self, z=None):
 
@@ -490,7 +491,7 @@ class PatchClampRobot(Thread):
             self.microscope.wait_motor_stop(2)
 
         # capture frame
-        self.frame = self.cam.frame
+        #self.frame = self.cam.frame
         '''
         if self.cam.getRemainingImageCount() > 0:
 
@@ -594,9 +595,6 @@ class PatchClampRobot(Thread):
             print '{i} has not been calibrated.'.format(i=self.controller)
 
     def __del__(self):
-        self.cam.cam.stopSequenceAcquisition()
-        camera_unload(self.cam.cam)
-        self.cam.cam.reset()
         del self.microscope
         cv2.destroyAllWindows()
         del self.dev
@@ -616,7 +614,7 @@ if __name__ == '__main__':
         if key & 0xFF == ord('t'):
             if robot.template:
                 for i in robot.template:
-                    _, val, _ = templatematching(robot.frame, i)
+                    _, val, _ = templatematching(robot.cam.frame, i)
                     print val
 
         if key & 0xFF == ord('z'):

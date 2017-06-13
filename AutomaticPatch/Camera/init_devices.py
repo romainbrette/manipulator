@@ -1,6 +1,5 @@
 from devices import *
 from serial import SerialException
-from camera import *
 from CameraThread import *
 
 __all__ = ['init_device']

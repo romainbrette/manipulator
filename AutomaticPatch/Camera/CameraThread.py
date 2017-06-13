@@ -21,13 +21,12 @@ class CameraThread(Thread):
         self.show = 1
 
     def run(self):
-        while 1:
-            if self.show:
-                self.get_img()
-            else:
-                cv2.destroyAllWindows()
-                self.show = 1
-                break
+        while self.show:
+            self.get_img()
+        cv2.destroyAllWindows()
+        self.cam.stopSequenceAcquisition()
+        camera_unload(self.cam)
+        self.cam.reset()
 
     def reverse_img(self):
         # Reverse the frame depending on the type of machine used
@@ -50,7 +49,6 @@ class CameraThread(Thread):
             self.reverse_img()
             self.height, self.width = self.frame.shape[:2]
             frame = disp_centered_cross(self.frame)
-
             cv2.imshow(self.winname, frame)
             cv2.waitKey(1)
 
