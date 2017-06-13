@@ -462,6 +462,17 @@ class MultiClamp(object):
             self.dll.AfxMessageBox(szError, self.dll.MB_ICONSTOP)
         return res
 
+    @needs_select
+    def auto_pipette_offset(self):
+        if not self.dll.MCCMSG_AutoPipetteOffset(self.msg_handler,
+                                                 ctypes.byref(self.last_error)):
+            szError = ctypes.c_char_p()
+            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
+                                           self.last_error,
+                                           szError,
+                                           ctypes.sizeof(szError))
+            self.dll.AfxMessageBox(szError, self.dll.MB_ICONSTOP)
+
     def close(self):
         self.dll.MCCMSG_DestroyObject(self.msg_handler)
         self.msg_handler = None
@@ -501,8 +512,9 @@ if __name__ == '__main__':
         task.ai_channels.add_ai_voltage_chan("Dev1/ai1")
         init = task.read()
         print init
-
+    mcc.auto_pipette_offset()
     mcc.freq_pulse_enable(True)
+
     #mcc.meter_resist_enable(True)
    # mcc.set_leak_comp_enable(True)
     #mcc.set_primary_signal_membcur()
@@ -516,8 +528,8 @@ if __name__ == '__main__':
         task.ai_channels.add_ai_voltage_chan("Dev1/ai1")
         for _ in range(200):
             temp = task.read()
-            if fabs(temp[1] - init[1]) > 1e-2:
-                print (temp[1]/10.)/(1e-9*temp[0]/0.5)
+            if fabs(temp[1] - init[1]) > .1:
+                print fabs((temp[1]/10.)/(temp[0]/0.5))
 
 
     mcc.freq_pulse_enable(False)
