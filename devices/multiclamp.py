@@ -463,6 +463,68 @@ class MultiClamp(object):
         return res
 
     @needs_select
+    def set_primary_signal_gain(self, gain):
+        if not self.dll.MCCMSG_SetPrimarySignalGain(self.msg_handler,
+                                                   ctypes.c_double(gain),
+                                                   ctypes.byref(self.last_error)):
+            szError = ctypes.c_char_p()
+            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
+                                           self.last_error,
+                                           szError,
+                                           ctypes.sizeof(szError))
+            self.dll.AfxMessageBox(szError, self.dll.MB_ICONSTOP)
+
+    @needs_select
+    def set_primary_signal_lpf(self, lpf):
+        if not self.dll.MCCMSG_SetPrimarySignalLPF(self.msg_handler,
+                                                   ctypes.c_double(lpf),
+                                                   ctypes.byref(self.last_error)):
+            szError = ctypes.c_char_p()
+            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
+                                           self.last_error,
+                                           szError,
+                                           ctypes.sizeof(szError))
+            self.dll.AfxMessageBox(szError, self.dll.MB_ICONSTOP)
+
+    @needs_select
+    def set_secondary_signal_membpot(self):
+        if not self.dll.MCCMSG_SetSecondarySignal(self.msg_handler,
+                                                  ctypes.c_uint(1),
+                                                  ctypes.byref(self.last_error)):
+            szError = ctypes.c_char_p()
+            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
+                                           self.last_error,
+                                           szError,
+                                           ctypes.sizeof(szError))
+            self.dll.AfxMessageBox(szError, self.dll.MB_ICONSTOP)
+
+    @needs_select
+    def get_secondary_signal_membcur(self):
+        res = ctypes.c_uint(0)
+        if not self.dll.MCCMSG_GetSecondarySignal(self.msg_handler,
+                                                  ctypes.byref(res),
+                                                  ctypes.byref(self.last_error)):
+            szError = ctypes.c_char_p()
+            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
+                                           self.last_error,
+                                           szError,
+                                           ctypes.sizeof(szError))
+            self.dll.AfxMessageBox(szError, self.dll.MB_ICONSTOP)
+        return res
+
+    @needs_select
+    def set_secondary_signal_lpf(self, lpf):
+        if not self.dll.MCCMSG_SetSecondarySignalLPF(self.msg_handler,
+                                                     ctypes.c_double(lpf),
+                                                     ctypes.byref(self.last_error)):
+            szError = ctypes.c_char_p()
+            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
+                                           self.last_error,
+                                           szError,
+                                           ctypes.sizeof(szError))
+            self.dll.AfxMessageBox(szError, self.dll.MB_ICONSTOP)
+
+    @needs_select
     def auto_pipette_offset(self):
         if not self.dll.MCCMSG_AutoPipetteOffset(self.msg_handler,
                                                  ctypes.byref(self.last_error)):
@@ -502,10 +564,14 @@ if __name__ == '__main__':
     print('Compensation values:')
     print('Slow: {}'.format(mcc.get_slow_compensation_capacitance()))
     print('Fast: {}'.format(mcc.get_fast_compensation_capacitance()))
-    mcc.set_freq_pulse_amplitude(1e-2)
+    mcc.set_freq_pulse_amplitude(1e-1)
     mcc.set_freq_pulse_frequency(1e-2)
     mcc.set_pulse_amplitude(1e-2)
     mcc.set_pulse_duration(1e-2)
+    mcc.set_primary_signal_membcur()
+    mcc.set_primary_signal_lpf(1000)
+    mcc.set_secondary_signal_membpot()
+    mcc.set_secondary_signal_lpf(1000)
     time.sleep(1)
     with nidaqmx.Task() as task:
         task.ai_channels.add_ai_voltage_chan("Dev1/ai0")
@@ -514,14 +580,6 @@ if __name__ == '__main__':
         print init
     mcc.auto_pipette_offset()
     mcc.freq_pulse_enable(True)
-
-    #mcc.meter_resist_enable(True)
-   # mcc.set_leak_comp_enable(True)
-    #mcc.set_primary_signal_membcur()
-   # mcc.auto_leak_res()
-   # print('Sign: {}'.format(mcc.get_primary_signal_membcur()))
-   # print('Res: {}'.format(mcc.get_leak_res()))
-   # mcc.set_leak_comp_enable(False)
 
     with nidaqmx.Task() as task:
         task.ai_channels.add_ai_voltage_chan("Dev1/ai0")
