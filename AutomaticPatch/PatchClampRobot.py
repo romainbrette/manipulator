@@ -7,6 +7,8 @@ import numpy as np
 import cv2
 from math import fabs
 from time import sleep
+import os
+import errno
 
 
 class PatchClampRobot(Thread):
@@ -15,7 +17,9 @@ class PatchClampRobot(Thread):
 
         # devices
         Thread.__init__(self)
-        self.dev, self.microscope, self.arm, self.cam = init_device(controller, arm)
+        self.dev, self.microscope, self.arm = init_device(controller, arm)
+        self.cam = CameraThread(controller, self.clic_position)
+        self.cam.start()
         self.controller = controller
 
         # Camera
@@ -201,6 +205,7 @@ class PatchClampRobot(Thread):
         self.inv_mat = inv(self.mat)
         print 'Calibration finished'
         self.calibrated = 1
+        self.save_calibration()
         return 1
 
     def pipettechange(self):
@@ -508,6 +513,15 @@ class PatchClampRobot(Thread):
         return img
 
     def save_img(self):
+        path = './{i}/screenshots/screenshot{n}'.format(i=self.controller, n=self.n_img)
+        if not os.path.exists(os.path.dirname(path)):
+            try:
+                os.makedirs(os.path.dirname(path))
+            except OSError as exc:
+                # Guard against race condition
+                if exc.errno != errno.EEXIST:
+                    raise
+
         cv2.imwrite('./{i}/screenshots/screenshot{n}'.format(i=self.controller, n=self.n_img), self.cam.frame)
         self.n_img += 1
         pass
@@ -547,6 +561,15 @@ class PatchClampRobot(Thread):
 
     def save_calibration(self):
 
+        path = '\{}'.format(self.controller)
+        if not os.path.exists(os.path.dirname(path)):
+            try:
+                os.makedirs(os.path.dirname(path))
+            except OSError as exc:
+                # Guard against race condition
+                if exc.errno != errno.EEXIST:
+                    raise
+
         with open("./{i}/mat.txt".format(i=self.controller), 'wt') as f:
             for i in range(3):
                 f.write('{a},{b},{c}\n'.format(a=self.mat[i, 0], b=self.mat[i, 1], c=self.mat[i, 2]))
@@ -555,7 +578,7 @@ class PatchClampRobot(Thread):
             for i in range(3):
                 f.write('{a},{b},{c}\n'.format(a=self.rot[i, 0], b=self.rot[i, 1], c=self.rot[i, 2]))
 
-        with open('./{i}/data'.format(i=self.controller), 'wt') as f:
+        with open('./{i}/data.txt'.format(i=self.controller), 'wt') as f:
             f.write('{d}\n'.format(d=self.um_px))
             f.write('{d}\n'.format(d=self.x_init))
             f.write('{d}\n'.format(d=self.y_init))
@@ -582,7 +605,7 @@ class PatchClampRobot(Thread):
                         i += 1
                 self.rot_inv = inv(self.rot)
 
-            with open('./{i}/data'.format(i=self.controller), 'rt') as f:
+            with open('./{i}/data.txt'.format(i=self.controller), 'rt') as f:
                 self.um_px = float(f.readline())
                 self.x_init = float(f.readline())
                 self.y_init = float(f.readline())
@@ -590,9 +613,11 @@ class PatchClampRobot(Thread):
                 self.template_loc[1] = float(f.readline())
 
             self.calibrated = 1
+            return 1
 
         except IOError:
             print '{i} has not been calibrated.'.format(i=self.controller)
+            return 0
 
     def __del__(self):
         del self.microscope

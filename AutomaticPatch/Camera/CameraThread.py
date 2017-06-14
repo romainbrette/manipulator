@@ -9,7 +9,7 @@ __all__ = ['CameraThread']
 
 class CameraThread(Thread):
 
-    def __init__(self, controller, winname='Camera'):
+    def __init__(self, controller, mouse_fun, winname='Camera'):
         Thread.__init__(self)
         self.controller = controller
         self.cam = camera_init(controller)
@@ -19,10 +19,14 @@ class CameraThread(Thread):
         cv2.namedWindow(self.winname, flags=cv2.WINDOW_NORMAL)
         self.n_img = 1
         self.show = 1
+        self.clic_on_window = 0
+        self.mouse_callback = mouse_fun
 
     def run(self):
         while self.show:
             self.get_img()
+            if self.clic_on_window:
+                cv2.setMouseCallback(self.winname, self.mouse_callback)
         cv2.destroyAllWindows()
         self.cam.stopSequenceAcquisition()
         camera_unload(self.cam)
@@ -56,6 +60,9 @@ class CameraThread(Thread):
         cv2.imwrite('./{i}/screenshots/screenshot{n}'.format(i=self.controller, n=self.n_img), self.frame)
         self.n_img += 1
         pass
+
+    def switch_mouse_callback(self):
+        self.mouse_callback ^= 1
 
     def stop(self):
         self.show = 0

@@ -1,4 +1,5 @@
 from Tkinter import *
+from tkMessageBox import *
 import ttk
 from PatchClampRobot import *
 
@@ -26,6 +27,7 @@ class Application(Frame):
         self.calibrate = None
         self.imgsave = None
         self.zero = None
+        self.load_calibrate = None
         self.pack()
         self.createwidgets()
 
@@ -42,6 +44,7 @@ class Application(Frame):
                 self.armlist['state'] = 'disabled'
                 self.robot = PatchClampRobot(self.controller, self.arm)
                 self.imgsave.config(state='normal', command=self.robot.save_img)
+                self.load_calibrate.config(state='normal', command=self.robot.load_calibration)
                 self.calibrate.config(state='normal', command=self.calibration)
                 self.zero.config(state='normal')
                 self.connection.config(state='disabled')
@@ -54,6 +57,7 @@ class Application(Frame):
         self.robot = None
         self.calibrate.config(command=None, state='disable')
         self.imgsave.config(state='disable', command=None)
+        self.load_calibrate.config(state='disable', command=None)
         self.zero.config(state='disable')
         self.controllist['state'] = "readonly"
         self.armlist['state'] = 'readonly'
@@ -62,13 +66,22 @@ class Application(Frame):
         pass
 
     def calibration(self):
+        if showinfo('Loading calibration',
+                    'Please put the tip of the pipette in focus and at the center of the image.'):
+            calibrate = self.robot.calibrate()
 
-        calibrate = self.robot.calibrate()
-        if calibrate:
-            print 'Calibration succesfull.'
-        else:
-            print 'Calibration canceled.'
-        pass
+            if calibrate:
+                print 'Calibration succesfull.'
+            else:
+                print 'Calibration canceled.'
+            pass
+
+    def load_cali(self):
+        if self.robot.load_calibration():
+            if showinfo('Loading calibration',
+                        'Please put the tip of the pipette in focus and at the center of the image.'):
+                self.robot.arm.set_to_zero([0, 1, 2])
+                self.robot.microscope.set_to_zero([0, 1, 2])
 
     def reset_pos(self):
         if self.robot:
@@ -102,14 +115,17 @@ class Application(Frame):
         self.calibrate = Button(self, text='Calibrate', state='disable')
         self.calibrate.grid(row=3, column=0)
 
+        self.load_calibrate = Button(self, text='Load calibration', state='disable')
+        self.load_calibrate.grid(row=3, column=1)
+
         self.zero = Button(self, text='Go to zero', command=self.reset_pos, state='disable')
-        self.zero.grid(row=3, column=1)
+        self.zero.grid(row=4, column=0)
 
         self.imgsave = Button(self, text='Screenshot', state='disable')
         self.imgsave.grid(row=4, column=1)
 
         self.QUIT = Button(self, text='QUIT', fg='red', command=self.exit)
-        self.QUIT.grid(row=4, column=0)
+        self.QUIT.grid(row=5, column=0)
 
 if __name__ == '__main__':
     root = Tk()
