@@ -66,7 +66,7 @@ class Application(Frame):
         pass
 
     def calibration(self):
-        if showinfo('Loading calibration',
+        if showinfo('Calibrating',
                     'Please put the tip of the pipette in focus and at the center of the image.'):
             calibrate = self.robot.calibrate()
 

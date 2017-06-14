@@ -620,6 +620,7 @@ class PatchClampRobot(Thread):
             return 0
 
     def __del__(self):
+        self.cam.stop()
         del self.microscope
         cv2.destroyAllWindows()
         del self.dev

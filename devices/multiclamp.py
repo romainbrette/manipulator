@@ -587,7 +587,7 @@ if __name__ == '__main__':
         for _ in range(200):
             temp = task.read()
             if fabs(temp[1] - init[1]) > .1:
-                print fabs((temp[1]/10.)/(temp[0]/0.5))
+                print fabs((temp[1]/10.)/(1e-9*temp[0]/0.5))
 
 
     mcc.freq_pulse_enable(False)
