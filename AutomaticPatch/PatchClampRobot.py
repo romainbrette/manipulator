@@ -7,6 +7,8 @@ import numpy as np
 import cv2
 from math import fabs
 from time import sleep
+import os
+import errno
 
 
 class PatchClampRobot(Thread):
@@ -15,7 +17,9 @@ class PatchClampRobot(Thread):
 
         # devices
         Thread.__init__(self)
-        self.dev, self.microscope, self.arm, self.cam = init_device(controller, arm)
+        self.dev, self.microscope, self.arm = init_device(controller, arm)
+        self.cam = CameraThread(controller, self.clic_position)
+        self.cam.start()
         self.controller = controller
 
         # Camera
@@ -89,7 +93,7 @@ class PatchClampRobot(Thread):
         self.get_template_series(5)
 
         # Saving initial position of the tip on the screen
-        _, _, loc = templatematching(self.frame, self.template[len(self.template) / 2])
+        _, _, loc = templatematching(self.cam.frame, self.template[len(self.template) / 2])
         self.x_init, self.y_init = loc[:2]
 
         # Getting the rotation matrix between the platform and the camera
@@ -104,7 +108,7 @@ class PatchClampRobot(Thread):
             self.show()
 
             # Getting the displacement, in pixels, of the tip on the screen
-            _, _, loc = templatematching(self.frame, self.template[len(self.template) / 2])
+            _, _, loc = templatematching(self.cam.frame, self.template[len(self.template) / 2])
             dx = loc[0] - self.x_init
             dy = loc[1] - self.y_init
 
@@ -201,6 +205,7 @@ class PatchClampRobot(Thread):
         self.inv_mat = inv(self.mat)
         print 'Calibration finished'
         self.calibrated = 1
+        self.save_calibration()
         return 1
 
     def pipettechange(self):
@@ -320,7 +325,7 @@ class PatchClampRobot(Thread):
         # Getting the maxvals and their locations
         for i in self.template:
 
-            res, val, loc = templatematching(self.frame, i)
+            res, val, loc = templatematching(self.cam.frame, i)
             locs += [loc]
 
             if res:
@@ -471,10 +476,11 @@ class PatchClampRobot(Thread):
 
     def reverse_img(self):
         # Reverse the frame depending on the type of machine used
-        if self.controller == 'SM5':
-            self.frame = cv2.flip(self.frame, 2)
-        elif self.controller == 'SM10':
-            self.frame = cv2.flip(self.frame, 0)
+        #if self.controller == 'SM5':
+            #self.frame = cv2.flip(self.frame, 2)
+        #elif self.controller == 'SM10':
+            #self.frame = cv2.flip(self.frame, 0)
+        pass
 
     def get_img(self, z=None):
 
@@ -490,7 +496,7 @@ class PatchClampRobot(Thread):
             self.microscope.wait_motor_stop(2)
 
         # capture frame
-        self.frame = self.cam.frame
+        #self.frame = self.cam.frame
         '''
         if self.cam.getRemainingImageCount() > 0:
 
@@ -507,6 +513,15 @@ class PatchClampRobot(Thread):
         return img
 
     def save_img(self):
+        path = './{i}/screenshots/screenshot{n}'.format(i=self.controller, n=self.n_img)
+        if not os.path.exists(os.path.dirname(path)):
+            try:
+                os.makedirs(os.path.dirname(path))
+            except OSError as exc:
+                # Guard against race condition
+                if exc.errno != errno.EEXIST:
+                    raise
+
         cv2.imwrite('./{i}/screenshots/screenshot{n}'.format(i=self.controller, n=self.n_img), self.cam.frame)
         self.n_img += 1
         pass
@@ -546,6 +561,15 @@ class PatchClampRobot(Thread):
 
     def save_calibration(self):
 
+        path = '\{}'.format(self.controller)
+        if not os.path.exists(os.path.dirname(path)):
+            try:
+                os.makedirs(os.path.dirname(path))
+            except OSError as exc:
+                # Guard against race condition
+                if exc.errno != errno.EEXIST:
+                    raise
+
         with open("./{i}/mat.txt".format(i=self.controller), 'wt') as f:
             for i in range(3):
                 f.write('{a},{b},{c}\n'.format(a=self.mat[i, 0], b=self.mat[i, 1], c=self.mat[i, 2]))
@@ -554,7 +578,7 @@ class PatchClampRobot(Thread):
             for i in range(3):
                 f.write('{a},{b},{c}\n'.format(a=self.rot[i, 0], b=self.rot[i, 1], c=self.rot[i, 2]))
 
-        with open('./{i}/data'.format(i=self.controller), 'wt') as f:
+        with open('./{i}/data.txt'.format(i=self.controller), 'wt') as f:
             f.write('{d}\n'.format(d=self.um_px))
             f.write('{d}\n'.format(d=self.x_init))
             f.write('{d}\n'.format(d=self.y_init))
@@ -581,7 +605,7 @@ class PatchClampRobot(Thread):
                         i += 1
                 self.rot_inv = inv(self.rot)
 
-            with open('./{i}/data'.format(i=self.controller), 'rt') as f:
+            with open('./{i}/data.txt'.format(i=self.controller), 'rt') as f:
                 self.um_px = float(f.readline())
                 self.x_init = float(f.readline())
                 self.y_init = float(f.readline())
@@ -589,14 +613,13 @@ class PatchClampRobot(Thread):
                 self.template_loc[1] = float(f.readline())
 
             self.calibrated = 1
+            return 1
 
         except IOError:
             print '{i} has not been calibrated.'.format(i=self.controller)
+            return 0
 
     def __del__(self):
-        self.cam.cam.stopSequenceAcquisition()
-        camera_unload(self.cam.cam)
-        self.cam.cam.reset()
         del self.microscope
         cv2.destroyAllWindows()
         del self.dev
@@ -616,7 +639,7 @@ if __name__ == '__main__':
         if key & 0xFF == ord('t'):
             if robot.template:
                 for i in robot.template:
-                    _, val, _ = templatematching(robot.frame, i)
+                    _, val, _ = templatematching(robot.cam.frame, i)
                     print val
 
         if key & 0xFF == ord('z'):
