@@ -295,15 +295,15 @@ class PatchClampRobot(Thread):
         i = index // 3
         self.template_loc = [temp.shape[1] * (1 - j / 2.), temp.shape[0] * (1 - i / 2.)]
 
-        pos = self.microscope.position(2)
-
         for k in range(nb_images):
-            self.show(pos - (nb_images - 1) / 2 + k)
+            self.show(k - (nb_images - 1) / 2)
             img = self.template_zone()
             height, width = img.shape[:2]
             img = img[i * height / 4:height / 2 + i * height / 4, j * width / 4:width / 2 + j * width / 4]
+            cv2.imshow('{}'.format(k), img)
+            cv2.waitKey(1)
             self.template += [img]
-        self.show(pos)
+        self.go_to_zero()
         pass
 
     def focus(self):

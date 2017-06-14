@@ -37,7 +37,7 @@ class CameraThread(Thread):
         if self.controller == 'SM5':
             self.frame = cv2.flip(self.frame, 2)
         elif self.controller == 'SM10':
-            self.frame = cv2.flip(self.frame, 0)
+            self.frame = cv2.flip(self.frame, 1)
 
     def get_img(self):
 
@@ -48,9 +48,9 @@ class CameraThread(Thread):
 
         if self.cam.getRemainingImageCount() > 0:
 
-            self.frame = self.cam.getLastImage()
-            self.frame = np.float32(self.frame/(1.0*self.frame.max()))
-            self.reverse_img()
+            temp_frame = self.cam.getLastImage()
+            self.frame = np.float32(temp_frame/np.float32(temp_frame.max()))
+            #self.reverse_img()
             self.height, self.width = self.frame.shape[:2]
             frame = disp_centered_cross(self.frame)
             cv2.imshow(self.winname, frame)

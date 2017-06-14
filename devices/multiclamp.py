@@ -564,7 +564,7 @@ if __name__ == '__main__':
     print('Compensation values:')
     print('Slow: {}'.format(mcc.get_slow_compensation_capacitance()))
     print('Fast: {}'.format(mcc.get_fast_compensation_capacitance()))
-    mcc.set_freq_pulse_amplitude(1e-1)
+    mcc.set_freq_pulse_amplitude(5e-2)
     mcc.set_freq_pulse_frequency(1e-2)
     mcc.set_pulse_amplitude(1e-2)
     mcc.set_pulse_duration(1e-2)
