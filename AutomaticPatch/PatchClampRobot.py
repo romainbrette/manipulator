@@ -505,7 +505,7 @@ class PatchClampRobot(Thread):
                 if exc.errno != errno.EEXIST:
                     raise
 
-        cv2.imwrite('./{i}/screenshots/screenshot{n}'.format(i=self.controller, n=self.n_img), self.cam.frame)
+        cv2.imwrite('./{i}/screenshots/screenshot{n}.jpg'.format(i=self.controller, n=self.n_img), self.cam.frame)
         self.n_img += 1
         pass
 
