@@ -205,6 +205,7 @@ class PatchClampRobot(Thread):
         self.inv_mat = inv(self.mat)
         print 'Calibration finished'
         self.calibrated = 1
+        self.cam.clic_on_window = True
         self.save_calibration()
         return 1
 
@@ -474,14 +475,6 @@ class PatchClampRobot(Thread):
         '''
         pass
 
-    def reverse_img(self):
-        # Reverse the frame depending on the type of machine used
-        #if self.controller == 'SM5':
-            #self.frame = cv2.flip(self.frame, 2)
-        #elif self.controller == 'SM10':
-            #self.frame = cv2.flip(self.frame, 0)
-        pass
-
     def get_img(self, z=None):
 
         """
@@ -494,16 +487,6 @@ class PatchClampRobot(Thread):
         if z:
             self.microscope.absolute_move(z, 2)
             self.microscope.wait_motor_stop(2)
-
-        # capture frame
-        #self.frame = self.cam.frame
-        '''
-        if self.cam.getRemainingImageCount() > 0:
-
-            self.frame = self.cam.getLastImage()
-            self.frame = np.float32(self.frame/(1.0*self.frame.max()))
-            self.reverse_img()
-        '''
 
     def template_zone(self):
         ratio = 32

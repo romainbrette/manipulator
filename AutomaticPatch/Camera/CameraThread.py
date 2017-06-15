@@ -16,10 +16,10 @@ class CameraThread(Thread):
         self.frame = None
         self.width, self.height = None, None
         self.winname = winname
-        cv2.namedWindow(self.winname, flags=cv2.WINDOW_NORMAL)
+        cv2.namedWindow(self.winname, flags=(cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO | cv2.WINDOW_GUI_EXPANDED))
         self.n_img = 1
-        self.show = 1
-        self.clic_on_window = 0
+        self.show = True
+        self.clic_on_window = False
         self.mouse_callback = mouse_fun
 
     def run(self):
@@ -65,4 +65,4 @@ class CameraThread(Thread):
         self.mouse_callback ^= 1
 
     def stop(self):
-        self.show = 0
+        self.show = False
