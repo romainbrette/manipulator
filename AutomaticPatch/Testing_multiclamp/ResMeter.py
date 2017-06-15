@@ -2,6 +2,7 @@ from devices import *
 import nidaqmx
 from math import fabs
 import time
+import numpy as np
 
 
 class ResistanceMeter:
@@ -21,6 +22,7 @@ class ResistanceMeter:
 
         self.mcc.set_freq_pulse_amplitude(1e-2)
         self.mcc.set_freq_pulse_frequency(1e-2)
+        self.mcc.freq_pulse_enable(False)
 
         self.mcc.set_primary_signal_membcur()
         self.mcc.set_primary_signal_lpf(1000)
@@ -45,25 +47,33 @@ class ResistanceMeter:
         self.mcc.freq_pulse_enable(True)
         init_time = int(round(time.time() * 1000))
 
-        with nidaqmx.Task() as task:
+        with nidaqmx.Task() as task, nidaqmx.Task() as output:
             task.ai_channels.add_ai_voltage_chan("Dev1/ai0")
             task.ai_channels.add_ai_voltage_chan("Dev1/ai1")
-            while n < 5:
-                temp = task.read()
-                if fabs(temp[1] - self.init[1]) > .1:
-                    res += [fabs((temp[1]/10.)/(1e-9*temp[0]/0.5))]
-                    n += 1
+            output.ao_channels.add_ao_voltage_chan('Dev1/ao0')
+            n = 0
+            while n<3:
+                temp = task.read(number_of_samples_per_channel=100)
+                res += [fabs((np.mean(temp[1])/10.)/(1e-9*np.mean(temp[0])/0.5))]
+                n += 1
 
         self.mcc.freq_pulse_enable(False)
-        print('Time: {}'.format(int(round(time.time() * 1000))-init_time))
-
-        return sum(res)/len(res)
+        print('Time: {}ms'.format(int(round(time.time() * 1000))-init_time))
+        return np.mean(res)
 
     def __del__(self):
         self.mcc.close()
 
 if __name__ == '__main__':
+    from matplotlib.pyplot import *
+    val =[]
     multi = ResistanceMeter()
     print('Getting resistance')
-    print('Resistance is:{}'.format(multi.get_res()))
+    val += [multi.get_res()]
+
+    print min(val)
+    print max(val)
+    print np.median(val)
+    plot(val)
+    #show()
     del multi
