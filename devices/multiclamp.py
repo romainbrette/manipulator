@@ -525,6 +525,18 @@ class MultiClamp(object):
             self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
 
     @needs_select
+    def set_secondary_signal_gain(self, gain):
+        if not self.dll.MCCMSG_SetSecondarySignalGain(self.msg_handler,
+                                                      ctypes.c_double(gain),
+                                                      ctypes.byref(self.last_error)):
+            sz_error = ctypes.c_char_p()
+            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
+                                           self.last_error,
+                                           sz_error,
+                                           ctypes.sizeof(sz_error))
+            self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
+
+    @needs_select
     def auto_pipette_offset(self):
         if not self.dll.MCCMSG_AutoPipetteOffset(self.msg_handler,
                                                  ctypes.byref(self.last_error)):

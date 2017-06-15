@@ -17,7 +17,7 @@ class ResistanceMeter:
         print('Running automatic fast compensation')
         self.mcc.auto_fast_compensation()
 
-        mcc.meter_resist_enable(False)
+        self.mcc.meter_resist_enable(False)
 
         self.mcc.set_freq_pulse_amplitude(1e-2)
         self.mcc.set_freq_pulse_frequency(1e-2)
@@ -27,6 +27,7 @@ class ResistanceMeter:
         self.mcc.set_primary_signal_gain(5)
         self.mcc.set_secondary_signal_membpot()
         self.mcc.set_secondary_signal_lpf(1000)
+        self.mcc.set_secondary_signal_gain(5)
         time.sleep(1)
 
         with nidaqmx.Task() as task:
@@ -49,8 +50,8 @@ class ResistanceMeter:
             task.ai_channels.add_ai_voltage_chan("Dev1/ai1")
             while n < 5:
                 temp = task.read()
-                if fabs(temp[0] - init[0]) > 1:
-                    res += [fabs((temp[1]/10.)/(5*1e-9*temp[0]/0.5))]
+                if fabs(temp[1] - self.init[1]) > .1:
+                    res += [fabs((temp[1]/10.)/(1e-9*temp[0]/0.5))]
                     n += 1
 
         self.mcc.freq_pulse_enable(False)
@@ -63,5 +64,6 @@ class ResistanceMeter:
 
 if __name__ == '__main__':
     multi = ResistanceMeter()
+    print('Getting resistance')
     print('Resistance is:{}'.format(multi.get_res()))
     del multi

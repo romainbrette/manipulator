@@ -16,7 +16,7 @@ class CameraThread(Thread):
         self.frame = None
         self.width, self.height = None, None
         self.winname = winname
-        cv2.namedWindow(self.winname, flags=(cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO | cv2.WINDOW_GUI_EXPANDED))
+        cv2.namedWindow(self.winname, flags=cv2.WINDOW_NORMAL)
         self.n_img = 1
         self.show = True
         self.clic_on_window = False
