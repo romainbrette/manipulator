@@ -42,7 +42,7 @@ class ResistanceMeter:
         res = []
 
         self.mcc.freq_pulse_enable(True)
-        init_time = time.time()
+        init_time = int(round(time.time() * 1000))
 
         with nidaqmx.Task() as task:
             task.ai_channels.add_ai_voltage_chan("Dev1/ai0")
@@ -54,7 +54,7 @@ class ResistanceMeter:
                     n += 1
 
         self.mcc.freq_pulse_enable(False)
-        print('Time: {}'.format(time.time()-init_time))
+        print('Time: {}'.format(int(round(time.time() * 1000))-init_time))
 
         return sum(res)/len(res)
 
