@@ -2,6 +2,7 @@ from devices import *
 import nidaqmx
 from math import fabs
 import time
+from threading import Thread
 import numpy as np
 
 
@@ -63,6 +64,30 @@ class ResistanceMeter:
 
     def __del__(self):
         self.mcc.close()
+
+
+class ContinuousMeter(Thread):
+
+    def __init__(self, mcc):
+        Thread.__init__(self)
+        self.meter = True
+        self.multi = mcc
+        self.multi.freq_pulse_enable(True)
+
+    def run(self):
+
+        while self.meter:
+            res = []
+            with nidaqmx.Task() as task:
+                task.ai_channels.add_ai_voltage_chan("Dev1/ai0")
+                task.ai_channels.add_ai_voltage_chan("Dev1/ai1")
+                n = 0
+                while n < 3:
+                    temp = task.read(number_of_samples_per_channel=100)
+                    res += [fabs((np.mean(temp[1])/10.)/(1e-9*np.mean(temp[0])/0.5))]
+                    n += 1
+            self.multi.freq_pulse_enable(False)
+
 
 if __name__ == '__main__':
     from matplotlib.pyplot import *
