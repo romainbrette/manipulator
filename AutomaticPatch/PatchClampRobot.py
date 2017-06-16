@@ -425,17 +425,7 @@ class PatchClampRobot:
         return img
 
     def save_img(self):
-        path = './{i}/screenshots/screenshot{n}'.format(i=self.controller, n=self.n_img)
-        if not os.path.exists(os.path.dirname(path)):
-            try:
-                os.makedirs(os.path.dirname(path))
-            except OSError as exc:
-                # Guard against race condition
-                if exc.errno != errno.EEXIST:
-                    raise
-
-        cv2.imwrite('./{i}/screenshots/screenshot{n}.jpg'.format(i=self.controller, n=self.n_img), self.cam.frame)
-        self.n_img += 1
+        self.cam.save_img()
         pass
 
     def clic_position(self, event, x, y, flags, param):
@@ -533,8 +523,7 @@ class PatchClampRobot:
 
     def stop(self):
         self.cam.stop()
-        del self.microscope
-        del self.dev
+        cv2.destroyAllWindows()
         pass
 
 if __name__ == '__main__':

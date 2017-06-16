@@ -94,7 +94,9 @@ class Application(Frame):
             self.after(10, self.show)
 
     def exit(self):
-        self.robot.stop()
+        if self.robot:
+            self.robot.stop()
+            del self.robot
         self.quit()
 
     def createwidgets(self):
