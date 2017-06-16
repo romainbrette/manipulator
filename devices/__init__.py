@@ -7,3 +7,4 @@ from virtualxyzunit import *
 from fakedevice import *
 from xymicunit import *
 from leica import *
+from multiclamp import *

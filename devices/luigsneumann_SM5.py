@@ -136,7 +136,8 @@ class LuigsNeumann_SM5(SerialDevice):
         :param axis: 
         :return: 
         """
-        self.send_command('00f0', [axis], 0)
+        for axes in axis:
+            self.send_command('00f0', [axes], 0)
 
     def wait_motor_stop(self, axis):
         """
@@ -148,6 +149,9 @@ class LuigsNeumann_SM5(SerialDevice):
         while res:
             res = self.send_command('0120', [axis], 7)
             res = int(binascii.hexlify(struct.unpack('s', res[6])[0])[1])
+
+    def __del__(self):
+        self.port.close()
 
 
 if __name__ == '__main__':

@@ -3,7 +3,6 @@ Initialization of controllers and camera
 '''
 from devices import *
 from serial import SerialException
-from camera import *
 
 __all__ = ['init_device']
 
@@ -26,9 +25,6 @@ def init_device(devtype, armdev):
     else:
         raise SerialException("No supported device detected")
 
-    cam = camera_init(devtype)
-    cam.startContinuousSequenceAcquisition(1)
-
     if armdev == 'dev1':
         arm = XYZUnit(dev, [1, 2, 3])
     elif armdev == 'dev2':
@@ -36,4 +32,4 @@ def init_device(devtype, armdev):
     else:
         raise NameError('Unknown device for arm control.')
 
-    return dev, microscope, arm, cam
+    return dev, microscope, arm

@@ -97,11 +97,8 @@ class XYZUnit(Device):
         :param axis: 
         :return: 
         """
-        if isinstance(axis, list):
-            for i in axis:
-                self.dev.set_to_zero(self.axes[i])
-        else:
-            self.dev.set_to_zero(self.axes[axis])
+        axes = [self.axes[i] for i in axis]
+        self.dev.set_to_zero(axes)
 
     def wait_motor_stop(self, axis):
         """
