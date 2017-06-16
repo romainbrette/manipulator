@@ -6,10 +6,11 @@ from threading import Thread, RLock
 import numpy as np
 
 
-class ResistanceMeter:
+class ResistanceMeter(Thread):
 
     def __init__(self):
 
+        Thread.__init__(self)
         print('Connecting to the MultiClamp amplifier')
         self.mcc = MultiClamp(channel=1)
         print('Switching to voltage clamp')
@@ -39,7 +40,51 @@ class ResistanceMeter:
             self.init = task.read()
 
         self.mcc.auto_pipette_offset()
-        self.continious = None
+        self.acquisition = True
+        self.continious = False
+        self.discrete = False
+        self.res = None
+
+    def run(self):
+        while self.acquisition:
+
+            if self.continious:
+
+                self.mcc.freq_pulse_enable(True)
+                while self.continious:
+                    with nidaqmx.Task() as task, RLock():
+
+                        self.res = []
+                        task.ai_channels.add_ai_voltage_chan("Dev1/ai0")
+                        task.ai_channels.add_ai_voltage_chan("Dev1/ai1")
+
+                        for _ in range(3):
+                            temp = task.read(number_of_samples_per_channel=100)
+                            self.res += [fabs((np.mean(temp[1]) / 10.) / (1e-9 * np.mean(temp[0]) / 0.5))]
+
+                        self.res = np.mean(self.res)
+
+                self.mcc.freq_pulse_enable(False)
+
+            elif self.discrete:
+
+                self.mcc.freq_pulse_enable(True)
+                with nidaqmx.Task() as task, RLock():
+                    self.res = []
+                    task.ai_channels.add_ai_voltage_chan("Dev1/ai0")
+                    task.ai_channels.add_ai_voltage_chan("Dev1/ai1")
+
+                    for _ in range(3):
+                        temp = task.read(number_of_samples_per_channel=100)
+                        self.res += [fabs((np.mean(temp[1]) / 10.) / (1e-9 * np.mean(temp[0]) / 0.5))]
+
+                    self.res = np.mean(self.res)
+
+                self.mcc.freq_pulse_enable(False)
+                self.discrete = False
+
+            else:
+                pass
 
     def get_res(self):
 
@@ -59,50 +104,25 @@ class ResistanceMeter:
         print('Time: {}ms'.format(int(round(time.time() * 1000))-init_time))
         return np.mean(res)
 
-    def start_continious_meter(self):
-        self.continious = ContinuousMeter(self.mcc)
-        self.continious.start()
+    def stop(self):
+        self.continious = False
+        self.acquisition = False
 
-    def stop_continious_meter(self):
-        try:
-            self.continious.stop()
-        except AttributeError:
-            print('Continious metering has not been started.')
+    def start_continious_acquisition(self):
+        self.continious = True
+        self.discrete = False
 
-    def get_continious_meter_res(self):
-        try:
-            out = self.continious.res
-            return out
-        except AttributeError:
-            print('Continious metering has not been started.')
+    def stop_continious_acquisition(self):
+        self.continious = False
+        self.discrete = False
+
+    def get_discrete_acquisition(self):
+        self.continious = False
+        self.discrete = True
 
     def __del__(self):
+        self.stop()
         self.mcc.close()
-
-
-class ContinuousMeter(Thread):
-
-    def __init__(self, mcc):
-        Thread.__init__(self)
-        self.meter = True
-        self.multi = mcc
-        self.res = None
-
-    def run(self):
-        self.multi.freq_pulse_enable(True)
-        while self.meter:
-            with nidaqmx.Task() as task, RLock():
-                self.res = []
-                task.ai_channels.add_ai_voltage_chan("Dev1/ai0")
-                task.ai_channels.add_ai_voltage_chan("Dev1/ai1")
-                for _ in range(3):
-                    temp = task.read(number_of_samples_per_channel=100)
-                    self.res += [fabs((np.mean(temp[1])/10.)/(1e-9*np.mean(temp[0])/0.5))]
-                self.res = np.mean(self.res)
-        self.multi.freq_pulse_enable(False)
-
-    def stop(self):
-        self.meter = False
 
 
 if __name__ == '__main__':
