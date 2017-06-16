@@ -83,8 +83,6 @@ class PatchClampRobot(Thread):
         Compute rotation matrix between the platform and camera 
         """
 
-        self.show()
-
         # Make current position the zero position
         self.arm.set_to_zero([0, 1, 2])
         self.microscope.set_to_zero([0, 1, 2])
@@ -104,9 +102,6 @@ class PatchClampRobot(Thread):
             self.microscope.wait_motor_stop(i)
             sleep(.5)
 
-            # Refreshing the frame after the move
-            self.show()
-
             # Getting the displacement, in pixels, of the tip on the screen
             _, _, loc = templatematching(self.cam.frame, self.template[len(self.template) / 2])
             dx = loc[0] - self.x_init
@@ -123,9 +118,6 @@ class PatchClampRobot(Thread):
             # Resetting position of microscope
             self.go_to_zero()
 
-            # Refreshing frame
-            self.show()
-
         # Inverse rotation matrix for future use
         self.rot_inv = inv(self.rot)
         pass
@@ -137,15 +129,7 @@ class PatchClampRobot(Thread):
         :return: 0 if calibration failed, 1 otherwise
         """
 
-        self.show()
-
         while self.arm.position(axis) < self.maxdist:
-
-            self.show()
-            key = cv2.waitKey(1)
-
-            if key & 0xFF == ord('q'):
-                return 0
 
             # calibrate arm axis using exponential moves:
             # moves the arm, recenter the tip and refocus.
@@ -160,9 +144,6 @@ class PatchClampRobot(Thread):
 
         # Resetting position of arm and microscope so no error gets to the next axis calibration
         self.go_to_zero()
-
-        # Update the frame
-        self.show()
 
         return 1
 
@@ -231,7 +212,6 @@ class PatchClampRobot(Thread):
         # Get the pipette out
         self.arm.relative_move(sign * 20000, 0)
         self.arm.wait_motor_stop(0)
-        self.show()
 
         # Wait until the user change the pipette and press a key
         key = cv2.waitKey(0)
@@ -241,12 +221,10 @@ class PatchClampRobot(Thread):
         # Approching the pipette until on screen
         self.arm.relative_move(-sign * 17000, 0)
         self.arm.wait_motor_stop(0)
-        self.show()
 
         while 1:
             self.arm.relative_move(100, 0)
             self.arm.wait_motor_stop(0)
-            self.get_img()
             key = cv2.waitKey(1)
             if key & 0xFF == ord('q'):
                 return 0
@@ -257,7 +235,6 @@ class PatchClampRobot(Thread):
             if isin:
                 while val < 0.98:
                     val, _, loc = self.focus()
-                    self.show()
 
                 delta = matrix('{a}; {b}'.format(a=(self.x_init - loc[0]) * self.um_px,
                                                  b=(self.y_init - loc[1]) * self.um_px))
@@ -265,7 +242,6 @@ class PatchClampRobot(Thread):
                 for i in range(2):
                     self.arm.relative_move(move[i, 0], i)
                 self.arm.wait_motor_stop([0, 1])
-                self.show()
                 # Change zero position to current position
                 self.arm.set_to_zero([0, 1, 2])
                 self.microscope.set_to_zero([0, 1, 2])
@@ -280,7 +256,6 @@ class PatchClampRobot(Thread):
         self.template = []
         temp = []
 
-        self.get_img()
         template = self.template_zone()
         height, width = template.shape[:2]
         weight = []
@@ -297,7 +272,8 @@ class PatchClampRobot(Thread):
         self.template_loc = [temp.shape[1] * (1 - j / 2.), temp.shape[0] * (1 - i / 2.)]
 
         for k in range(nb_images):
-            self.show(k - (nb_images - 1) / 2)
+            self.microscope.absolute_move(k - (nb_images - 1) / 2, 2)
+            self.microscope.wait_motor_stop(2)
             img = self.template_zone()
             height, width = img.shape[:2]
             img = img[i * height / 4:height / 2 + i * height / 4, j * width / 4:width / 2 + j * width / 4]
@@ -318,7 +294,6 @@ class PatchClampRobot(Thread):
         # Getting the microscope height according to the used controller
         current_z = self.microscope.position(2)
 
-        self.get_img()
         # Tabs of maxval and their location during the process
         vals = []
         locs = []
@@ -344,7 +319,8 @@ class PatchClampRobot(Thread):
             index = vals.index(maxval)
             loc = locs[index]
             focus_height = current_z + len(self.template) / 2 - index
-            self.show(focus_height)
+            self.microscope.absolute_move(focus_height, 2)
+            self.microscope.wait_motor_stop(2)
             dep = len(self.template) / 2 - index
         else:
             # No template has been detected, focus can not be achieved
@@ -356,9 +332,6 @@ class PatchClampRobot(Thread):
         """
         Focus after a move of the arm along axis
         """
-
-        # Update frame just in case
-        self.get_img()
 
         if self.arm.position(axis) == 0:
             self.step = self.first_step
@@ -376,9 +349,6 @@ class PatchClampRobot(Thread):
         self.arm.wait_motor_stop(axis)
         self.microscope.wait_motor_stop([0, 1, 2])
 
-        # Update the frame.
-        self.show()
-
         # Focus around the estimated focus height
         # Focus two times to minimize error
         try:
@@ -395,9 +365,6 @@ class PatchClampRobot(Thread):
 
         self.microscope.wait_motor_stop([0, 1])
 
-        # Update frame
-        self.show()
-
         # Update the estimated move to do for a move of 1 um of the arm
         for i in range(3):
             self.mat[i, axis] = self.microscope.position(i)/self.arm.position(axis)
@@ -409,9 +376,6 @@ class PatchClampRobot(Thread):
         Focus after a move of the arm
         """
 
-        # Update frame just in case
-        self.get_img()
-
         # Move the arm
         self.arm.relative_move(step, axis)
 
@@ -422,9 +386,6 @@ class PatchClampRobot(Thread):
         # Waiting for motors to stop
         self.arm.wait_motor_stop(axis)
         self.microscope.wait_motor_stop([0, 1, 2])
-
-        # Update the frame.
-        self.show()
 
         # Focus around the estimated focus height
         try:
@@ -439,9 +400,6 @@ class PatchClampRobot(Thread):
             self.microscope.relative_move(move[i, 0], i)
 
         self.microscope.wait_motor_stop([0, 1])
-
-        # Update frame
-        self.show()
 
         # Update the estimated move to do for a move of 1 um of the arm
         for i in range(3):
@@ -460,33 +418,6 @@ class PatchClampRobot(Thread):
                 temp += self.mat[j, i]**2
             acc[i] = temp**0.5
         return acc
-
-    def show(self, z=None):
-        self.get_img(z)
-        '''
-        if isinstance(self.frame, np.ndarray):
-            self.height, self.width = self.frame.shape[:2]
-            frame = disp_centered_cross(self.frame)
-            # if not self.template:
-            #     frame = disp_template_zone(frame)
-
-            cv2.imshow(self.win_name, frame)
-            cv2.waitKey(1)
-        '''
-        pass
-
-    def get_img(self, z=None):
-
-        """
-        get an image from the microscope at given height z
-        :param z: desired absolute height of the microscope
-        :return frame: image taken from camera
-        """
-
-        # Move the microscope if an height has been specify
-        if z:
-            self.microscope.absolute_move(z, 2)
-            self.microscope.wait_motor_stop(2)
 
     def template_zone(self):
         ratio = 32
@@ -602,7 +533,7 @@ class PatchClampRobot(Thread):
             print '{i} has not been calibrated.'.format(i=self.controller)
             return 0
 
-    def __del__(self):
+    def stop(self):
         self.cam.stop()
         del self.microscope
         del self.dev
@@ -613,7 +544,6 @@ if __name__ == '__main__':
     calibrated = 0
     while 1:
 
-        robot.show()
         key = cv2.waitKey(1)
 
         if key & 0xFF == ord('q'):

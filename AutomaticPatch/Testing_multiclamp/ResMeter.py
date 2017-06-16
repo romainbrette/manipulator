@@ -2,7 +2,7 @@ from devices import *
 import nidaqmx
 from math import fabs
 import time
-from threading import Thread
+from threading import Thread, RLock
 import numpy as np
 
 
@@ -39,28 +39,42 @@ class ResistanceMeter:
             self.init = task.read()
 
         self.mcc.auto_pipette_offset()
+        self.continious = None
 
     def get_res(self):
 
-        n = 0
         res = []
 
         self.mcc.freq_pulse_enable(True)
         init_time = int(round(time.time() * 1000))
 
-        with nidaqmx.Task() as task, nidaqmx.Task() as output:
+        with nidaqmx.Task() as task:
             task.ai_channels.add_ai_voltage_chan("Dev1/ai0")
             task.ai_channels.add_ai_voltage_chan("Dev1/ai1")
-            output.ao_channels.add_ao_voltage_chan('Dev1/ao0')
-            n = 0
-            while n<3:
+            for _ in range(3):
                 temp = task.read(number_of_samples_per_channel=100)
                 res += [fabs((np.mean(temp[1])/10.)/(1e-9*np.mean(temp[0])/0.5))]
-                n += 1
 
         self.mcc.freq_pulse_enable(False)
         print('Time: {}ms'.format(int(round(time.time() * 1000))-init_time))
         return np.mean(res)
+
+    def start_continious_meter(self):
+        self.continious = ContinuousMeter(self.mcc)
+        self.continious.start()
+
+    def stop_continious_meter(self):
+        try:
+            self.continious.stop()
+        except AttributeError:
+            print('Continious metering has not been started.')
+
+    def get_continious_meter_res(self):
+        try:
+            out = self.continious.res
+            return out
+        except AttributeError:
+            print('Continious metering has not been started.')
 
     def __del__(self):
         self.mcc.close()
@@ -73,25 +87,28 @@ class ContinuousMeter(Thread):
         self.meter = True
         self.multi = mcc
         self.multi.freq_pulse_enable(True)
+        self.res = None
 
     def run(self):
 
         while self.meter:
-            res = []
-            with nidaqmx.Task() as task:
+            self.res = []
+            with nidaqmx.Task() as task, RLock():
                 task.ai_channels.add_ai_voltage_chan("Dev1/ai0")
                 task.ai_channels.add_ai_voltage_chan("Dev1/ai1")
-                n = 0
-                while n < 3:
+                for _ in range(3):
                     temp = task.read(number_of_samples_per_channel=100)
-                    res += [fabs((np.mean(temp[1])/10.)/(1e-9*np.mean(temp[0])/0.5))]
-                    n += 1
-            self.multi.freq_pulse_enable(False)
+                    self.res += [fabs((np.mean(temp[1])/10.)/(1e-9*np.mean(temp[0])/0.5))]
+                self.res = np.mean(self.res)
+        self.multi.freq_pulse_enable(False)
+
+    def stop(self):
+        self.meter = False
 
 
 if __name__ == '__main__':
     from matplotlib.pyplot import *
-    val =[]
+    val = []
     multi = ResistanceMeter()
     print('Getting resistance')
     val += [multi.get_res()]
@@ -100,5 +117,5 @@ if __name__ == '__main__':
     print max(val)
     print np.median(val)
     plot(val)
-    #show()
+    # show()
     del multi

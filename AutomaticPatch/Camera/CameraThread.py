@@ -23,6 +23,7 @@ class CameraThread(Thread):
         self.mouse_callback = mouse_fun
 
     def run(self):
+        self.cam.startContinuousSequenceAcquisition(1)
         while self.show:
             self.get_img()
             if self.clic_on_window:

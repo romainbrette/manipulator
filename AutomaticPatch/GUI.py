@@ -49,12 +49,11 @@ class Application(Frame):
                 self.zero.config(state='normal')
                 self.connection.config(state='disabled')
                 self.disconnection.config(state='normal')
-                self.after(10, self.show)
+                # self.after(10, self.show)
         pass
 
     def disconnect(self):
-        del self.robot
-        self.robot = None
+        self.robot.stop()
         self.calibrate.config(command=None, state='disable')
         self.imgsave.config(state='disable', command=None)
         self.load_calibrate.config(state='disable', command=None)
@@ -95,7 +94,7 @@ class Application(Frame):
             self.after(10, self.show)
 
     def exit(self):
-        del self.robot
+        self.robot.stop()
         self.quit()
 
     def createwidgets(self):
