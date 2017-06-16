@@ -63,7 +63,7 @@ class ResistanceMeter(Thread):
                         for _ in range(3):
                             temp = task.read(number_of_samples_per_channel=100)
                             res += [fabs((np.mean(temp[1]) / 10.) / (1e-9 * np.mean(temp[0]) / 0.5))]
-                        self.res = np.median(res)
+                        self.res = np.mean(res)
 
                 self.mcc.freq_pulse_enable(False)
 
@@ -79,7 +79,7 @@ class ResistanceMeter(Thread):
                         temp = task.read(number_of_samples_per_channel=100)
                         self.res += [fabs((np.mean(temp[1]) / 10.) / (1e-9 * np.mean(temp[0]) / 0.5))]
 
-                    self.res = np.median(self.res)
+                    self.res = np.mean(self.res)
 
                 self.mcc.freq_pulse_enable(False)
                 self.discrete = False
