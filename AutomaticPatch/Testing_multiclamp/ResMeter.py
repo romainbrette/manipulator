@@ -86,14 +86,13 @@ class ContinuousMeter(Thread):
         Thread.__init__(self)
         self.meter = True
         self.multi = mcc
-        self.multi.freq_pulse_enable(True)
         self.res = None
 
     def run(self):
-
+        self.multi.freq_pulse_enable(True)
         while self.meter:
-            self.res = []
             with nidaqmx.Task() as task, RLock():
+                self.res = []
                 task.ai_channels.add_ai_voltage_chan("Dev1/ai0")
                 task.ai_channels.add_ai_voltage_chan("Dev1/ai1")
                 for _ in range(3):
