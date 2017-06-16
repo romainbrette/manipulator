@@ -66,7 +66,8 @@ class CameraThread(Thread):
                 # Guard against race condition
                 if exc.errno != errno.EEXIST:
                     raise
-        cv2.imwrite('./{i}/screenshots/screenshot{n}.jpg'.format(i=self.controller, n=self.n_img), self.frame)
+        cv2.imwrite('./{i}/screenshots/screenshot{n}.jpg'.format(i=self.controller, n=self.n_img),
+                    self.cam.getLastImage())
         self.n_img += 1
         pass
 
