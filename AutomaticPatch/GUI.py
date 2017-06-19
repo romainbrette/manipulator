@@ -29,7 +29,7 @@ class Application(Frame):
         self.zero = None
         self.load_calibrate = None
         self.pack()
-        self.createwidgets()
+        self.create_widgets()
 
     def connect(self):
         self.controller = self.controllist.get()
@@ -49,7 +49,6 @@ class Application(Frame):
                 self.zero.config(state='normal')
                 self.connection.config(state='disabled')
                 self.disconnection.config(state='normal')
-                # self.after(10, self.show)
         pass
 
     def disconnect(self):
@@ -87,11 +86,19 @@ class Application(Frame):
             self.robot.go_to_zero()
         pass
 
-    def show(self):
+    def get_res(self):
         if self.robot:
-            self.robot.show()
-            self.robot.enable_clic_position()
-            self.after(10, self.show)
+            res = self.robot.get_resistance()
+        pass
+
+    def enable_continuous_meter(self):
+        if self.robot:
+            self.robot.set_continious_res_meter(True)
+        pass
+
+    def disable_continuous_meter(self):
+        if self.robot:
+            self.robot.set_continious_res_meter(False)
 
     def exit(self):
         if self.robot:
@@ -99,7 +106,7 @@ class Application(Frame):
             del self.robot
         self.quit()
 
-    def createwidgets(self):
+    def create_widgets(self):
 
         self.controllist = ttk.Combobox(self, state='readonly', values='SM5 SM10')
         self.controllist.grid(row=0, column=0, columnspan=2, padx=2, pady=2)

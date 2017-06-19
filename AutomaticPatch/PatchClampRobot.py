@@ -1,5 +1,6 @@
 from Autofocus import *
 from Camera import *
+from Testing_multiclamp import *
 from numpy import matrix
 from numpy.linalg import inv
 import numpy as np
@@ -52,6 +53,8 @@ class PatchClampRobot():
 
         # Camera
         self.cam = CameraThread(controller, self.clic_position)
+        self.multi = ResistanceMeter()
+        self.multi.start()
         pass
 
     def go_to_zero(self):
@@ -515,8 +518,22 @@ class PatchClampRobot():
             print '{i} has not been calibrated.'.format(i=self.controller)
             return 0
 
+    def set_continuous_res_meter(self, bool):
+        if bool:
+            self.multi.start_continuous_acquisition()
+        else:
+            self.multi.stop_continuous_acquisition()
+
+    def get_one_res_metering(self):
+        self.multi.get_discrete_acquisition()
+        return self.get_resistance()
+
+    def get_resistance(self):
+        return self.multi.res
+
     def stop(self):
         self.cam.stop()
+        self.multi.stop()
         cv2.destroyAllWindows()
         pass
 
