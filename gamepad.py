@@ -36,11 +36,13 @@ class GamepadReader(threading.Thread):
             if event.code in ['ABS_X', 'ABS_Y']:
                 self.event_container.append(event)
 
-class Application(Frame):
-    def __init__(self, controller, master=None):
+class GamepadControl(Frame):
+    def __init__(self, controller, axes, scale=(1, 1), master=None):
         Frame.__init__(self, master)
         self.master = master
         self.controller = controller
+        self.axes = axes
+        self.scale = scale
         self.abs_x = Label(self, text='X: 0')
         self.abs_x.pack()
         self.speed_x = 0
@@ -55,7 +57,7 @@ class Application(Frame):
         reader = GamepadReader(self.event_container, gamepad)
         reader.start()
         self.after(10, self.update_labels)
-        self.after(100, self.update_speed)
+        self.after(200, self.update_speed)
 
     def update_labels(self):
         for event in self.event_container:
@@ -77,26 +79,28 @@ class Application(Frame):
         factor = 1.5
         if self.speed_x != 0:
             if self.speed_x != self.previous_speed_x:
-                self.controller.set_single_step_velocity(1, abs(self.speed_x))
-                self.controller.set_single_step_distance(1, abs(self.speed_x)*revolutions[abs(self.speed_x)-1]*factor)
+                self.controller.set_single_step_velocity(self.axes[0], abs(self.speed_x))
+                self.controller.set_single_step_distance(self.axes[0], abs(self.speed_x)*revolutions[abs(self.speed_x)-1]*factor)
                 self.previous_speed_x = self.speed_x
             step = 1 if self.speed_x > 0 else -1
-            self.controller.single_step(1, step)
+            step *= self.scale[0]
+            self.controller.single_step(self.axes[0], step)
         else:
-            self.controller.stop(1)
+            self.controller.stop(self.axes[0])
         if self.speed_y != 0:
             if self.speed_y != self.previous_speed_y:
-                self.controller.set_single_step_velocity(2, abs(self.speed_y))
-                self.controller.set_single_step_distance(2, abs(self.speed_y)*revolutions[abs(self.speed_y)-1]*factor)
+                self.controller.set_single_step_velocity(self.axes[1], abs(self.speed_y))
+                self.controller.set_single_step_distance(self.axes[1], abs(self.speed_y)*revolutions[abs(self.speed_y)-1]*factor)
                 self.previous_speed_y = self.speed_y
             step = 1 if self.speed_y > 0 else -1
-            self.controller.single_step(2, step)
+            step *= self.scale[1]
+            self.controller.single_step(self.axes[1], step)
         else:
-            self.controller.stop(2)
+            self.controller.stop(self.axes[1])
         self.after(100, self.update_speed)
 
 if __name__ == '__main__':
     root = Tk()
     dev = LuigsNeumann_SM10('COM3')
-    Application(dev, master=root).pack()
+    GamepadControl(dev, axes=[7, 8], scale=[-1, 1], master=root).pack()
     root.mainloop()
