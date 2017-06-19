@@ -44,9 +44,11 @@ class Application(Frame):
         self.abs_x = Label(self, text='X: 0')
         self.abs_x.pack()
         self.speed_x = 0
+        self.previous_speed_x = 0
         self.abs_y = Label(self, text='Y: 0')
         self.abs_y.pack()
         self.speed_y = 0
+        self.previous_speed_y = 0
 
         gamepad = inputs.devices.gamepads[0]
         self.event_container = []
@@ -61,7 +63,7 @@ class Application(Frame):
             if abs(event.state) < 4096:
                 state = 0
             else:
-                state = int(round((abs(event.state) - 4096)/ 1792.) * sign)
+                state = int(round((abs(event.state) - 4096)/ 3584.) * sign) * 2
             if event.code == 'ABS_X':
                 self.abs_x['text'] = 'X: {}'.format(state)
                 self.speed_x = state
@@ -74,16 +76,20 @@ class Application(Frame):
     def update_speed(self):
         factor = 1.5
         if self.speed_x != 0:
-            self.controller.set_single_step_velocity(1, abs(self.speed_x))
-            self.controller.set_single_step_distance(1, abs(self.speed_x)*revolutions[abs(self.speed_x)-1]*factor)
+            if self.speed_x != self.previous_speed_x:
+                self.controller.set_single_step_velocity(1, abs(self.speed_x))
+                self.controller.set_single_step_distance(1, abs(self.speed_x)*revolutions[abs(self.speed_x)-1]*factor)
+                self.previous_speed_x = self.speed_x
             step = 1 if self.speed_x > 0 else -1
             self.controller.single_step(1, step)
         else:
             self.controller.stop(1)
         if self.speed_y != 0:
-            self.controller.set_single_step_velocity(2, abs(self.speed_y))
-            self.controller.set_single_step_distance(2, abs(self.speed_y)*revolutions[abs(self.speed_y)-1]*factor)
-            step = 1 if self.speed_x > 0 else -1
+            if self.speed_y != self.previous_speed_y:
+                self.controller.set_single_step_velocity(2, abs(self.speed_y))
+                self.controller.set_single_step_distance(2, abs(self.speed_y)*revolutions[abs(self.speed_y)-1]*factor)
+                self.previous_speed_y = self.speed_y
+            step = 1 if self.speed_y > 0 else -1
             self.controller.single_step(2, step)
         else:
             self.controller.stop(2)
