@@ -1,5 +1,5 @@
-from threading import Thread, RLock
-from camera import *
+from threading import Thread, Lock
+from camera_init import *
 from img_functions import *
 import cv2
 import os
@@ -7,6 +7,8 @@ import errno
 import numpy as np
 
 __all__ = ['CameraThread']
+
+locked = Lock()
 
 
 class CameraThread(Thread):
@@ -16,46 +18,39 @@ class CameraThread(Thread):
         self.controller = controller
         self.cam = camera_init(controller)
         self.frame = None
+        self.img_to_display = None
         self.width, self.height = None, None
         self.winname = winname
-        cv2.namedWindow(self.winname, flags=cv2.WINDOW_NORMAL)
         self.n_img = 1
         self.show = True
         self.clic_on_window = False
         self.mouse_callback = mouse_fun
+        self.start()
 
     def run(self):
         self.cam.startContinuousSequenceAcquisition(1)
+        cv2.namedWindow(self.winname, flags=cv2.WINDOW_NORMAL)
         while self.show:
-            with RLock():
-                self.get_img()
+            with locked:
+                if self.cam.getRemainingImageCount() > 0:
+                    temp_frame = self.cam.getLastImage()
+                    img = np.float32(temp_frame / (1. * temp_frame.max()))
+
+                    if self.controller == 'SM5':
+                        img = cv2.flip(img, 2)
+                    elif self.controller == 'SM10':
+                        img = cv2.flip(img, 1)
+
+                    self.frame = img
+                    self.height, self.width = img.shape[:2]
+                    img_to_display = disp_centered_cross(img)
+                    cv2.imshow(self.winname, img_to_display)
+                    cv2.waitKey(1)
                 if self.clic_on_window:
                     cv2.setMouseCallback(self.winname, self.mouse_callback)
         self.cam.stopSequenceAcquisition()
         camera_unload(self.cam)
         self.cam.reset()
-
-    def reverse_img(self):
-        # Reverse the frame depending on the type of machine used
-        if self.controller == 'SM5':
-            self.frame = cv2.flip(self.frame, 2)
-        elif self.controller == 'SM10':
-            self.frame = cv2.flip(self.frame, 1)
-
-    def get_img(self):
-
-        """
-        get an image from the camera
-        """
-        # capture frame
-        if self.cam.getRemainingImageCount() > 0:
-            temp_frame = self.cam.getLastImage()
-            self.frame = np.float32(temp_frame/np.float32(temp_frame.max()))
-            self.reverse_img()
-            self.height, self.width = self.frame.shape[:2]
-            frame = disp_centered_cross(self.frame)
-            cv2.imshow(self.winname, frame)
-            cv2.waitKey(1)
 
     def save_img(self):
         path = './{i}/screenshots/screenshot{n}'.format(i=self.controller, n=self.n_img)
@@ -66,7 +61,9 @@ class CameraThread(Thread):
                 # Guard against race condition
                 if exc.errno != errno.EEXIST:
                     raise
-        cv2.imwrite('./{i}/screenshots/screenshot{n}.jpg'.format(i=self.controller, n=self.n_img), self.frame)
+
+        img = self.frame*256
+        cv2.imwrite('./{i}/screenshots/screenshot{n}.jpg'.format(i=self.controller, n=self.n_img), img)
         self.n_img += 1
         pass
 

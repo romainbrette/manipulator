@@ -113,7 +113,7 @@ class XYMicUnit(Device):
             if axis == 2:
                 self.dev_mic.set_to_zero()
             else:
-                self.dev.set_to_zero(self.axes[axis])
+                self.dev.set_to_zero([self.axes[axis]])
 
     def wait_motor_stop(self, axis):
         """
@@ -128,7 +128,7 @@ class XYMicUnit(Device):
             if axis == 2:
                 self.dev_mic.wait_motor_stop()
             else:
-                self.dev.wait_motor_stop(self.axes[axis])
+                self.dev.wait_motor_stop([self.axes[axis]])
 
 if __name__ == '__main__':
     from luigsneumann_SM5 import *

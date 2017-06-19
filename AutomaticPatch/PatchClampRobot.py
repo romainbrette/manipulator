@@ -1,5 +1,6 @@
 from Autofocus import *
 from Camera import *
+from Testing_multiclamp import *
 from numpy import matrix
 from numpy.linalg import inv
 import numpy as np
@@ -8,27 +9,17 @@ from math import fabs
 from time import sleep
 import os
 import errno
+import time
 
 
-class PatchClampRobot:
+class PatchClampRobot():
 
     def __init__(self, controller, arm):
 
         # devices
         self.dev, self.microscope, self.arm = init_device(controller, arm)
-        self.cam = CameraThread(controller, self.clic_position)
-        self.cam.start()
         self.controller = controller
 
-        # Camera
-        '''
-        self.win_name = 'Camera'
-        cv2.namedWindow(self.win_name, flags=cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO | cv2.WINDOW_GUI_EXPANDED)
-        self.frame = 0
-        self.n_img = 0
-        self.width = 50
-        self.height = 50
-        '''
         self.n_img = 0
         # Tab for template images
         self.template = []
@@ -59,6 +50,11 @@ class PatchClampRobot:
 
         # Position of the tip in the template image
         self.template_loc = [0., 0.]
+
+        # Camera
+        self.cam = CameraThread(controller, self.clic_position)
+        self.multi = ResistanceMeter()
+        self.multi.start()
         pass
 
     def go_to_zero(self):
@@ -272,6 +268,7 @@ class PatchClampRobot:
         for k in range(nb_images):
             self.microscope.absolute_move(k - (nb_images - 1) / 2, 2)
             self.microscope.wait_motor_stop(2)
+            time.sleep(0.1)
             img = self.template_zone()
             height, width = img.shape[:2]
             img = img[i * height / 4:height / 2 + i * height / 4, j * width / 4:width / 2 + j * width / 4]
@@ -521,8 +518,22 @@ class PatchClampRobot:
             print '{i} has not been calibrated.'.format(i=self.controller)
             return 0
 
+    def set_continuous_res_meter(self, bool):
+        if bool:
+            self.multi.start_continuous_acquisition()
+        else:
+            self.multi.stop_continuous_acquisition()
+
+    def get_one_res_metering(self):
+        self.multi.get_discrete_acquisition()
+        return self.get_resistance()
+
+    def get_resistance(self):
+        return self.multi.res
+
     def stop(self):
         self.cam.stop()
+        self.multi.stop()
         cv2.destroyAllWindows()
         pass
 

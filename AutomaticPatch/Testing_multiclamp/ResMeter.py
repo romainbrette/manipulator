@@ -41,19 +41,19 @@ class ResistanceMeter(Thread):
 
         self.mcc.auto_pipette_offset()
         self.acquisition = True
-        self.continious = False
+        self.continuous = False
         self.discrete = False
         self.res = None
 
-    def run(self):
+    def not_run(self):
         while self.acquisition:
             lock = RLock()
             lock.acquire()
 
-            if self.continious:
+            if self.continuous:
 
                 self.mcc.freq_pulse_enable(True)
-                while self.continious:
+                while self.continuous:
                     with nidaqmx.Task() as task:
 
                         res = []
@@ -63,7 +63,7 @@ class ResistanceMeter(Thread):
                         for _ in range(3):
                             temp = task.read(number_of_samples_per_channel=100)
                             res += [fabs((np.mean(temp[1]) / 10.) / (1e-9 * np.mean(temp[0]) / 0.5))]
-                        self.res = np.median(res)
+                        self.res = np.mean(res)
 
                 self.mcc.freq_pulse_enable(False)
 
@@ -71,15 +71,52 @@ class ResistanceMeter(Thread):
 
                 self.mcc.freq_pulse_enable(True)
                 with nidaqmx.Task() as task:
-                    self.res = []
+                    res = []
                     task.ai_channels.add_ai_voltage_chan("Dev1/ai0")
                     task.ai_channels.add_ai_voltage_chan("Dev1/ai1")
 
                     for _ in range(3):
                         temp = task.read(number_of_samples_per_channel=100)
-                        self.res += [fabs((np.mean(temp[1]) / 10.) / (1e-9 * np.mean(temp[0]) / 0.5))]
+                        res += [fabs((np.mean(temp[1]) / 10.) / (1e-9 * np.mean(temp[0]) / 0.5))]
 
-                    self.res = np.median(self.res)
+                    self.res = np.mean(res)
+
+                self.mcc.freq_pulse_enable(False)
+                self.discrete = False
+
+            else:
+                pass
+
+            lock.release()
+
+    def run(self):
+        while self.acquisition:
+            lock = RLock()
+            lock.acquire()
+
+            if self.continuous:
+
+                self.mcc.freq_pulse_enable(True)
+                while self.continuous:
+
+                    res = []
+
+                    for _ in range(3):
+                        res += [self.mcc.get_meter_value().value]
+                    self.res = np.mean(res)
+
+                self.mcc.freq_pulse_enable(False)
+
+            elif self.discrete:
+
+                self.mcc.freq_pulse_enable(True)
+                res = []
+
+                for _ in range(3):
+
+                    res += [self.mcc.get_meter_value().value]
+
+                self.res = np.mean(res)
 
                 self.mcc.freq_pulse_enable(False)
                 self.discrete = False
@@ -108,22 +145,22 @@ class ResistanceMeter(Thread):
         return np.mean(res)
 
     def stop(self):
-        self.continious = False
+        self.continuous = False
         self.acquisition = False
         time.sleep(.2)
 
-    def start_continious_acquisition(self):
-        self.continious = True
+    def start_continuous_acquisition(self):
+        self.continuous = True
         self.discrete = False
         time.sleep(.2)
 
-    def stop_continious_acquisition(self):
-        self.continious = False
+    def stop_continuous_acquisition(self):
+        self.continuous = False
         self.discrete = False
         time.sleep(.2)
 
     def get_discrete_acquisition(self):
-        self.continious = False
+        self.continuuous = False
         self.discrete = True
         time.sleep(.2)
 
