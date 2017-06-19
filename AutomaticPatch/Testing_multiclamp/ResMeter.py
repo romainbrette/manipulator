@@ -33,13 +33,15 @@ class ResistanceMeter(Thread):
         self.mcc.set_secondary_signal_lpf(2000)
         self.mcc.set_secondary_signal_gain(5)
         time.sleep(1)
-
+        '''
         with nidaqmx.Task() as task:
             task.ai_channels.add_ai_voltage_chan("Dev1/ai0")
             task.ai_channels.add_ai_voltage_chan("Dev1/ai1")
             self.init = task.read()
-
+        '''
         self.mcc.auto_pipette_offset()
+        self.mcc.meter_resist_enable(True)
+        time.sleep(3)
         self.acquisition = True
         self.continuous = False
         self.discrete = False

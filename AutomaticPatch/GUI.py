@@ -92,9 +92,9 @@ class Application(Frame):
 
     def get_res(self):
         if self.robot:
-            val = self.robot.get_resistance()
-            unit = (len(val)-1) // 3
-            length = len(val) - unit*3
+            val = str(self.robot.get_resistance())
+            unit = (len(val)-3) // 3
+            length = len(val) - 2 - unit*3
             if unit <= 0:
                 unit = ' Ohm'
             elif unit == 1:
@@ -105,21 +105,24 @@ class Application(Frame):
                 unit = ' GOhm'
             elif unit == 4:
                 unit = ' TOhm'
+            else:
+                unit = str(unit)
 
-            self.res_value['text'] = text[:length] + ',' + text[length:length+2] + unit
+            self.res_value['text'] = val[:length] + ',' + val[length:length+2] + unit
             self.after(10, self.get_res)
         pass
 
     def enable_continuous_meter(self):
         if self.robot:
-            self.robot.set_continious_res_meter(True)
-            self.continuous_meter.config(command=self.disable_continuous_meter, text='Continiuous metering Off')
+            self.robot.set_continuous_res_meter(True)
+            self.continuous_meter.config(command=self.disable_continuous_meter, text='Continuous metering Off')
             self.get_res()
         pass
 
     def disable_continuous_meter(self):
         if self.robot:
-            self.robot.set_continious_res_meter(False)
+            self.robot.set_continuous_res_meter(False)
+            self.continuous_meter.config(command=self.enable_continuous_meter, text='Continuous metering On')
 
     def exit(self):
         if self.robot:
@@ -149,7 +152,7 @@ class Application(Frame):
         self.res_window.grid(row=4, column=0)
 
         self.res_value = Label(self, text='0 Ohm')
-        self.res_window.grid(row=4, column=1)
+        self.res_value.grid(row=4, column=1)
 
         self.calibrate = Button(self, text='Calibrate', state='disable')
         self.calibrate.grid(row=5, column=0)
