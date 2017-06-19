@@ -18,16 +18,18 @@ class CameraThread(Thread):
         self.controller = controller
         self.cam = camera_init(controller)
         self.frame = None
+        self.img_to_display = None
         self.width, self.height = None, None
         self.winname = winname
-        cv2.namedWindow(self.winname, flags=cv2.WINDOW_NORMAL)
         self.n_img = 1
         self.show = True
         self.clic_on_window = False
         self.mouse_callback = mouse_fun
+        self.start()
 
     def run(self):
         self.cam.startContinuousSequenceAcquisition(1)
+        cv2.namedWindow(self.winname, flags=cv2.WINDOW_NORMAL)
         while self.show:
             with locked:
                 if self.cam.getRemainingImageCount() > 0:

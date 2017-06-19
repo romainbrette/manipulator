@@ -11,11 +11,10 @@ import errno
 from threading import Thread
 
 
-class PatchClampRobot(Thread):
+class PatchClampRobot():
 
     def __init__(self, controller, arm):
 
-        Thread.__init__(self)
         # devices
         self.dev, self.microscope, self.arm = init_device(controller, arm)
         self.controller = controller
@@ -62,7 +61,6 @@ class PatchClampRobot(Thread):
 
         # Camera
         self.cam = CameraThread(controller, self.clic_position)
-        self.cam.start()
         pass
 
     def go_to_zero(self):
