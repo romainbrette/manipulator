@@ -1,5 +1,5 @@
 from threading import Thread, Lock
-from camera import *
+from camera_init import *
 from img_functions import *
 import cv2
 import os
@@ -32,15 +32,16 @@ class CameraThread(Thread):
             with locked:
                 if self.cam.getRemainingImageCount() > 0:
                     temp_frame = self.cam.getLastImage()
-                    self.frame = np.float32(temp_frame / (1. * temp_frame.max()))
+                    frame = np.float32(temp_frame / (1. * temp_frame.max()))
 
                     if self.controller == 'SM5':
-                        self.frame = cv2.flip(self.frame, 2)
+                        frame = cv2.flip(frame, 2)
                     elif self.controller == 'SM10':
-                        self.frame = cv2.flip(self.frame, 1)
+                        frame = cv2.flip(frame, 1)
 
-                    self.height, self.width = self.frame.shape[:2]
-                    frame = disp_centered_cross(self.frame)
+                    self.frame = frame
+                    self.height, self.width = frame.shape[:2]
+                    frame = disp_centered_cross(frame)
                     cv2.imshow(self.winname, frame)
                     cv2.waitKey(1)
                 if self.clic_on_window:

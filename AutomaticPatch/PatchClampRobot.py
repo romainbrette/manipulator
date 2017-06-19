@@ -6,19 +6,16 @@ import numpy as np
 import cv2
 from math import fabs
 from time import sleep
-from threading import Thread
 import os
 import errno
 
 
-class PatchClampRobot():
+class PatchClampRobot:
 
     def __init__(self, controller, arm):
 
         # devices
         self.dev, self.microscope, self.arm = init_device(controller, arm)
-        self.cam = CameraThread(controller, self.clic_position)
-        self.cam.start()
         self.controller = controller
 
         # Camera
@@ -61,6 +58,9 @@ class PatchClampRobot():
         # Position of the tip in the template image
         self.template_loc = [0., 0.]
 
+        # Camera
+        self.cam = CameraThread(controller, self.clic_position)
+        self.cam.start()
         pass
 
     def go_to_zero(self):
