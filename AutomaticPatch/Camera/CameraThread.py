@@ -32,17 +32,17 @@ class CameraThread(Thread):
             with locked:
                 if self.cam.getRemainingImageCount() > 0:
                     temp_frame = self.cam.getLastImage()
-                    frame = np.float32(temp_frame / (1. * temp_frame.max()))
+                    img = np.float32(temp_frame / (1. * temp_frame.max()))
 
                     if self.controller == 'SM5':
-                        frame = cv2.flip(frame, 2)
+                        img = cv2.flip(img, 2)
                     elif self.controller == 'SM10':
-                        frame = cv2.flip(frame, 1)
+                        img = cv2.flip(img, 1)
 
-                    self.frame = frame
-                    self.height, self.width = frame.shape[:2]
-                    frame = disp_centered_cross(frame)
-                    cv2.imshow(self.winname, frame)
+                    self.frame = img
+                    self.height, self.width = img.shape[:2]
+                    img_to_display = disp_centered_cross(img)
+                    cv2.imshow(self.winname, img_to_display)
                     cv2.waitKey(1)
                 if self.clic_on_window:
                     cv2.setMouseCallback(self.winname, self.mouse_callback)

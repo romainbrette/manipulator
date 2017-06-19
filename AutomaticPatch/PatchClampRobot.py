@@ -8,12 +8,14 @@ from math import fabs
 from time import sleep
 import os
 import errno
+from threading import Thread
 
 
-class PatchClampRobot:
+class PatchClampRobot(Thread):
 
     def __init__(self, controller, arm):
 
+        Thread.__init__(self)
         # devices
         self.dev, self.microscope, self.arm = init_device(controller, arm)
         self.controller = controller
