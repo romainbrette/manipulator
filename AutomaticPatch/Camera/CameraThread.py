@@ -8,6 +8,8 @@ import numpy as np
 
 __all__ = ['CameraThread']
 
+locked = RLock()
+
 
 class CameraThread(Thread):
 
@@ -27,7 +29,7 @@ class CameraThread(Thread):
     def run(self):
         self.cam.startContinuousSequenceAcquisition(1)
         while self.show:
-            with RLock():
+            with locked:
                 self.get_img()
                 if self.clic_on_window:
                     cv2.setMouseCallback(self.winname, self.mouse_callback)
