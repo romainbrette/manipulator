@@ -6,11 +6,12 @@ import numpy as np
 import cv2
 from math import fabs
 from time import sleep
+from threading import Thread
 import os
 import errno
 
 
-class PatchClampRobot:
+class PatchClampRobot():
 
     def __init__(self, controller, arm):
 
@@ -59,6 +60,7 @@ class PatchClampRobot:
 
         # Position of the tip in the template image
         self.template_loc = [0., 0.]
+
         pass
 
     def go_to_zero(self):
@@ -337,8 +339,7 @@ class PatchClampRobot:
             self.step *= 2.
 
         # Move the arm
-        #self.arm.relative_move(self.step, axis)
-        self.arm.set
+        self.arm.relative_move(self.step, axis)
 
         # Move the platform to center the tip
         for i in range(3):

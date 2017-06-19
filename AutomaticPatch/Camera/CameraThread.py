@@ -1,4 +1,4 @@
-from threading import Thread, RLock
+from threading import Thread, Lock
 from camera import *
 from img_functions import *
 import cv2
@@ -8,7 +8,7 @@ import numpy as np
 
 __all__ = ['CameraThread']
 
-locked = RLock()
+locked = Lock()
 
 
 class CameraThread(Thread):
@@ -30,34 +30,24 @@ class CameraThread(Thread):
         self.cam.startContinuousSequenceAcquisition(1)
         while self.show:
             with locked:
-                self.get_img()
+                if self.cam.getRemainingImageCount() > 0:
+                    temp_frame = self.cam.getLastImage()
+                    self.frame = np.float32(temp_frame / (1. * temp_frame.max()))
+
+                    if self.controller == 'SM5':
+                        self.frame = cv2.flip(self.frame, 2)
+                    elif self.controller == 'SM10':
+                        self.frame = cv2.flip(self.frame, 1)
+
+                    self.height, self.width = self.frame.shape[:2]
+                    frame = disp_centered_cross(self.frame)
+                    cv2.imshow(self.winname, frame)
+                    cv2.waitKey(1)
                 if self.clic_on_window:
                     cv2.setMouseCallback(self.winname, self.mouse_callback)
         self.cam.stopSequenceAcquisition()
         camera_unload(self.cam)
         self.cam.reset()
-
-    def reverse_img(self):
-        # Reverse the frame depending on the type of machine used
-        if self.controller == 'SM5':
-            self.frame = cv2.flip(self.frame, 2)
-        elif self.controller == 'SM10':
-            self.frame = cv2.flip(self.frame, 1)
-
-    def get_img(self):
-
-        """
-        get an image from the camera
-        """
-        # capture frame
-        if self.cam.getRemainingImageCount() > 0:
-            temp_frame = self.cam.getLastImage()
-            self.frame = np.float32(temp_frame/np.float32(temp_frame.max()))
-            self.reverse_img()
-            self.height, self.width = self.frame.shape[:2]
-            frame = disp_centered_cross(self.frame)
-            cv2.imshow(self.winname, frame)
-            cv2.waitKey(1)
 
     def save_img(self):
         path = './{i}/screenshots/screenshot{n}'.format(i=self.controller, n=self.n_img)
@@ -68,8 +58,9 @@ class CameraThread(Thread):
                 # Guard against race condition
                 if exc.errno != errno.EEXIST:
                     raise
-        cv2.imwrite('./{i}/screenshots/screenshot{n}.jpg'.format(i=self.controller, n=self.n_img),
-                    self.cam.getLastImage())
+
+        img = self.frame*255
+        cv2.imwrite('./{i}/screenshots/screenshot{n}.jpg'.format(i=self.controller, n=self.n_img), img)
         self.n_img += 1
         pass
 

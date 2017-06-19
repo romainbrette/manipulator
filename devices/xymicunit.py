@@ -108,7 +108,7 @@ class XYMicUnit(Device):
         """
         if isinstance(axis, list):
             for i in axis:
-                self.set_to_zero([i])
+                self.set_to_zero(i)
         else:
             if axis == 2:
                 self.dev_mic.set_to_zero()
@@ -123,7 +123,7 @@ class XYMicUnit(Device):
         """
         if isinstance(axis, list):
             for i in axis:
-                self.wait_motor_stop([i])
+                self.wait_motor_stop(i)
         else:
             if axis == 2:
                 self.dev_mic.wait_motor_stop()
