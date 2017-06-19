@@ -231,7 +231,7 @@ class LuigsNeumann_SM10(SerialDevice):
         :param axes:
         :return: 
         """
-        axes = [axes]
+
         axes4 = [0, 0, 0, 0]
         axes4[:len(axes)] = axes
         data = [0xA0] + axes + [0]

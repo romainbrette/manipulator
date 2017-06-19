@@ -108,6 +108,6 @@ class XYZUnit(Device):
         """
         if isinstance(axis, list):
             for i in axis:
-                self.wait_motor_stop(i)
+                self.wait_motor_stop([i])
         else:
-            self.dev.wait_motor_stop(self.axes[axis])
+            self.dev.wait_motor_stop([self.axes[axis]])

@@ -337,7 +337,8 @@ class PatchClampRobot:
             self.step *= 2.
 
         # Move the arm
-        self.arm.relative_move(self.step, axis)
+        #self.arm.relative_move(self.step, axis)
+        self.arm.set
 
         # Move the platform to center the tip
         for i in range(3):

@@ -147,7 +147,7 @@ class LuigsNeumann_SM5(SerialDevice):
         """
         res = 1
         while res:
-            res = self.send_command('0120', [axis], 7)
+            res = self.send_command('0120', axis, 7)
             res = int(binascii.hexlify(struct.unpack('s', res[6])[0])[1])
 
     def __del__(self):
