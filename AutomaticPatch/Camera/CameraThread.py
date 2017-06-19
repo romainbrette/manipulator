@@ -62,7 +62,7 @@ class CameraThread(Thread):
                 if exc.errno != errno.EEXIST:
                     raise
 
-        img = self.frame*255
+        img = self.frame*256
         cv2.imwrite('./{i}/screenshots/screenshot{n}.jpg'.format(i=self.controller, n=self.n_img), img)
         self.n_img += 1
         pass

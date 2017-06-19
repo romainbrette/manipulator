@@ -8,7 +8,7 @@ from math import fabs
 from time import sleep
 import os
 import errno
-from threading import Thread
+import time
 
 
 class PatchClampRobot():
@@ -19,15 +19,6 @@ class PatchClampRobot():
         self.dev, self.microscope, self.arm = init_device(controller, arm)
         self.controller = controller
 
-        # Camera
-        '''
-        self.win_name = 'Camera'
-        cv2.namedWindow(self.win_name, flags=cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO | cv2.WINDOW_GUI_EXPANDED)
-        self.frame = 0
-        self.n_img = 0
-        self.width = 50
-        self.height = 50
-        '''
         self.n_img = 0
         # Tab for template images
         self.template = []
@@ -274,6 +265,7 @@ class PatchClampRobot():
         for k in range(nb_images):
             self.microscope.absolute_move(k - (nb_images - 1) / 2, 2)
             self.microscope.wait_motor_stop(2)
+            time.sleep(0.1)
             img = self.template_zone()
             height, width = img.shape[:2]
             img = img[i * height / 4:height / 2 + i * height / 4, j * width / 4:width / 2 + j * width / 4]
