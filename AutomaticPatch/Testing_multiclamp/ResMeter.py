@@ -160,7 +160,7 @@ class ResistanceMeter(Thread):
         time.sleep(.2)
 
     def get_discrete_acquisition(self):
-        self.continuuous = False
+        self.continuous = False
         self.discrete = True
         time.sleep(.2)
 
@@ -174,12 +174,12 @@ if __name__ == '__main__':
     val = []
     multi = ResistanceMeter()
     multi.start()
-    multi.start_continious_acquisition()
+    multi.start_continuous_acquisition()
     print('Getting resistance')
     init = time.time()
     while time.time() - init < 5:
         val += [multi.res]
-    multi.stop_continious_acquisition()
+    multi.stop_continuous_acquisition()
     multi.stop()
     print min(val)
     print max(val)

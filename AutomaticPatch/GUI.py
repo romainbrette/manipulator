@@ -28,6 +28,9 @@ class Application(Frame):
         self.imgsave = None
         self.zero = None
         self.load_calibrate = None
+        self.res_window = None
+        self.res_value = None
+        self.continuous_meter = None
         self.pack()
         self.create_widgets()
 
@@ -49,6 +52,7 @@ class Application(Frame):
                 self.zero.config(state='normal')
                 self.connection.config(state='disabled')
                 self.disconnection.config(state='normal')
+                self.continuous_meter.config(state='normal')
         pass
 
     def disconnect(self):
@@ -88,12 +92,29 @@ class Application(Frame):
 
     def get_res(self):
         if self.robot:
-            res = self.robot.get_resistance()
+            val = self.robot.get_resistance()
+            unit = (len(val)-1) // 3
+            length = len(val) - unit*3
+            if unit <= 0:
+                unit = ' Ohm'
+            elif unit == 1:
+                unit = ' kOhm'
+            elif unit == 2:
+                unit = ' MOhm'
+            elif unit == 3:
+                unit = ' GOhm'
+            elif unit == 4:
+                unit = ' TOhm'
+
+            self.res_value['text'] = text[:length] + ',' + text[length:length+2] + unit
+            self.after(10, self.get_res)
         pass
 
     def enable_continuous_meter(self):
         if self.robot:
             self.robot.set_continious_res_meter(True)
+            self.continuous_meter.config(command=self.disable_continuous_meter, text='Continiuous metering Off')
+            self.get_res()
         pass
 
     def disable_continuous_meter(self):
@@ -120,20 +141,30 @@ class Application(Frame):
         self.disconnection = Button(self, text='Disconnect', command=self.disconnect, state='disable')
         self.disconnection.grid(row=2, column=1)
 
+        self.continuous_meter = Button(self, text='Continiuous metering On', command=self.enable_continuous_meter,
+                                       state='disable')
+        self.continuous_meter.grid(row=3, column=0)
+
+        self.res_window = Label(self, text='Resistance: ')
+        self.res_window.grid(row=4, column=0)
+
+        self.res_value = Label(self, text='0 Ohm')
+        self.res_window.grid(row=4, column=1)
+
         self.calibrate = Button(self, text='Calibrate', state='disable')
-        self.calibrate.grid(row=3, column=0)
+        self.calibrate.grid(row=5, column=0)
 
         self.load_calibrate = Button(self, text='Load calibration', state='disable')
-        self.load_calibrate.grid(row=3, column=1)
+        self.load_calibrate.grid(row=5, column=1)
 
         self.zero = Button(self, text='Go to zero', command=self.reset_pos, state='disable')
-        self.zero.grid(row=4, column=0)
+        self.zero.grid(row=6, column=0)
 
         self.imgsave = Button(self, text='Screenshot', state='disable')
-        self.imgsave.grid(row=4, column=1)
+        self.imgsave.grid(row=6, column=1)
 
         self.QUIT = Button(self, text='QUIT', fg='red', command=self.exit)
-        self.QUIT.grid(row=5, column=0)
+        self.QUIT.grid(row=7, column=0)
 
 if __name__ == '__main__':
     root = Tk()
