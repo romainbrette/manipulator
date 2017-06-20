@@ -1,3 +1,4 @@
+# coding=utf-8
 import threading
 import time
 from Tkinter import *
@@ -44,15 +45,17 @@ class GamepadControl(Frame):
         self.controller = controller
         self.axes = axes
         self.scale = scale
-        self.abs_x = Label(self, text='force: 0')
-        self.abs_x.pack()
+        self.force_label = Label(self, text='force: 0')
+        self.force_label.pack()
         self.x = 0
         self.y = 0
         self.force = 0
         self.angle = 0
-        self.abs_y = Label(self, text='angle: 0')
-        self.abs_y.pack()
-
+        self.speed_x = 0
+        self.speed_y = 0
+        self.angle_label = Label(self, text='angle: -')
+        self.angle_label.pack()
+        self.speed_setting = [12, 15]
         gamepad = inputs.devices.gamepads[0]
         self.event_container = []
         reader = GamepadReader(self.event_container, gamepad)
@@ -62,34 +65,44 @@ class GamepadControl(Frame):
 
     def update_labels(self):
         for event in self.event_container:
-            sign = -1 if event.state < 0 else 1
-            if abs(event.state) < 4096:
-                state = 0
-            else:
-                state = int(round((abs(event.state) - 4096)/ 3584.) * sign) * 2
             if event.code == 'ABS_X':
                 self.x = event.state / 32768.0
             elif event.code == 'ABS_Y':
                 self.y = event.state / 32768.0
-            self.force = int(np.clip(np.round(np.clip(np.sqrt(self.x**2 + self.y**2) - 0.2, 0, 1) * 19), 0, 15))
-            self.angle = np.arctan2(self.x, self.y)
-            self.abs_x['text'] = 'force: {}'.format(self.force)
-            self.abs_y['text'] = 'angle: {:.0f}'.format(self.angle*180/np.pi)
+            # Classify deviation from center (i.e. movement speed) into three class
+            # No movement, slow movement, fast movement
+            self.force = np.clip(int(np.sqrt(self.x**2 + self.y**2) * 3), 0, 2)
+            # Bin direction into 45° steps
+            self.angle = np.round(np.arctan2(self.x, self.y) / (np.pi/4)) * np.pi/4
+            self.force_label['text'] = 'force: {}'.format(self.force)
+            if self.force > 0:
+                self.angle_label['text'] = 'angle: {:.0f}'.format(self.angle * 180 / np.pi)
+            else:
+                self.angle_label['text'] = 'angle: -'
         self.event_container[:] = []
         self.after(10, self.update_labels)
 
     def update_speed(self):
-        factor = 3
-        if self.force != 0:
-            speed = 16 if self.force >=8 else 8
-
-            x = speed * np.sin(self.angle) * self.scale[0]
-            y = speed * np.cos(self.angle) * self.scale[1]
-            speed_x = np.argmin(abs(revolutions - abs(x)/12))
-            speed_y = np.argmin(abs(revolutions - abs(y)/12))
-            self.controller.set_slow_speed(self.axes[0], speed_x)
-            self.controller.set_slow_speed(self.axes[1], speed_y)
-            self.controller.relative_move_group([factor*x, factor*y], self.axes, fast=False)
+        factor = 21
+        if self.force > 0:
+            speed = revolutions[self.speed_setting[self.force-1]]
+            x = factor * speed * np.sin(self.angle) * self.scale[0]
+            y = factor * speed * np.cos(self.angle) * self.scale[1]
+            if abs(x) > 1:
+                speed_x = self.speed_setting[self.force-1]
+                if speed_x != self.speed_x:
+                    self.controller.set_slow_speed(self.axes[0], speed_x)
+                    self.speed_x = speed_x
+            else:
+                x = 0
+            if abs(y) > 1:
+                speed_y = self.speed_setting[self.force - 1]
+                if speed_y != self.speed_y:
+                    self.controller.set_slow_speed(self.axes[1], speed_y)
+                    self.speed_y = speed_y
+            else:
+                y = 0
+            self.controller.relative_move_group([x, y], self.axes, fast=False)
 
         self.after(50, self.update_speed)
 
