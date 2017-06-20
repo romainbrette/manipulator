@@ -4,6 +4,7 @@ from Tkinter import *
 import ttk
 
 import inputs
+import numpy as np
 
 from devices.luigsneumann_SM10 import LuigsNeumann_SM10
 
@@ -36,24 +37,28 @@ class GamepadReader(threading.Thread):
             if event.code in ['ABS_X', 'ABS_Y']:
                 self.event_container.append(event)
 
-class Application(Frame):
-    def __init__(self, controller, master=None):
+class GamepadControl(Frame):
+    def __init__(self, controller, axes, scale=(1, 1), master=None):
         Frame.__init__(self, master)
         self.master = master
         self.controller = controller
-        self.abs_x = Label(self, text='X: 0')
+        self.axes = axes
+        self.scale = scale
+        self.abs_x = Label(self, text='force: 0')
         self.abs_x.pack()
-        self.speed_x = 0
-        self.abs_y = Label(self, text='Y: 0')
+        self.x = 0
+        self.y = 0
+        self.force = 0
+        self.angle = 0
+        self.abs_y = Label(self, text='angle: 0')
         self.abs_y.pack()
-        self.speed_y = 0
 
         gamepad = inputs.devices.gamepads[0]
         self.event_container = []
         reader = GamepadReader(self.event_container, gamepad)
         reader.start()
         self.after(10, self.update_labels)
-        self.after(100, self.update_speed)
+        self.after(50, self.update_speed)
 
     def update_labels(self):
         for event in self.event_container:
@@ -61,36 +66,35 @@ class Application(Frame):
             if abs(event.state) < 4096:
                 state = 0
             else:
-                state = int(round((abs(event.state) - 4096)/ 1792.) * sign)
+                state = int(round((abs(event.state) - 4096)/ 3584.) * sign) * 2
             if event.code == 'ABS_X':
-                self.abs_x['text'] = 'X: {}'.format(state)
-                self.speed_x = state
+                self.x = event.state / 32768.0
             elif event.code == 'ABS_Y':
-                self.abs_y['text'] = 'Y: {}'.format(state)
-                self.speed_y = state
+                self.y = event.state / 32768.0
+            self.force = int(np.clip(np.round(np.clip(np.sqrt(self.x**2 + self.y**2) - 0.2, 0, 1) * 19), 0, 15))
+            self.angle = np.arctan2(self.x, self.y)
+            self.abs_x['text'] = 'force: {}'.format(self.force)
+            self.abs_y['text'] = 'angle: {:.0f}'.format(self.angle*180/np.pi)
         self.event_container[:] = []
         self.after(10, self.update_labels)
 
     def update_speed(self):
-        factor = 1.5
-        if self.speed_x != 0:
-            self.controller.set_single_step_velocity(1, abs(self.speed_x))
-            self.controller.set_single_step_distance(1, abs(self.speed_x)*revolutions[abs(self.speed_x)-1]*factor)
-            step = 1 if self.speed_x > 0 else -1
-            self.controller.single_step(1, step)
-        else:
-            self.controller.stop(1)
-        if self.speed_y != 0:
-            self.controller.set_single_step_velocity(2, abs(self.speed_y))
-            self.controller.set_single_step_distance(2, abs(self.speed_y)*revolutions[abs(self.speed_y)-1]*factor)
-            step = 1 if self.speed_x > 0 else -1
-            self.controller.single_step(2, step)
-        else:
-            self.controller.stop(2)
-        self.after(100, self.update_speed)
+        factor = 3
+        if self.force != 0:
+            speed = 16 if self.force >=8 else 8
+
+            x = speed * np.sin(self.angle) * self.scale[0]
+            y = speed * np.cos(self.angle) * self.scale[1]
+            speed_x = np.argmin(abs(revolutions - abs(x)/12))
+            speed_y = np.argmin(abs(revolutions - abs(y)/12))
+            self.controller.set_slow_speed(self.axes[0], speed_x)
+            self.controller.set_slow_speed(self.axes[1], speed_y)
+            self.controller.relative_move_group([factor*x, factor*y], self.axes, fast=False)
+
+        self.after(50, self.update_speed)
 
 if __name__ == '__main__':
     root = Tk()
     dev = LuigsNeumann_SM10('COM3')
-    Application(dev, master=root).pack()
+    GamepadControl(dev, axes=[7, 8], scale=[-1, 1], master=root).pack()
     root.mainloop()

@@ -89,6 +89,32 @@ class LuigsNeumann_SM10(SerialDevice):
         res = self.send_command('0101', [axis], 4)
         return struct.unpack('f', res)[0]
 
+    def slow_speed(self, axis):
+        '''
+        Query the slow speed setting for a given axis
+        '''
+        res = self.send_command('0190', [axis], 1)
+        return struct.unpack('b', res)[0]
+
+    def fast_speed(self, axis):
+        '''
+        Query the fast speed setting for a given axis
+        '''
+        res = self.send_command('0143', [axis], 1)
+        return struct.unpack('b', res)[0]
+
+    def set_slow_speed(self, axis, speed):
+        '''
+        Query the slow speed setting for a given axis
+        '''
+        self.send_command('018F', [axis, speed], 0)
+
+    def set_fast_speed(self, axis, speed):
+        '''
+        Query the slow speed setting for a given axis
+        '''
+        self.send_command('0144', [axis, speed], 0)
+
     def absolute_move(self, x, axis, fast=True):
         '''
         Moves the device axis to position x.
