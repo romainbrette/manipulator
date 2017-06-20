@@ -50,7 +50,6 @@ class LuigsNeumann_SM10(SerialDevice):
         # Loop over length of data to be sent
         for i in range(len(data)):
             send += '%0.2X' % data[i]
-
         # <CRC>
         send += '%0.2X%0.2X' % (high, low)
         # Convert hex string to bytes
@@ -201,30 +200,17 @@ class LuigsNeumann_SM10(SerialDevice):
 
     def single_step(self, axis, steps):
         '''
-        Moves the given axis using the StepIncrement or StepDecrement command.
-        Using a steps argument different from 1 (or -1) simply sends multiple
-        StepIncrement/StepDecrement commands.
-        Uses distance and velocity set by `set_single_step_distance` resp.
-        `set_single_step_velocity`.
         '''
-        if steps > 0:
-            ID = '0140'
-        else:
-            ID = '0141'
-        for _ in range(abs(steps)):
-            self.send_command(ID, [axis], 0)
+        ID = '01E8'
+        if steps < 0:
+            steps += 256
+        self.send_command(ID, [axis, steps], 0)
 
-    def set_single_step_distance(self, axis, distance):
-        '''
-        Distance (in um) for `single_step`.
-        '''
-        ID = '044F'
-        data = [axis] + list(bytearray(struct.pack('f', distance)))
-        self.send_command(ID, data, 0)
-
-    def set_single_step_velocity(self, axis, velocity):
-        ID = '0158'
-        data = (axis, velocity)
+    def set_single_step_factor(self, axis, factor):
+        ID = '019F'
+        if factor < 0:
+            factor += 256
+        data = (axis, factor)
         self.send_command(ID, data, 0)
 
     def stop(self, axis):
@@ -280,12 +266,20 @@ if __name__ == '__main__':
     print(''.join(['%x' % a for a in group_address([3, 6, 9, 12, 15, 18])]))
     print(''.join(['%x' % a for a in group_address([4, 5, 6, 7, 8, 9, 10, 11, 12])]))
     sm10 = LuigsNeumann_SM10('COM3')
-    sm10.set_single_step_distance(1, 0.5)
-    sm10.absolute_move(1000, 1)
-    sm10.wait_motor_stop([1])
-    sm10.single_step(1, 1)
+
+    sm10.absolute_move(1000, 7)
+    sm10.wait_motor_stop([7])
+    sm10.set_single_step_factor(7, 2)
+    sm10.set_single_step_factor(8, 2)
+    # sm10.single_step(7, 1)
+    # print sm10.position(7)
+    # sm10.single_step(7, 1)
+    # print sm10.position(7)
+    # time.sleep(1)
+    print sm10.position(8)
+    sm10.single_step(8, 1)
     time.sleep(1)
-    sm10.single_step(1, 2)
+    print sm10.position(8)
+    sm10.single_step(8, -2)
     time.sleep(1)
-    sm10.single_step(1, 3)
-    time.sleep(1)
+    print sm10.position(8)
