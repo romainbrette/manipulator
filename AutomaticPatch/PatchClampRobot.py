@@ -61,10 +61,13 @@ class PatchClampRobot(object):
         """
         Make the arm and platform go to the origin: state before the calibration
         """
+        '''
         for i in range(3):
             self.arm.absolute_move(0, i)
             self.microscope.absolute_move(0, i)
-
+        '''
+        self.arm.go_to_zero([0, 1, 2])
+        self.microscope.go_to_zero([0, 1, 2])
         self.arm.wait_motor_stop([0, 1, 2])
         self.microscope.wait_motor_stop([0, 1, 2])
         sleep(.5)

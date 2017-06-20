@@ -266,8 +266,6 @@ class LuigsNeumann_SM10(SerialDevice):
             moving = [ret[6 + i * 4] for i in range(len(axes))]
             is_moving = any(moving)
 
-    def __del__(self):
-        self.port.close()
 
 if __name__ == '__main__':
     # Calculate the example group addresses from the documentation
