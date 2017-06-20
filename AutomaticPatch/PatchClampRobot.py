@@ -461,7 +461,7 @@ class PatchClampRobot():
 
     def save_calibration(self):
 
-        path = '\{}'.format(self.controller)
+        path = './{}/'.format(self.controller)
         if not os.path.exists(os.path.dirname(path)):
             try:
                 os.makedirs(os.path.dirname(path))
@@ -493,7 +493,8 @@ class PatchClampRobot():
                     line = line.split(',')
                     for j in range(3):
                         self.mat[i, j] = float(line[j])
-                        i += 1
+                    i += 1
+                print self.mat
                 self.inv_mat = inv(self.mat)
 
             with open("./{i}/rotmat.txt".format(i=self.controller), 'rt') as f:
@@ -502,7 +503,7 @@ class PatchClampRobot():
                     line = line.split(',')
                     for j in range(2):
                         self.rot[i, j] = float(line[j])
-                        i += 1
+                    i += 1
                 self.rot_inv = inv(self.rot)
 
             with open('./{i}/data.txt'.format(i=self.controller), 'rt') as f:
@@ -513,6 +514,7 @@ class PatchClampRobot():
                 self.template_loc[1] = float(f.readline())
 
             self.calibrated = 1
+            self.cam.clic_on_window = True
             return 1
 
         except IOError:
