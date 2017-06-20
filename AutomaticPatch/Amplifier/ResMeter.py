@@ -1,7 +1,7 @@
 from devices import *
+from FakeMulticlamp import *
 from math import fabs
 import time
-from FakeMulticlamp import *
 from threading import Thread, RLock
 import numpy as np
 
@@ -14,7 +14,7 @@ class ResistanceMeter(Thread):
         print('Connecting to the MultiClamp amplifier')
         try:
             self.mcc = MultiClamp(channel=1)
-        except AttributeError, RuntimeError:
+        except (AttributeError, RuntimeError):
             print 'No multiclamp detected, switching to fake amplifier.'
             self.mcc = FakeMultiClamp()
         print('Switching to voltage clamp')

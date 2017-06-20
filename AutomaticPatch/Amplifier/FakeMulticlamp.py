@@ -24,6 +24,7 @@ class FakeMultiClamp(object):
         self.leak_val = ctypes.c_float(0.0)
         self.primary_memcur = ctypes.c_bool(False)
         self.meter_val = ctypes.c_float(0.)
+        self.holding = ctypes.c_double(0.)
         pass
 
     def voltage_clamp(self):
@@ -135,6 +136,13 @@ class FakeMultiClamp(object):
 
     def get_meter_value(self):
         return self.meter_val
+
+    def set_holding_enable(self, enable):
+        pass
+
+    def set_holding(self, value):
+        self.holding = ctypes.c_double(value)
+        pass
 
     def close(self):
         pass
