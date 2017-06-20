@@ -19,20 +19,63 @@ class Application(Frame):
         self.arm = None
 
         # GUI
-        self.QUIT = None
-        self.disconnection = None
-        self.connection = None
-        self.controllist = None
-        self.armlist = None
-        self.calibrate = None
-        self.imgsave = None
-        self.zero = None
-        self.load_calibrate = None
-        self.res_window = None
-        self.res_value = None
-        self.continuous_meter = None
+        self.robot_box = LabelFrame(self, text='Connection')
+        self.robot_box.grid(row=0, column=0, padx=5, pady=5)
+
+        self.ask_controller = Label(self.robot_box, text='Controller: ')
+        self.ask_controller.grid(row=0, column=0, padx=2, pady=2)
+
+        self.controllist = ttk.Combobox(self.robot_box, state='readonly', values='SM5 SM10')
+        self.controllist.grid(row=0, column=1, columnspan=2, padx=2, pady=2)
+
+        self.ask_arm = Label(self.robot_box, text='Arm: ')
+        self.ask_arm.grid(row=1, column=0, padx=2, pady=2)
+
+        self.armlist = ttk.Combobox(self.robot_box, state='readonly', values='dev1 dev2')
+        self.armlist.grid(row=1, column=1, columnspan=2, padx=2, pady=2)
+
+        self.connection = Button(self.robot_box, text='Connect', command=self.connect, bg='green', fg='white')
+        self.connection.grid(row=2, column=0, padx=2, pady=2)
+
+        self.disconnection = Button(self.robot_box, text='Disconnect', command=self.disconnect, state='disable')
+        self.disconnection.grid(row=2, column=1, padx=2, pady=2)
+
+        self.calibrate_box = LabelFrame(self, text='Calibration')
+        self.calibrate_box.grid(row=0, column=1, padx=2, pady=2)
+
+        self.calibrate = Button(self.calibrate_box, text='Calibrate', state='disable')
+        self.calibrate.grid(row=0, column=0, padx=2, pady=2)
+
+        self.load_calibrate = Button(self.calibrate_box, text='Load calibration', state='disable')
+        self.load_calibrate.grid(row=0, column=1, padx=2, pady=2)
+
+        self.meter_box = LabelFrame(self, text='Resistance metering')
+        self.meter_box.grid(row=1, column=1, padx=2, pady=2)
+
+        self.continuous_meter = Checkbutton(self.meter_box, text='Continiuous metering',
+                                            command=self.enable_continuous_meter,
+                                            state='disable')
+        self.continuous_meter.grid(row=0, column=0, padx=2, pady=2)
+
+        self.res_window = Label(self.meter_box, text='Resistance: ')
+        self.res_window.grid(row=1, column=0, padx=2, pady=2)
+
+        self.res_value = Label(self.meter_box, text='0 Ohm')
+        self.res_value.grid(row=1, column=1, padx=2, pady=2)
+
+        self.misc = LabelFrame(self, text='misc')
+        self.misc.grid(row=1, column=0, padx=2, pady=2)
+
+        self.zero = Button(self.misc, text='Go to zero', command=self.reset_pos, state='disable')
+        self.zero.grid(row=0, column=0, padx=2, pady=2)
+
+        self.imgsave = Button(self.misc, text='Screenshot', state='disable')
+        self.imgsave.grid(row=0, column=1, padx=2, pady=2)
+
+        self.QUIT = Button(self, text='QUIT', bg='orange', fg='white', command=self.exit)
+        self.QUIT.grid(row=2, column=0, padx=2, pady=2)
+
         self.pack()
-        self.create_widgets()
 
     def connect(self):
         self.controller = self.controllist.get()
@@ -73,9 +116,9 @@ class Application(Frame):
             calibrate = self.robot.calibrate()
 
             if calibrate:
-                print 'Calibration succesfull.'
+                showinfo('Calibrating', 'Calibration succesfull.')
             else:
-                print 'Calibration canceled.'
+                showerror('Calibrating', 'Calibration canceled.')
             pass
 
     def load_cali(self):
@@ -84,6 +127,8 @@ class Application(Frame):
                         'Please put the tip of the pipette in focus and at the center of the image.'):
                 self.robot.arm.set_to_zero([0, 1, 2])
                 self.robot.microscope.set_to_zero([0, 1, 2])
+        else:
+            showerror('Loading calibration', 'The device has never been calibrated.')
 
     def reset_pos(self):
         if self.robot:
@@ -130,62 +175,6 @@ class Application(Frame):
             del self.robot
         self.quit()
 
-    def create_widgets(self):
-
-        self.robot_box = LabelFrame(self, text='Connection')
-        self.robot_box.grid(row=0, column=0, padx=5, pady=5)
-
-        self.ask_controller = Label(self.robot_box, text='Controller: ')
-        self.ask_controller.grid(row=0, column=0, padx=2, pady=2)
-
-        self.controllist = ttk.Combobox(self.robot_box, state='readonly', values='SM5 SM10')
-        self.controllist.grid(row=0, column=1, columnspan=2, padx=2, pady=2)
-
-        self.ask_arm = Label(self.robot_box, text='Arm: ')
-        self.ask_arm.grid(row=1, column=0, padx=2, pady=2)
-
-        self.armlist = ttk.Combobox(self.robot_box, state='readonly', values='dev1 dev2')
-        self.armlist.grid(row=1, column=1, columnspan=2, padx=2, pady=2)
-
-        self.connection = Button(self.robot_box, text='Connect', command=self.connect, bg='green', fg='white')
-        self.connection.grid(row=2, column=0, padx=2, pady=2)
-
-        self.disconnection = Button(self.robot_box, text='Disconnect', command=self.disconnect, state='disable')
-        self.disconnection.grid(row=2, column=1, padx=2, pady=2)
-
-        self.calibrate_box = LabelFrame(self, text='Calibration')
-        self.calibrate_box.grid(row=0, column=1, padx=2, pady=2)
-
-        self.calibrate = Button(self.calibrate_box, text='Calibrate', state='disable')
-        self.calibrate.grid(row=0, column=0, padx=2, pady=2)
-
-        self.load_calibrate = Button(self.calibrate_box, text='Load calibration', state='disable')
-        self.load_calibrate.grid(row=0, column=1, padx=2, pady=2)
-
-        self.meter_box = LabelFrame(self, text='Resistance metering')
-        self.meter_box.grid(row=1, column=1, padx=2, pady=2)
-
-        self.continuous_meter = Checkbutton(self.meter_box, text='Continiuous metering', command=self.enable_continuous_meter,
-                                            state='disable')
-        self.continuous_meter.grid(row=0, column=0, padx=2, pady=2)
-
-        self.res_window = Label(self.meter_box, text='Resistance: ')
-        self.res_window.grid(row=1, column=0, padx=2, pady=2)
-
-        self.res_value = Label(self.meter_box, text='0 Ohm')
-        self.res_value.grid(row=1, column=1, padx=2, pady=2)
-
-        self.misc = LabelFrame(self, text='misc')
-        self.misc.grid(row=1, column=0, padx=2, pady=2)
-
-        self.zero = Button(self.misc, text='Go to zero', command=self.reset_pos, state='disable')
-        self.zero.grid(row=0, column=0, padx=2, pady=2)
-
-        self.imgsave = Button(self.misc, text='Screenshot', state='disable')
-        self.imgsave.grid(row=0, column=1, padx=2, pady=2)
-
-        self.QUIT = Button(self, text='QUIT', bg='orange', fg='white', command=self.exit)
-        self.QUIT.grid(row=2, column=0, padx=2, pady=2)
 
 if __name__ == '__main__':
     root = Tk()

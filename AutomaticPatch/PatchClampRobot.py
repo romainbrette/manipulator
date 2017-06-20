@@ -151,38 +151,40 @@ class PatchClampRobot(object):
         :return: 0 if calibration failed, 1 otherwise
         """
 
+        print 'Calibrating pkatform'
+
         self.calibrate_platform()
 
-        print 'Calibrated platform'
+        print 'Platform Calibrated'
 
         # calibrate arm x axis
+        print 'Calibrating x axis'
         calibrated = self.calibrate_arm(0)
 
         if not calibrated:
             return 0
         else:
-            print 'Calibrated x axis'
+            print 'x axis calibrated'
 
         # calibrate arm y axis
+        print 'Calibrating y axis'
         calibrated = self.calibrate_arm(1)
 
         if not calibrated:
             return 0
         else:
-            print 'Calibrated y axis'
+            print 'y axis calibrated'
 
         # calibrate arm z axis
+        print 'Calibrating z axis'
         calibrated = self.calibrate_arm(2)
 
         if not calibrated:
             return 0
         else:
-            print 'Calibrated z axis'
+            print 'z axis calibrated'
 
-        print self.mat
-        print self.matrix_accuracy()
         self.inv_mat = inv(self.mat)
-        print 'Calibration finished'
         self.calibrated = 1
         self.cam.clic_on_window = True
         self.save_calibration()
