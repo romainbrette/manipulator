@@ -269,7 +269,7 @@ class PatchClampRobot():
         for k in range(nb_images):
             self.microscope.absolute_move(k - (nb_images - 1) / 2, 2)
             self.microscope.wait_motor_stop(2)
-            time.sleep(0.1)
+            time.sleep(0.5)
             img = self.template_zone()
             height, width = img.shape[:2]
             img = img[i * height / 4:height / 2 + i * height / 4, j * width / 4:width / 2 + j * width / 4]
@@ -475,8 +475,8 @@ class PatchClampRobot():
                 f.write('{a},{b},{c}\n'.format(a=self.mat[i, 0], b=self.mat[i, 1], c=self.mat[i, 2]))
 
         with open("./{i}/rotmat.txt".format(i=self.controller), 'wt') as f:
-            for i in range(3):
-                f.write('{a},{b},{c}\n'.format(a=self.rot[i, 0], b=self.rot[i, 1], c=self.rot[i, 2]))
+            for i in range(2):
+                f.write('{a},{b}\n'.format(a=self.rot[i, 0], b=self.rot[i, 1]))
 
         with open('./{i}/data.txt'.format(i=self.controller), 'wt') as f:
             f.write('{d}\n'.format(d=self.um_px))
@@ -500,7 +500,7 @@ class PatchClampRobot():
                 i = 0
                 for line in f:
                     line = line.split(',')
-                    for j in range(3):
+                    for j in range(2):
                         self.rot[i, j] = float(line[j])
                         i += 1
                 self.rot_inv = inv(self.rot)
