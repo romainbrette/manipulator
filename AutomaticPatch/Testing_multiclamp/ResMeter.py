@@ -1,5 +1,5 @@
 from devices import *
-#import nidaqmx
+import nidaqmx
 from math import fabs
 import time
 from threading import Thread, RLock

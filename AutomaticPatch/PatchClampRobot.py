@@ -52,9 +52,9 @@ class PatchClampRobot():
         self.template_loc = [0., 0.]
 
         # Camera
-        self.cam = CameraThread(controller, self.clic_position)
         self.multi = ResistanceMeter()
         self.multi.start()
+        self.cam = CameraThread(controller, self.clic_position)
         pass
 
     def go_to_zero(self):
