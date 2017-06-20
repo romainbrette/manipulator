@@ -160,14 +160,14 @@ class Application(Frame):
     def enable_continuous_meter(self):
         if self.robot:
             self.robot.set_continuous_res_meter(True)
-            self.continuous_meter.config(command=self.disable_continuous_meter, text='Continuous metering Off')
+            self.continuous_meter.config(command=self.disable_continuous_meter)
             self.get_res()
         pass
 
     def disable_continuous_meter(self):
         if self.robot:
             self.robot.set_continuous_res_meter(False)
-            self.continuous_meter.config(command=self.enable_continuous_meter, text='Continuous metering On')
+            self.continuous_meter.config(command=self.enable_continuous_meter)
 
     def exit(self):
         if self.robot:
