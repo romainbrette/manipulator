@@ -511,7 +511,7 @@ class MultiClamp(object):
             self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
 
     @needs_select
-    def get_secondary_signal_membcur(self):
+    def get_secondary_signal_membpot(self):
         res = ctypes.c_uint(0)
         if not self.dll.MCCMSG_GetSecondarySignal(self.msg_handler,
                                                   ctypes.byref(res),

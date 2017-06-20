@@ -1,5 +1,5 @@
 from devices import *
-import nidaqmx
+#import nidaqmx
 from math import fabs
 import time
 from threading import Thread, RLock
@@ -12,7 +12,11 @@ class ResistanceMeter(Thread):
 
         Thread.__init__(self)
         print('Connecting to the MultiClamp amplifier')
-        self.mcc = MultiClamp(channel=1)
+        try:
+            self.mcc = MultiClamp(channel=1)
+        except AttributeError:
+            print 'No multiclamp detected, switching to fake amplifier.'
+            self.mcc = None
         print('Switching to voltage clamp')
         self.mcc.voltage_clamp()
         print('Running automatic slow compensation')
@@ -41,7 +45,6 @@ class ResistanceMeter(Thread):
         '''
         self.mcc.auto_pipette_offset()
         self.mcc.meter_resist_enable(True)
-        time.sleep(3)
         self.acquisition = True
         self.continuous = False
         self.discrete = False
