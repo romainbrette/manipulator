@@ -236,6 +236,15 @@ class LuigsNeumann_SM10(SerialDevice):
         for axis in axes:
             self.send_command(ID, [axis], 0)
 
+    def go_to_zero(self, axis):
+        """
+        Make axis go to zero position
+        :return: 
+        """
+        ID = '0024'
+        for axes in axis:
+            self.send_command(ID, [axes], 0)
+
     def wait_motor_stop(self, axes):
         """
         Wait for the motor to stop
@@ -257,8 +266,6 @@ class LuigsNeumann_SM10(SerialDevice):
             moving = [ret[6 + i * 4] for i in range(len(axes))]
             is_moving = any(moving)
 
-    def __del__(self):
-        self.port.close()
 
 if __name__ == '__main__':
     # Calculate the example group addresses from the documentation

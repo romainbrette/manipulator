@@ -43,9 +43,9 @@ class Application(Frame):
             if not self.arm:
                 print 'Please specify a device for the arm.'
             else:
+                self.robot = PatchClampRobot(self.controller, self.arm)
                 self.controllist['state'] = 'disabled'
                 self.armlist['state'] = 'disabled'
-                self.robot = PatchClampRobot(self.controller, self.arm)
                 self.imgsave.config(state='normal', command=self.robot.save_img)
                 self.load_calibrate.config(state='normal', command=self.robot.load_calibration)
                 self.calibrate.config(state='normal', command=self.calibration)
