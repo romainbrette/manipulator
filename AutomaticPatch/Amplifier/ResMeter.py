@@ -1,6 +1,7 @@
 from devices import *
 from math import fabs
 import time
+from FakeMulticlamp import *
 from threading import Thread, RLock
 import numpy as np
 

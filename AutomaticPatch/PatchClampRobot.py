@@ -1,6 +1,6 @@
 from Autofocus import *
 from Camera import *
-from Testing_multiclamp import *
+from Amplifier import *
 from numpy import matrix
 from numpy.linalg import inv
 import numpy as np
