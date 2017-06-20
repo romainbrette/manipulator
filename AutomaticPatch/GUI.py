@@ -1,7 +1,7 @@
 from Tkinter import *
 from tkMessageBox import *
 import ttk
-from PatchClampRobot import *
+#from PatchClampRobot import *
 
 
 class Application(Frame):
@@ -184,5 +184,6 @@ if __name__ == '__main__':
     app.mainloop()
     try:
         root.destroy()
-    except:
+    except TclError:
+        # Already destroyed
         pass
