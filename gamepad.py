@@ -51,11 +51,10 @@ class GamepadControl(Frame):
         self.y = 0
         self.force = 0
         self.angle = 0
-        self.speed_x = 0
-        self.speed_y = 0
+        self.previous_speed = 0
         self.angle_label = Label(self, text='angle: -')
         self.angle_label.pack()
-        self.speed_setting = [12, 15]
+        self.speed_setting = [1, 2, 3]
         gamepad = inputs.devices.gamepads[0]
         self.event_container = []
         reader = GamepadReader(self.event_container, gamepad)
@@ -69,9 +68,9 @@ class GamepadControl(Frame):
                 self.x = event.state / 32768.0
             elif event.code == 'ABS_Y':
                 self.y = event.state / 32768.0
-            # Classify deviation from center (i.e. movement speed) into three class
-            # No movement, slow movement, fast movement
-            self.force = np.clip(int(np.sqrt(self.x**2 + self.y**2) * 3), 0, 2)
+            # Classify deviation from center (i.e. movement speed) into four classes
+            # No movement, slow movement, medium movement, fast movement
+            self.force = np.clip(int(np.sqrt(self.x**2 + self.y**2) * 4), 0, 3)
             # Bin direction into 45° steps
             self.angle = np.round(np.arctan2(self.x, self.y) / (np.pi/4)) * np.pi/4
             self.force_label['text'] = 'force: {}'.format(self.force)
@@ -85,24 +84,23 @@ class GamepadControl(Frame):
     def update_speed(self):
         factor = 21
         if self.force > 0:
-            speed = revolutions[self.speed_setting[self.force-1]]
-            x = factor * speed * np.sin(self.angle) * self.scale[0]
-            y = factor * speed * np.cos(self.angle) * self.scale[1]
-            if abs(x) > 1:
-                speed_x = self.speed_setting[self.force-1]
-                if speed_x != self.speed_x:
-                    self.controller.set_slow_speed(self.axes[0], speed_x)
-                    self.speed_x = speed_x
-            else:
-                x = 0
-            if abs(y) > 1:
-                speed_y = self.speed_setting[self.force - 1]
-                if speed_y != self.speed_y:
-                    self.controller.set_slow_speed(self.axes[1], speed_y)
-                    self.speed_y = speed_y
-            else:
-                y = 0
-            self.controller.relative_move_group([x, y], self.axes, fast=False)
+            speed = self.speed_setting[self.force - 1]
+            if self.previous_speed != speed:
+                self.controller.set_single_step_factor(self.axes[0], speed)
+                self.controller.set_single_step_factor(self.axes[1], speed)
+                self.previous_speed = speed
+            x = np.sin(self.angle) * self.scale[0]
+            y = np.cos(self.angle) * self.scale[1]
+            if abs(x) > .01:
+                if x> 0:
+                    self.controller.single_step(self.axes[0], 1)
+                else:
+                    self.controller.single_step(self.axes[0], -2)
+            if abs(y) > .01:
+                if y> 0:
+                    self.controller.single_step(self.axes[1], 1)
+                else:
+                    self.controller.single_step(self.axes[1], -2)
 
         self.after(50, self.update_speed)
 
