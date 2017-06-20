@@ -1,5 +1,4 @@
 from devices import *
-import nidaqmx
 from math import fabs
 import time
 from threading import Thread, RLock
@@ -37,62 +36,14 @@ class ResistanceMeter(Thread):
         self.mcc.set_secondary_signal_lpf(2000)
         self.mcc.set_secondary_signal_gain(5)
         time.sleep(1)
-        '''
-        with nidaqmx.Task() as task:
-            task.ai_channels.add_ai_voltage_chan("Dev1/ai0")
-            task.ai_channels.add_ai_voltage_chan("Dev1/ai1")
-            self.init = task.read()
-        '''
         self.mcc.auto_pipette_offset()
         self.mcc.meter_resist_enable(True)
+        self.mcc.set_holding(0.)
+        self.mcc.set_holding_enable(True)
         self.acquisition = True
         self.continuous = False
         self.discrete = False
         self.res = None
-
-    def not_run(self):
-        while self.acquisition:
-            lock = RLock()
-            lock.acquire()
-
-            if self.continuous:
-
-                self.mcc.freq_pulse_enable(True)
-                while self.continuous:
-                    with nidaqmx.Task() as task:
-
-                        res = []
-                        task.ai_channels.add_ai_voltage_chan("Dev1/ai0")
-                        task.ai_channels.add_ai_voltage_chan("Dev1/ai1")
-
-                        for _ in range(3):
-                            temp = task.read(number_of_samples_per_channel=100)
-                            res += [fabs((np.mean(temp[1]) / 10.) / (1e-9 * np.mean(temp[0]) / 0.5))]
-                        self.res = np.mean(res)
-
-                self.mcc.freq_pulse_enable(False)
-
-            elif self.discrete:
-
-                self.mcc.freq_pulse_enable(True)
-                with nidaqmx.Task() as task:
-                    res = []
-                    task.ai_channels.add_ai_voltage_chan("Dev1/ai0")
-                    task.ai_channels.add_ai_voltage_chan("Dev1/ai1")
-
-                    for _ in range(3):
-                        temp = task.read(number_of_samples_per_channel=100)
-                        res += [fabs((np.mean(temp[1]) / 10.) / (1e-9 * np.mean(temp[0]) / 0.5))]
-
-                    self.res = np.mean(res)
-
-                self.mcc.freq_pulse_enable(False)
-                self.discrete = False
-
-            else:
-                pass
-
-            lock.release()
 
     def run(self):
         while self.acquisition:
@@ -130,24 +81,7 @@ class ResistanceMeter(Thread):
                 pass
 
             lock.release()
-
-    def get_res(self):
-
-        res = []
-
-        self.mcc.freq_pulse_enable(True)
-        init_time = int(round(time.time() * 1000))
-
-        with nidaqmx.Task() as task:
-            task.ai_channels.add_ai_voltage_chan("Dev1/ai0")
-            task.ai_channels.add_ai_voltage_chan("Dev1/ai1")
-            for _ in range(3):
-                temp = task.read(number_of_samples_per_channel=100)
-                res += [fabs((np.mean(temp[1])/10.)/(1e-9*np.mean(temp[0])/0.5))]
-
-        self.mcc.freq_pulse_enable(False)
-        print('Time: {}ms'.format(int(round(time.time() * 1000))-init_time))
-        return np.mean(res)
+        self.mcc.set_holding_enable(False)
 
     def stop(self):
         self.continuous = False
