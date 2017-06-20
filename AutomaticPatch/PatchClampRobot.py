@@ -497,7 +497,6 @@ class PatchClampRobot(object):
                     for j in range(3):
                         self.mat[i, j] = float(line[j])
                     i += 1
-                print self.mat
                 self.inv_mat = inv(self.mat)
 
             with open("./{i}/rotmat.txt".format(i=self.controller), 'rt') as f:
