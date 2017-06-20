@@ -13,7 +13,7 @@ class FakeMultiClamp(object):
 
     """
 
-    def __init__(self, **kwds):
+    def __init__(self):
         self.fast_comp = ctypes.c_float(0.)
         self.slow_comp = ctypes.c_float(0.)
         self.pulse_amp = ctypes.c_float(0.)
@@ -154,7 +154,7 @@ if __name__ == '__main__':
 
     val = []
     print('Connecting to the MultiClamp amplifier')
-    mcc = FakeMultiClamp(channel=1)
+    mcc = FakeMultiClamp()
     print('Switching to voltage clamp')
     mcc.voltage_clamp()
     print('Running automatic slow compensation')

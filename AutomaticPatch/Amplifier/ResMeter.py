@@ -1,9 +1,8 @@
 from devices import *
+import numpy as np
 from FakeMulticlamp import *
-from math import fabs
 import time
 from threading import Thread, RLock
-import numpy as np
 
 
 class ResistanceMeter(Thread):
