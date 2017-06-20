@@ -1,7 +1,7 @@
 from Tkinter import *
 from tkMessageBox import *
 import ttk
-#from PatchClampRobot import *
+from PatchClampRobot import *
 
 
 class Application(Frame):
