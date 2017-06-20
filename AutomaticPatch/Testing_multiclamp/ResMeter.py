@@ -1,5 +1,5 @@
 from devices import *
-import nidaqmx
+#import nidaqmx
 from math import fabs
 import time
 from threading import Thread, RLock
@@ -12,7 +12,11 @@ class ResistanceMeter(Thread):
 
         Thread.__init__(self)
         print('Connecting to the MultiClamp amplifier')
-        self.mcc = MultiClamp(channel=1)
+        try:
+            self.mcc = MultiClamp(channel=1)
+        except AttributeError:
+            print 'No multiclamp detected, switching to fake amplifier.'
+            self.mcc = None
         print('Switching to voltage clamp')
         self.mcc.voltage_clamp()
         print('Running automatic slow compensation')
@@ -33,13 +37,14 @@ class ResistanceMeter(Thread):
         self.mcc.set_secondary_signal_lpf(2000)
         self.mcc.set_secondary_signal_gain(5)
         time.sleep(1)
-
+        '''
         with nidaqmx.Task() as task:
             task.ai_channels.add_ai_voltage_chan("Dev1/ai0")
             task.ai_channels.add_ai_voltage_chan("Dev1/ai1")
             self.init = task.read()
-
+        '''
         self.mcc.auto_pipette_offset()
+        self.mcc.meter_resist_enable(True)
         self.acquisition = True
         self.continuous = False
         self.discrete = False
@@ -160,7 +165,7 @@ class ResistanceMeter(Thread):
         time.sleep(.2)
 
     def get_discrete_acquisition(self):
-        self.continuuous = False
+        self.continuous = False
         self.discrete = True
         time.sleep(.2)
 
@@ -174,12 +179,12 @@ if __name__ == '__main__':
     val = []
     multi = ResistanceMeter()
     multi.start()
-    multi.start_continious_acquisition()
+    multi.start_continuous_acquisition()
     print('Getting resistance')
     init = time.time()
     while time.time() - init < 5:
         val += [multi.res]
-    multi.stop_continious_acquisition()
+    multi.stop_continuous_acquisition()
     multi.stop()
     print min(val)
     print max(val)
