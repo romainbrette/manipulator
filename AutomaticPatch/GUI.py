@@ -193,4 +193,7 @@ if __name__ == '__main__':
     root.resizable(width=False, height=False)
     app = Application(master=root)
     app.mainloop()
-    root.destroy()
+    try:
+        root.destroy()
+    except:
+        pass

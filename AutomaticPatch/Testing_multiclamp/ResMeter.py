@@ -13,9 +13,9 @@ class ResistanceMeter(Thread):
         print('Connecting to the MultiClamp amplifier')
         try:
             self.mcc = MultiClamp(channel=1)
-        except AttributeError:
+        except AttributeError, RuntimeError:
             print 'No multiclamp detected, switching to fake amplifier.'
-            self.mcc = None
+            self.mcc = FakeMultiClamp()
         print('Switching to voltage clamp')
         self.mcc.voltage_clamp()
         print('Running automatic slow compensation')
