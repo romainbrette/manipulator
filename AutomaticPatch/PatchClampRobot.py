@@ -110,7 +110,8 @@ class PatchClampRobot():
             self.rot[1, i] = dy / dist
 
             # Resetting position of microscope
-            self.go_to_zero()
+            self.microscope.relative_move(-120, i)
+            self.microscope.wait_motor_stop(i)
 
         # Inverse rotation matrix for future use
         self.rot_inv = inv(self.rot)
