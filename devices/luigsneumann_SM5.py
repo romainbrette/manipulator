@@ -139,6 +139,15 @@ class LuigsNeumann_SM5(SerialDevice):
         for axes in axis:
             self.send_command('00f0', [axes], 0)
 
+    def go_to_zero(self, axis):
+        """
+        Make axis go to zero position
+        :return: 
+        """
+        ID = '0024'
+        for axes in axis:
+            self.send_command(ID, [axes], 0)
+
     def wait_motor_stop(self, axis):
         """
         Wait for the motor to stop

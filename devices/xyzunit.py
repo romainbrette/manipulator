@@ -100,6 +100,17 @@ class XYZUnit(Device):
         axes = [self.axes[i] for i in axis]
         self.dev.set_to_zero(axes)
 
+    def go_to_zero(self, axis):
+        """
+        Make axis go to zero position
+        :return: 
+        """
+        if isinstance(axis, list):
+            for i in axis:
+                self.go_to_zero(i)
+        else:
+            self.dev.go_to_zero([self.axes[axis]])
+
     def wait_motor_stop(self, axis):
         """
         Wait for the motor to stop

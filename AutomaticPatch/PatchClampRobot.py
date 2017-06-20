@@ -12,7 +12,7 @@ import errno
 import time
 
 
-class PatchClampRobot():
+class PatchClampRobot(object):
 
     def __init__(self, controller, arm):
 
