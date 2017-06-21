@@ -1,6 +1,6 @@
-'''
+"""
 Elveflow OB1 microfluidic flow control system
-'''
+"""
 import os
 import sys
 from ctypes import *
@@ -13,9 +13,11 @@ from Elveflow64 import *
 
 __all__ = ['OB1']
 
+
 def _check_error(task, error):
     if error != 0:
         raise RuntimeError('{} failed with error code {}'.format(task, error))
+
 
 class OB1(object):
     def __init__(self, calibrate=False):
@@ -44,22 +46,21 @@ class OB1(object):
             error = Elveflow_Calibration_Load(calib_path.encode('ascii'), byref(self.calib), 1000)
             _check_error('Loading calibration file', error)
 
-
     def measure(self, port=0):
-        '''
+        """
         Measures the instantaneous pressure, on designated port.
-        '''
+        """
         set_channel = int(port)  # convert to int
         set_channel = c_int32(port)  # convert to c_int32
         get_pressure = c_double()
-        error =  OB1_Get_Sens_Data(self.instr_ID.value, set_channel, 1, byref(get_pressure))  # Acquire_data =1 -> Read all the analog value
+        error = OB1_Get_Sens_Data(self.instr_ID.value, set_channel, 1, byref(get_pressure))  # Acquire_data =1 -> Read all the analog value
         _check_error('Getting data from flow sensor', error)
         return get_pressure.value
 
     def set_pressure(self, pressure, port=0):
-        '''
+        """
         Sets the pressure, on designated port.
-        '''
+        """
         set_channel = int(port)  # convert to int
         set_channel = c_int32(port)  # convert to c_int32
         set_pressure = float(pressure)

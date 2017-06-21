@@ -1,25 +1,26 @@
-'''
+"""
 Records pressure during an experiment with the OB1
-'''
+"""
 from Tkinter import *
-from devices import *
+from ob1 import *
 from numpy import *
 
 from os.path import expanduser
 home = expanduser("~")
 filename = home+'/pressure.txt'
 
+
 class RecorderApplication(Frame):
-    '''
+    """
     The main application.
-    '''
+    """
     def __init__(self, master, controller):
-        '''
+        """
         Parameters
         ----------
         master : parent window
         controller : the pressure controller
-        '''
+        """
         Frame.__init__(self, master)
         self.master = master
         self.controller = controller
@@ -30,14 +31,14 @@ class RecorderApplication(Frame):
         self.pressure_label.pack()
         self.isrecording = False
 
-        self.measurement = list() # Could also be a numpy array
+        self.measurement = list()  # Could also be a numpy array
 
     def record(self):
         self.isrecording = not self.isrecording
         self.button_text.set(['Record', 'Stop'][self.isrecording])
         if self.isrecording:
             # Here we start clocked recording using a timer - could be different depending on the interface
-            self.master.after(50, self.sample) # 20 Hz recording
+            self.master.after(50, self.sample)  # 20 Hz recording
         else:
             # Save to while when it's finished
             savetxt(filename, array(self.measurement))

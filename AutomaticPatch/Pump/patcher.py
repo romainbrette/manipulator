@@ -1,25 +1,26 @@
-'''
+"""
 A simple patch-clamp GUI
 
 Pressures
-'''
+"""
 from Tkinter import *
-from devices import *
+from ob1 import *
 from numpy import *
 
 verbose = True
 
+
 class PatcherApplication(Frame):
-    '''
+    """
     The main application.
-    '''
+    """
     def __init__(self, master, controller):
-        '''
+        """
         Parameters
         ----------
         master : parent window
         controller : the pressure controller
-        '''
+        """
         Frame.__init__(self, master)
         self.master = master
 
@@ -32,7 +33,10 @@ class PatcherApplication(Frame):
         Button(self, text='Break in', command=self.break_in).pack()
         self.pressure_label = Label(self, text='')
         self.pressure_label.pack()
-        self.release() # We start with 0 pressure
+
+        # We start with 0 pressure
+        self.pressure = 0.
+        self.release()
 
     def update_pressure(self, pressure):
         self.pressure = pressure
@@ -53,7 +57,7 @@ class PatcherApplication(Frame):
         # Sealing with small negative pressure
         if verbose:
             print "Sealing"
-        self.update_pressure(-25) #(from Desai)
+        self.update_pressure(-25)   # (from Desai)
         # -15 to -20 in Kodandaramaiah paper?
 
     def release(self):
@@ -79,4 +83,3 @@ if __name__ == '__main__':
     controller = OB1()
     app = PatcherApplication(root, controller).pack(side="top", fill="both", expand=True)
     root.mainloop()
-
