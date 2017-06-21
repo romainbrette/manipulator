@@ -4,6 +4,8 @@ from FakeMulticlamp import *
 import time
 from threading import Thread, RLock
 
+__all__ = ['ResistanceMeter']
+
 
 class ResistanceMeter(Thread):
 

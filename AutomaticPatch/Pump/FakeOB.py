@@ -1,3 +1,4 @@
+__all__ = ['FakeOB1']
 
 
 class FakeOB1(object):

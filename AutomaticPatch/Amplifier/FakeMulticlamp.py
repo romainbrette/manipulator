@@ -4,6 +4,8 @@ Fake multiclamp class in case no multiclamp is connected
 
 import ctypes
 
+__all__ = ['FakeMultiClamp']
+
 
 class FakeMultiClamp(object):
     """

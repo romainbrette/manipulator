@@ -11,6 +11,8 @@ import os
 import errno
 import time
 
+__all__ = ['PatchClampRobot']
+
 
 class PatchClampRobot(object):
 
