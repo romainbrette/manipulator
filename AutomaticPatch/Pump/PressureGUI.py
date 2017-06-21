@@ -62,11 +62,13 @@ class PressureApplication(Frame):
         if verbose:
             print "High pressure"
         self.update_pressure(800)  # mBar (800-1000 in 2012 Kodandaramaiah paper)
+        self.measurement.append('High pressure 800mBar')
 
     def nearing(self):
         if verbose:
             print "Nearing"
         self.update_pressure(25)  # mBar (25-30)
+        self.measurement.append('Nearing 25mBar')
 
     def seal(self):
         # Sealing with small negative pressure
@@ -74,13 +76,15 @@ class PressureApplication(Frame):
             print "Sealing"
         self.update_pressure(-25)   # (from Desai)
         # -15 to -20 in Kodandaramaiah paper?
+        self.measurement.append('Sealing -25mBar')
 
     def release(self):
         # Release the pressure
         if verbose:
             print "Releasing"
-            self.update_pressure(0)
+        self.update_pressure(0)
         # -15 to -20 in Kodandaramaiah paper?
+        self.measurement.append('Release 0mBar')
 
     def break_in(self):
         # Breaks in with a ramp
@@ -89,6 +93,7 @@ class PressureApplication(Frame):
         if verbose:
             print "Breaking in; release after 1 s"
         self.update_pressure(-150)
+        self.measurement.append('BreakingIn -150mBar')
         self.master.after(1000, self.release)
 
     def record(self):
@@ -99,7 +104,9 @@ class PressureApplication(Frame):
             self.master.after(50, self.sample)  # 20 Hz recording
         else:
             # Save to while when it's finished
-            savetxt(filename, array(self.measurement))
+            with open(filename, 'wt') as f:
+                for i in self.measurement:
+                    f.writelines('{}\n'.format(i))
             self.record_label['text'] = 'Not recording'
 
     def sample(self):
