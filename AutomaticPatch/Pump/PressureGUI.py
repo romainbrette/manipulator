@@ -4,8 +4,8 @@ A simple patch-clamp GUI
 Pressures
 """
 from Tkinter import *
-#from ob1 import *
-from FakeOB import *
+from ob1 import *
+#from FakeOB import *
 from numpy import *
 filename = 'pressure.txt'
 
@@ -121,6 +121,6 @@ if __name__ == '__main__':
     root = Tk()
     root.title('Patcher')
 
-    controller = FakeOB1()
+    controller = OB1()
     app = PressureApplication(root, controller).pack(side="top", fill="both", expand=True)
     root.mainloop()

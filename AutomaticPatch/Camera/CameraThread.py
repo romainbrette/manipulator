@@ -21,7 +21,6 @@ class CameraThread(Thread):
         self.img_to_display = None
         self.width, self.height = None, None
         self.winname = winname
-        self.n_img = 1
         self.show = True
         self.clic_on_window = False
         self.mouse_callback = mouse_fun
@@ -53,7 +52,7 @@ class CameraThread(Thread):
         self.cam.reset()
 
     def save_img(self):
-        path = './{i}/screenshots/screenshot{n}'.format(i=self.controller, n=self.n_img)
+        path = './{i}/screenshots/'.format(i=self.controller)
         if not os.path.exists(os.path.dirname(path)):
             try:
                 os.makedirs(os.path.dirname(path))
@@ -63,8 +62,8 @@ class CameraThread(Thread):
                     raise
 
         img = self.frame*256
-        cv2.imwrite('./{i}/screenshots/screenshot{n}.jpg'.format(i=self.controller, n=self.n_img), img)
-        self.n_img += 1
+        n_img = len(os.listdir(path))
+        cv2.imwrite('./{i}/screenshots/screenshot{n}.jpg'.format(i=self.controller, n=n_img), img)
         pass
 
     def switch_mouse_callback(self):

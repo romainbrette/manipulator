@@ -22,7 +22,6 @@ class PatchClampRobot(object):
         self.dev, self.microscope, self.arm = init_device(controller, arm)
         self.controller = controller
 
-        self.n_img = 0
         # Tab for template images
         self.template = []
 
