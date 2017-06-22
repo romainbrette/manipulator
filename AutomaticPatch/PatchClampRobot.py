@@ -107,15 +107,14 @@ class PatchClampRobot(object):
 
             # Determination of um_px
             dist = (dx ** 2 + dy ** 2) ** 0.5
-            self.um_px = 120. / dist
+            self.um_px = self.microscope.position(i) / dist
 
             # Compute the rotation matrix
             self.rot[0, i] = dx / dist
             self.rot[1, i] = dy / dist
 
             # Resetting position of microscope
-            self.microscope.relative_move(-120, i)
-            self.microscope.wait_motor_stop(i)
+            self.microscope.go_to_zero([i])
 
         # Inverse rotation matrix for future use
         self.rot_inv = inv(self.rot)
