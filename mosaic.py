@@ -3,7 +3,7 @@ Creates a photo mosaic using the stage
 '''
 from devices import *
 from serial import SerialException
-from AutomaticPatch.Camera.camera import *
+from AutomaticPatch.Camera.camera_init import *
 from pylab import *
 import cv2
 
