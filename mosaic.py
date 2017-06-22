@@ -1,5 +1,10 @@
 '''
 Creates a photo mosaic using the stage
+
+check this
+https://github.com/opencv/opencv_attic/blob/master/opencv/samples/cpp/fitellipse.cpp
+https://stackoverflow.com/questions/42206042/ellipse-detection-in-opencv-python
+http://docs.opencv.org/3.1.0/dd/d49/tutorial_py_contour_features.html
 '''
 from devices import *
 from serial import SerialException
@@ -11,6 +16,8 @@ from os.path import expanduser
 home = expanduser("~")
 
 SM5 = True
+
+mmc = camera_init('SM5')
 
 try:
     if SM5:
@@ -31,8 +38,6 @@ else:
 microscope = XYZUnit(dev, [7,8])
 
 print "Device initialized"
-
-mmc = camera_init('SM5')
 
 # We first need to calibrate the stage
 # Then we take a series of photos
@@ -60,6 +65,7 @@ camera_unload(mmc)
 for i in enumerate(frames):
     cv2.imwrite(home+'/mosaic'+str(i)+'.jpg')
 
+del dev
 """
 for frame in frames[:10]:
     imshow(frame, cmap='gray')
