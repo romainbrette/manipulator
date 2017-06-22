@@ -28,6 +28,7 @@ class SerialDevice(Device):
 
     def __del__(self):
         self.port.close()
+        del self.port
 
     def CRC_16(self, butter, length):
         # Calculate CRC-16 checksum based on the data sent

@@ -115,6 +115,20 @@ class XYMicUnit(Device):
             else:
                 self.dev.set_to_zero([self.axes[axis]])
 
+    def go_to_zero(self, axis):
+        """
+        Make axis go to zero position
+        :return: 
+        """
+        if isinstance(axis, list):
+            for i in axis:
+                self.go_to_zero(i)
+        else:
+            if axis == 2:
+                self.dev_mic.go_to_zero()
+            else:
+                self.dev.go_to_zero([self.axes[axis]])
+
     def wait_motor_stop(self, axis):
         """
         Wait for the motor to stop

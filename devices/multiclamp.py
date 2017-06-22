@@ -574,6 +574,30 @@ class MultiClamp(object):
             self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
         return value
 
+    @needs_select
+    def set_holding_enable(self, enable):
+        if not self.dll.MCCMSG_SetHoldingEnable(self.msg_handler,
+                                                ctypes.c_bool(enable),
+                                                ctypes.byref(self.last_error)):
+            sz_error = ctypes.c_char_p()
+            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
+                                           self.last_error,
+                                           sz_error,
+                                           ctypes.sizeof(sz_error))
+            self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
+
+    @needs_select
+    def set_holding(self, value):
+        if not self.dll.MCCMSG_SetHolding(self.msg_handler,
+                                          ctypes.c_double(value),
+                                          ctypes.byref(self.last_error)):
+            sz_error = ctypes.c_char_p()
+            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
+                                           self.last_error,
+                                           sz_error,
+                                           ctypes.sizeof(sz_error))
+            self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
+
     def close(self):
         self.dll.MCCMSG_DestroyObject(self.msg_handler)
         self.msg_handler = None
