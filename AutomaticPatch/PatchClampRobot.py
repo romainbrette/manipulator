@@ -1,5 +1,6 @@
 from Autofocus import *
 from Camera import *
+from Amplifier import *
 from numpy import matrix
 from numpy.linalg import inv
 import numpy as np
@@ -8,28 +9,19 @@ from math import fabs
 from time import sleep
 import os
 import errno
+import time
+
+__all__ = ['PatchClampRobot']
 
 
-class PatchClampRobot:
+class PatchClampRobot(object):
 
     def __init__(self, controller, arm):
 
         # devices
         self.dev, self.microscope, self.arm = init_device(controller, arm)
-        self.cam = CameraThread(controller, self.clic_position)
-        self.cam.start()
         self.controller = controller
 
-        # Camera
-        '''
-        self.win_name = 'Camera'
-        cv2.namedWindow(self.win_name, flags=cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO | cv2.WINDOW_GUI_EXPANDED)
-        self.frame = 0
-        self.n_img = 0
-        self.width = 50
-        self.height = 50
-        '''
-        self.n_img = 0
         # Tab for template images
         self.template = []
 
@@ -59,16 +51,24 @@ class PatchClampRobot:
 
         # Position of the tip in the template image
         self.template_loc = [0., 0.]
+
+        # Camera
+        self.multi = ResistanceMeter()
+        self.multi.start()
+        self.cam = CameraThread(controller, self.clic_position)
         pass
 
     def go_to_zero(self):
         """
         Make the arm and platform go to the origin: state before the calibration
         """
+        '''
         for i in range(3):
             self.arm.absolute_move(0, i)
             self.microscope.absolute_move(0, i)
-
+        '''
+        self.arm.go_to_zero([0, 1, 2])
+        self.microscope.go_to_zero([0, 1, 2])
         self.arm.wait_motor_stop([0, 1, 2])
         self.microscope.wait_motor_stop([0, 1, 2])
         sleep(.5)
@@ -107,14 +107,14 @@ class PatchClampRobot:
 
             # Determination of um_px
             dist = (dx ** 2 + dy ** 2) ** 0.5
-            self.um_px = 120. / dist
+            self.um_px = self.microscope.position(i) / dist
 
             # Compute the rotation matrix
             self.rot[0, i] = dx / dist
             self.rot[1, i] = dy / dist
 
             # Resetting position of microscope
-            self.go_to_zero()
+            self.microscope.go_to_zero([i])
 
         # Inverse rotation matrix for future use
         self.rot_inv = inv(self.rot)
@@ -151,38 +151,40 @@ class PatchClampRobot:
         :return: 0 if calibration failed, 1 otherwise
         """
 
+        print 'Calibrating pkatform'
+
         self.calibrate_platform()
 
-        print 'Calibrated platform'
+        print 'Platform Calibrated'
 
         # calibrate arm x axis
+        print 'Calibrating x axis'
         calibrated = self.calibrate_arm(0)
 
         if not calibrated:
             return 0
         else:
-            print 'Calibrated x axis'
+            print 'x axis calibrated'
 
         # calibrate arm y axis
+        print 'Calibrating y axis'
         calibrated = self.calibrate_arm(1)
 
         if not calibrated:
             return 0
         else:
-            print 'Calibrated y axis'
+            print 'y axis calibrated'
 
         # calibrate arm z axis
+        print 'Calibrating z axis'
         calibrated = self.calibrate_arm(2)
 
         if not calibrated:
             return 0
         else:
-            print 'Calibrated z axis'
+            print 'z axis calibrated'
 
-        print self.mat
-        print self.matrix_accuracy()
         self.inv_mat = inv(self.mat)
-        print 'Calibration finished'
         self.calibrated = 1
         self.cam.clic_on_window = True
         self.save_calibration()
@@ -272,6 +274,7 @@ class PatchClampRobot:
         for k in range(nb_images):
             self.microscope.absolute_move(k - (nb_images - 1) / 2, 2)
             self.microscope.wait_motor_stop(2)
+            time.sleep(0.5)
             img = self.template_zone()
             height, width = img.shape[:2]
             img = img[i * height / 4:height / 2 + i * height / 4, j * width / 4:width / 2 + j * width / 4]
@@ -463,7 +466,7 @@ class PatchClampRobot:
 
     def save_calibration(self):
 
-        path = '\{}'.format(self.controller)
+        path = './{}/'.format(self.controller)
         if not os.path.exists(os.path.dirname(path)):
             try:
                 os.makedirs(os.path.dirname(path))
@@ -477,8 +480,8 @@ class PatchClampRobot:
                 f.write('{a},{b},{c}\n'.format(a=self.mat[i, 0], b=self.mat[i, 1], c=self.mat[i, 2]))
 
         with open("./{i}/rotmat.txt".format(i=self.controller), 'wt') as f:
-            for i in range(3):
-                f.write('{a},{b},{c}\n'.format(a=self.rot[i, 0], b=self.rot[i, 1], c=self.rot[i, 2]))
+            for i in range(2):
+                f.write('{a},{b}\n'.format(a=self.rot[i, 0], b=self.rot[i, 1]))
 
         with open('./{i}/data.txt'.format(i=self.controller), 'wt') as f:
             f.write('{d}\n'.format(d=self.um_px))
@@ -495,16 +498,16 @@ class PatchClampRobot:
                     line = line.split(',')
                     for j in range(3):
                         self.mat[i, j] = float(line[j])
-                        i += 1
+                    i += 1
                 self.inv_mat = inv(self.mat)
 
             with open("./{i}/rotmat.txt".format(i=self.controller), 'rt') as f:
                 i = 0
                 for line in f:
                     line = line.split(',')
-                    for j in range(3):
+                    for j in range(2):
                         self.rot[i, j] = float(line[j])
-                        i += 1
+                    i += 1
                 self.rot_inv = inv(self.rot)
 
             with open('./{i}/data.txt'.format(i=self.controller), 'rt') as f:
@@ -515,14 +518,29 @@ class PatchClampRobot:
                 self.template_loc[1] = float(f.readline())
 
             self.calibrated = 1
+            self.cam.clic_on_window = True
             return 1
 
         except IOError:
             print '{i} has not been calibrated.'.format(i=self.controller)
             return 0
 
+    def set_continuous_res_meter(self, bool):
+        if bool:
+            self.multi.start_continuous_acquisition()
+        else:
+            self.multi.stop_continuous_acquisition()
+
+    def get_one_res_metering(self):
+        self.multi.get_discrete_acquisition()
+        return self.get_resistance()
+
+    def get_resistance(self):
+        return self.multi.res
+
     def stop(self):
         self.cam.stop()
+        self.multi.stop()
         cv2.destroyAllWindows()
         pass
 

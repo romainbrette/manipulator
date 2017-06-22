@@ -100,6 +100,9 @@ class Leica(Device):
     def set_to_zero(self):
         self.zero_position = self.mmc.getPosition()
 
+    def go_to_zero(self):
+        self.absolute_move(0)
+
 
 if __name__ == '__main__':
     import time

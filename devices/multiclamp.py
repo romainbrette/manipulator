@@ -487,6 +487,18 @@ class MultiClamp(object):
             self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
 
     @needs_select
+    def set_primary_signal_hpf(self, hpf):
+        if not self.dll.MCCMSG_SetPrimarySignalHPF(self.msg_handler,
+                                                   ctypes.c_double(hpf),
+                                                   ctypes.byref(self.last_error)):
+            sz_error = ctypes.c_char_p()
+            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
+                                           self.last_error,
+                                           sz_error,
+                                           ctypes.sizeof(sz_error))
+            self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
+
+    @needs_select
     def set_secondary_signal_membpot(self):
         if not self.dll.MCCMSG_SetSecondarySignal(self.msg_handler,
                                                   ctypes.c_uint(1),
@@ -499,7 +511,7 @@ class MultiClamp(object):
             self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
 
     @needs_select
-    def get_secondary_signal_membcur(self):
+    def get_secondary_signal_membpot(self):
         res = ctypes.c_uint(0)
         if not self.dll.MCCMSG_GetSecondarySignal(self.msg_handler,
                                                   ctypes.byref(res),
@@ -547,15 +559,55 @@ class MultiClamp(object):
                                            ctypes.sizeof(sz_error))
             self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
 
+    @needs_select
+    def get_meter_value(self):
+        value = ctypes.c_double(0.)
+        if not self.dll.MCCMSG_GetMeterValue(self.msg_handler,
+                                             ctypes.byref(value),
+                                             ctypes.c_uint(0),
+                                             ctypes.byref(self.last_error)):
+            sz_error = ctypes.c_char_p()
+            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
+                                           self.last_error,
+                                           sz_error,
+                                           ctypes.sizeof(sz_error))
+            self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
+        return value
+
+    @needs_select
+    def set_holding_enable(self, enable):
+        if not self.dll.MCCMSG_SetHoldingEnable(self.msg_handler,
+                                                ctypes.c_bool(enable),
+                                                ctypes.byref(self.last_error)):
+            sz_error = ctypes.c_char_p()
+            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
+                                           self.last_error,
+                                           sz_error,
+                                           ctypes.sizeof(sz_error))
+            self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
+
+    @needs_select
+    def set_holding(self, value):
+        if not self.dll.MCCMSG_SetHolding(self.msg_handler,
+                                          ctypes.c_double(value),
+                                          ctypes.byref(self.last_error)):
+            sz_error = ctypes.c_char_p()
+            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
+                                           self.last_error,
+                                           sz_error,
+                                           ctypes.sizeof(sz_error))
+            self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
+
     def close(self):
         self.dll.MCCMSG_DestroyObject(self.msg_handler)
         self.msg_handler = None
 
 
 if __name__ == '__main__':
-    import nidaqmx
     from math import fabs
+    from matplotlib.pyplot import *
 
+    val = []
     print('Connecting to the MultiClamp amplifier')
     mcc = MultiClamp(channel=1)
     print('Switching to voltage clamp')
@@ -574,30 +626,28 @@ if __name__ == '__main__':
     print('Slow: {}'.format(mcc.get_slow_compensation_capacitance()))
     print('Fast: {}'.format(mcc.get_fast_compensation_capacitance()))
     mcc.set_freq_pulse_amplitude(1e-2)
-    mcc.set_freq_pulse_frequency(1e-2)
+    mcc.set_freq_pulse_frequency(1e-3)
     mcc.set_pulse_amplitude(1e-2)
     mcc.set_pulse_duration(1e-2)
     mcc.set_primary_signal_membcur()
-    mcc.set_primary_signal_lpf(1000)
+    mcc.set_primary_signal_lpf(2000)
     mcc.set_secondary_signal_membpot()
-    mcc.set_secondary_signal_lpf(1000)
-    time.sleep(1)
-    with nidaqmx.Task() as task:
-        task.ai_channels.add_ai_voltage_chan("Dev1/ai0")
-        task.ai_channels.add_ai_voltage_chan("Dev1/ai1")
-        init = task.read()
-        print init
+    mcc.set_secondary_signal_lpf(2000)
+    time.sleep(.5)
     mcc.auto_pipette_offset()
+    mcc.meter_resist_enable(True)
+    time.sleep(3)
     mcc.freq_pulse_enable(True)
-
-    with nidaqmx.Task() as task:
-        task.ai_channels.add_ai_voltage_chan("Dev1/ai0")
-        task.ai_channels.add_ai_voltage_chan("Dev1/ai1")
-        for _ in range(200):
-            temp = task.read()
-            if fabs(temp[0] - init[0]) > 1:
-                print fabs((temp[1]/10.)/(1e-9*temp[0]/0.5))
-
+    init = time.time()
+    while time.time() - init < 1:
+        val += [mcc.get_meter_value().value]
+    #print time.time()*1000 - init
+    print min(val)
+    print max(val)
+    print np.median(val)
+    plot(val)
+    mcc.meter_resist_enable(False)
     mcc.freq_pulse_enable(False)
     mcc.meter_resist_enable(False)
     mcc.close()
+    show()

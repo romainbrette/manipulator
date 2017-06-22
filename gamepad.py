@@ -1,9 +1,11 @@
+# coding=utf-8
 import threading
 import time
 from Tkinter import *
 import ttk
 
 import inputs
+import numpy as np
 
 from devices.luigsneumann_SM10 import LuigsNeumann_SM10
 
@@ -36,61 +38,74 @@ class GamepadReader(threading.Thread):
             if event.code in ['ABS_X', 'ABS_Y']:
                 self.event_container.append(event)
 
-class Application(Frame):
-    def __init__(self, controller, master=None):
+class GamepadControl(Frame):
+    def __init__(self, controller, axes, scale=(1, 1), master=None):
         Frame.__init__(self, master)
         self.master = master
         self.controller = controller
-        self.abs_x = Label(self, text='X: 0')
-        self.abs_x.pack()
-        self.speed_x = 0
-        self.abs_y = Label(self, text='Y: 0')
-        self.abs_y.pack()
-        self.speed_y = 0
-
+        self.axes = axes
+        self.scale = scale
+        self.force_label = Label(self, text='force: 0')
+        self.force_label.pack()
+        self.x = 0
+        self.y = 0
+        self.force = 0
+        self.angle = 0
+        self.previous_speed = 0
+        self.angle_label = Label(self, text='angle: -')
+        self.angle_label.pack()
+        self.speed_setting = [1, 2, 3]
         gamepad = inputs.devices.gamepads[0]
         self.event_container = []
         reader = GamepadReader(self.event_container, gamepad)
         reader.start()
         self.after(10, self.update_labels)
-        self.after(100, self.update_speed)
+        self.after(50, self.update_speed)
 
     def update_labels(self):
         for event in self.event_container:
-            sign = -1 if event.state < 0 else 1
-            if abs(event.state) < 4096:
-                state = 0
-            else:
-                state = int(round((abs(event.state) - 4096)/ 1792.) * sign)
             if event.code == 'ABS_X':
-                self.abs_x['text'] = 'X: {}'.format(state)
-                self.speed_x = state
+                self.x = event.state / 32768.0
             elif event.code == 'ABS_Y':
-                self.abs_y['text'] = 'Y: {}'.format(state)
-                self.speed_y = state
+                self.y = event.state / 32768.0
+            # Classify deviation from center (i.e. movement speed) into four classes
+            # No movement, slow movement, medium movement, fast movement
+            self.force = np.clip(int(np.sqrt(self.x**2 + self.y**2) * 4), 0, 3)
+            # Bin direction into 45° steps
+            self.angle = np.round(np.arctan2(self.x, self.y) / (np.pi/4)) * np.pi/4
+            self.force_label['text'] = 'force: {}'.format(self.force)
+            if self.force > 0:
+                self.angle_label['text'] = 'angle: {:.0f}'.format(self.angle * 180 / np.pi)
+            else:
+                self.angle_label['text'] = 'angle: -'
         self.event_container[:] = []
         self.after(10, self.update_labels)
 
     def update_speed(self):
-        factor = 1.5
-        if self.speed_x != 0:
-            self.controller.set_single_step_velocity(1, abs(self.speed_x))
-            self.controller.set_single_step_distance(1, abs(self.speed_x)*revolutions[abs(self.speed_x)-1]*factor)
-            step = 1 if self.speed_x > 0 else -1
-            self.controller.single_step(1, step)
-        else:
-            self.controller.stop(1)
-        if self.speed_y != 0:
-            self.controller.set_single_step_velocity(2, abs(self.speed_y))
-            self.controller.set_single_step_distance(2, abs(self.speed_y)*revolutions[abs(self.speed_y)-1]*factor)
-            step = 1 if self.speed_x > 0 else -1
-            self.controller.single_step(2, step)
-        else:
-            self.controller.stop(2)
-        self.after(100, self.update_speed)
+        factor = 21
+        if self.force > 0:
+            speed = self.speed_setting[self.force - 1]
+            if self.previous_speed != speed:
+                self.controller.set_single_step_factor(self.axes[0], speed)
+                self.controller.set_single_step_factor(self.axes[1], speed)
+                self.previous_speed = speed
+            x = np.sin(self.angle) * self.scale[0]
+            y = np.cos(self.angle) * self.scale[1]
+            if abs(x) > .01:
+                if x> 0:
+                    self.controller.single_step(self.axes[0], 1)
+                else:
+                    self.controller.single_step(self.axes[0], -2)
+            if abs(y) > .01:
+                if y> 0:
+                    self.controller.single_step(self.axes[1], 1)
+                else:
+                    self.controller.single_step(self.axes[1], -2)
+
+        self.after(50, self.update_speed)
 
 if __name__ == '__main__':
     root = Tk()
     dev = LuigsNeumann_SM10('COM3')
-    Application(dev, master=root).pack()
+    GamepadControl(dev, axes=[7, 8], scale=[-1, 1], master=root).pack()
     root.mainloop()
