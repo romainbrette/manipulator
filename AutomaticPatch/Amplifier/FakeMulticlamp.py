@@ -16,17 +16,17 @@ class FakeMultiClamp(object):
     """
 
     def __init__(self):
-        self.fast_comp = ctypes.c_float(0.)
-        self.slow_comp = ctypes.c_float(0.)
-        self.pulse_amp = ctypes.c_float(0.)
-        self.pulse_dur = ctypes.c_float(0.)
-        self.freq_pulse_amp = ctypes.c_float(0.)
-        self.freq_pulse_freq = ctypes.c_float(0.)
+        self.fast_comp = ctypes.c_float(00000.0)
+        self.slow_comp = ctypes.c_float(00000.0)
+        self.pulse_amp = ctypes.c_float(00000.0)
+        self.pulse_dur = ctypes.c_float(00000.0)
+        self.freq_pulse_amp = ctypes.c_float(00000.0)
+        self.freq_pulse_freq = ctypes.c_float(00000.0)
         self.meter_resist_en = ctypes.c_bool(False)
-        self.leak_val = ctypes.c_float(0.0)
+        self.leak_val = ctypes.c_float(00000.0)
         self.primary_memcur = ctypes.c_bool(False)
-        self.meter_val = ctypes.c_float(0.)
-        self.holding = ctypes.c_double(0.)
+        self.meter_val = ctypes.c_float(0000000.0)
+        self.holding = ctypes.c_double(00000.0)
         pass
 
     def voltage_clamp(self):
