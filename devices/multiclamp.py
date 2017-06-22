@@ -249,25 +249,14 @@ class MultiClamp(object):
     def pulse(self):
         if not self.dll.MCCMSG_Pulse(self.msg_handler,
                                      ctypes.byref(self.last_error)):
-
-            sz_error = ctypes.c_char_p()
-            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
-                                           self.last_error,
-                                           sz_error,
-                                           ctypes.sizeof(sz_error))
-            self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
+            self.check_error()
 
     @needs_select
     def set_pulse_amplitude(self, amplitude):
         if not self.dll.MCCMSG_SetPulseAmplitude(self.msg_handler,
                                                  ctypes.c_double(amplitude),
                                                  ctypes.byref(self.last_error)):
-            sz_error = ctypes.c_char_p()
-            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
-                                           self.last_error,
-                                           sz_error,
-                                           ctypes.sizeof(sz_error))
-            self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
+            self.check_error()
 
     @needs_select
     def get_pulse_amplitude(self):
@@ -275,12 +264,7 @@ class MultiClamp(object):
         if not self.dll.MCCMSG_GetPulseAmplitude(self.msg_handler,
                                                  ctypes.byref(amplitude),
                                                  ctypes.byref(self.last_error)):
-            sz_error = ctypes.c_char_p()
-            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
-                                           self.last_error,
-                                           sz_error,
-                                           ctypes.sizeof(sz_error))
-            self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
+            self.check_error()
         return amplitude
 
     @needs_select
@@ -288,12 +272,7 @@ class MultiClamp(object):
         if not self.dll.MCCMSG_SetPulseDuration(self.msg_handler,
                                                 ctypes.c_double(duration),
                                                 ctypes.byref(self.last_error)):
-            sz_error = ctypes.c_char_p()
-            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
-                                           self.last_error,
-                                           sz_error,
-                                           ctypes.sizeof(sz_error))
-            self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
+            self.check_error()
 
     @needs_select
     def get_pulse_duration(self):
@@ -301,12 +280,7 @@ class MultiClamp(object):
         if not self.dll.MCCMSG_GetPulseDuration(self.msg_handler,
                                                 ctypes.byref(duration),
                                                 ctypes.byref(self.last_error)):
-            sz_error = ctypes.c_char_p()
-            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
-                                           self.last_error,
-                                           sz_error,
-                                           ctypes.sizeof(sz_error))
-            self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
+            self.check_error()
         return duration
 
     @needs_select
@@ -314,24 +288,14 @@ class MultiClamp(object):
         if not self.dll.MCCMSG_SetTestSignalEnable(self.msg_handler,
                                                    ctypes.c_bool(enable),
                                                    ctypes.byref(self.last_error)):
-            sz_error = ctypes.c_char_p()
-            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
-                                           self.last_error,
-                                           sz_error,
-                                           ctypes.sizeof(sz_error))
-            self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
+            self.check_error()
 
     @needs_select
     def set_freq_pulse_amplitude(self, amplitude):
         if not self.dll.MCCMSG_SetTestSignalAmplitude(self.msg_handler,
                                                       ctypes.c_double(amplitude),
                                                       ctypes.byref(self.last_error)):
-            sz_error = ctypes.c_char_p()
-            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
-                                           self.last_error,
-                                           sz_error,
-                                           ctypes.sizeof(sz_error))
-            self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
+            self.check_error()
 
     @needs_select
     def get_freq_pulse_amplitude(self):
@@ -339,12 +303,7 @@ class MultiClamp(object):
         if not self.dll.MCCMSG_GetTestSignalAmplitude(self.msg_handler,
                                                       ctypes.byref(amplitude),
                                                       ctypes.byref(self.last_error)):
-            sz_error = ctypes.c_char_p()
-            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
-                                           self.last_error,
-                                           sz_error,
-                                           ctypes.sizeof(sz_error))
-            self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
+            self.check_error()
         return amplitude
 
     @needs_select
@@ -352,12 +311,7 @@ class MultiClamp(object):
         if not self.dll.MCCMSG_SetTestSignalFrequency(self.msg_handler,
                                                       ctypes.c_double(frequency),
                                                       ctypes.byref(self.last_error)):
-            sz_error = ctypes.c_char_p()
-            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
-                                           self.last_error,
-                                           sz_error,
-                                           ctypes.sizeof(sz_error))
-            self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
+            self.check_error()
 
     @needs_select
     def get_freq_pulse_frequency(self):
@@ -365,12 +319,7 @@ class MultiClamp(object):
         if not self.dll.MCCMSG_GetTestSignalFrequency(self.msg_handler,
                                                       ctypes.byref(frequency),
                                                       ctypes.byref(self.last_error)):
-            sz_error = ctypes.c_char_p()
-            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
-                                           self.last_error,
-                                           sz_error,
-                                           ctypes.sizeof(sz_error))
-            self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
+            self.check_error()
         return frequency
 
     @needs_select
@@ -378,12 +327,7 @@ class MultiClamp(object):
         if not self.dll.MCCMSG_SetMeterResistEnable(self.msg_handler,
                                                     ctypes.c_bool(enable),
                                                     ctypes.byref(self.last_error)):
-            sz_error = ctypes.c_char_p()
-            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
-                                           self.last_error,
-                                           sz_error,
-                                           ctypes.sizeof(sz_error))
-            self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
+            self.check_error()
 
     @needs_select
     def get_meter_resist_enable(self):
@@ -391,12 +335,7 @@ class MultiClamp(object):
         if not self.dll.MCCMSG_GetMeterResistEnable(self.msg_handler,
                                                     ctypes.byref(enable),
                                                     ctypes.byref(self.last_error)):
-            sz_error = ctypes.c_char_p()
-            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
-                                           self.last_error,
-                                           sz_error,
-                                           ctypes.sizeof(sz_error))
-            self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
+            self.check_error()
         return enable
 
     @needs_select
@@ -404,12 +343,7 @@ class MultiClamp(object):
         if not self.dll.MCCMSG_SetLeakSubEnable(self.msg_handler,
                                                 ctypes.c_bool(enable),
                                                 ctypes.byref(self.last_error)):
-            sz_error = ctypes.c_char_p()
-            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
-                                           self.last_error,
-                                           sz_error,
-                                           ctypes.sizeof(sz_error))
-            self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
+            self.check_error()
 
     @needs_select
     def get_leak_res(self):
@@ -417,36 +351,21 @@ class MultiClamp(object):
         if not self.dll.MCCMSG_GetLeakSubResist(self.msg_handler,
                                                 ctypes.byref(res),
                                                 ctypes.byref(self.last_error)):
-            sz_error = ctypes.c_char_p()
-            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
-                                           self.last_error,
-                                           sz_error,
-                                           ctypes.sizeof(sz_error))
-            self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
+            self.check_error()
         return res
 
     @needs_select
     def auto_leak_res(self):
         if not self.dll.MCCMSG_AutoLeakSub(self.msg_handler,
                                            ctypes.byref(self.last_error)):
-            sz_error = ctypes.c_char_p()
-            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
-                                           self.last_error,
-                                           sz_error,
-                                           ctypes.sizeof(sz_error))
-            self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
+            self.check_error()
 
     @needs_select
     def set_primary_signal_membcur(self):
         if not self.dll.MCCMSG_SetPrimarySignal(self.msg_handler,
                                                 ctypes.c_uint(0),
                                                 ctypes.byref(self.last_error)):
-            sz_error = ctypes.c_char_p()
-            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
-                                           self.last_error,
-                                           sz_error,
-                                           ctypes.sizeof(sz_error))
-            self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
+            self.check_error()
 
     @needs_select
     def get_primary_signal_membcur(self):
@@ -454,12 +373,7 @@ class MultiClamp(object):
         if not self.dll.MCCMSG_GetPrimarySignal(self.msg_handler,
                                                 ctypes.byref(res),
                                                 ctypes.byref(self.last_error)):
-            sz_error = ctypes.c_char_p()
-            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
-                                           self.last_error,
-                                           sz_error,
-                                           ctypes.sizeof(sz_error))
-            self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
+            self.check_error()
         return res
 
     @needs_select
@@ -467,48 +381,28 @@ class MultiClamp(object):
         if not self.dll.MCCMSG_SetPrimarySignalGain(self.msg_handler,
                                                     ctypes.c_double(gain),
                                                     ctypes.byref(self.last_error)):
-            sz_error = ctypes.c_char_p()
-            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
-                                           self.last_error,
-                                           sz_error,
-                                           ctypes.sizeof(sz_error))
-            self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
+            self.check_error()
 
     @needs_select
     def set_primary_signal_lpf(self, lpf):
         if not self.dll.MCCMSG_SetPrimarySignalLPF(self.msg_handler,
                                                    ctypes.c_double(lpf),
                                                    ctypes.byref(self.last_error)):
-            sz_error = ctypes.c_char_p()
-            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
-                                           self.last_error,
-                                           sz_error,
-                                           ctypes.sizeof(sz_error))
-            self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
+            self.check_error()
 
     @needs_select
     def set_primary_signal_hpf(self, hpf):
         if not self.dll.MCCMSG_SetPrimarySignalHPF(self.msg_handler,
                                                    ctypes.c_double(hpf),
                                                    ctypes.byref(self.last_error)):
-            sz_error = ctypes.c_char_p()
-            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
-                                           self.last_error,
-                                           sz_error,
-                                           ctypes.sizeof(sz_error))
-            self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
+            self.check_error()
 
     @needs_select
     def set_secondary_signal_membpot(self):
         if not self.dll.MCCMSG_SetSecondarySignal(self.msg_handler,
                                                   ctypes.c_uint(1),
                                                   ctypes.byref(self.last_error)):
-            sz_error = ctypes.c_char_p()
-            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
-                                           self.last_error,
-                                           sz_error,
-                                           ctypes.sizeof(sz_error))
-            self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
+            self.check_error()
 
     @needs_select
     def get_secondary_signal_membpot(self):
@@ -516,12 +410,7 @@ class MultiClamp(object):
         if not self.dll.MCCMSG_GetSecondarySignal(self.msg_handler,
                                                   ctypes.byref(res),
                                                   ctypes.byref(self.last_error)):
-            sz_error = ctypes.c_char_p()
-            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
-                                           self.last_error,
-                                           sz_error,
-                                           ctypes.sizeof(sz_error))
-            self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
+            self.check_error()
         return res
 
     @needs_select
@@ -529,35 +418,20 @@ class MultiClamp(object):
         if not self.dll.MCCMSG_SetSecondarySignalLPF(self.msg_handler,
                                                      ctypes.c_double(lpf),
                                                      ctypes.byref(self.last_error)):
-            sz_error = ctypes.c_char_p()
-            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
-                                           self.last_error,
-                                           sz_error,
-                                           ctypes.sizeof(sz_error))
-            self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
+            self.check_error()
 
     @needs_select
     def set_secondary_signal_gain(self, gain):
         if not self.dll.MCCMSG_SetSecondarySignalGain(self.msg_handler,
                                                       ctypes.c_double(gain),
                                                       ctypes.byref(self.last_error)):
-            sz_error = ctypes.c_char_p()
-            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
-                                           self.last_error,
-                                           sz_error,
-                                           ctypes.sizeof(sz_error))
-            self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
+            self.check_error()
 
     @needs_select
     def auto_pipette_offset(self):
         if not self.dll.MCCMSG_AutoPipetteOffset(self.msg_handler,
                                                  ctypes.byref(self.last_error)):
-            sz_error = ctypes.c_char_p()
-            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
-                                           self.last_error,
-                                           sz_error,
-                                           ctypes.sizeof(sz_error))
-            self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
+            self.check_error()
 
     @needs_select
     def get_meter_value(self):
@@ -566,12 +440,7 @@ class MultiClamp(object):
                                              ctypes.byref(value),
                                              ctypes.c_uint(0),
                                              ctypes.byref(self.last_error)):
-            sz_error = ctypes.c_char_p()
-            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
-                                           self.last_error,
-                                           sz_error,
-                                           ctypes.sizeof(sz_error))
-            self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
+            self.check_error()
         return value
 
     @needs_select
@@ -579,24 +448,14 @@ class MultiClamp(object):
         if not self.dll.MCCMSG_SetHoldingEnable(self.msg_handler,
                                                 ctypes.c_bool(enable),
                                                 ctypes.byref(self.last_error)):
-            sz_error = ctypes.c_char_p()
-            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
-                                           self.last_error,
-                                           sz_error,
-                                           ctypes.sizeof(sz_error))
-            self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
+            self.check_error()
 
     @needs_select
     def set_holding(self, value):
         if not self.dll.MCCMSG_SetHolding(self.msg_handler,
                                           ctypes.c_double(value),
                                           ctypes.byref(self.last_error)):
-            sz_error = ctypes.c_char_p()
-            self.dll.MCCMSG_BuildErrorText(self.msg_handler,
-                                           self.last_error,
-                                           sz_error,
-                                           ctypes.sizeof(sz_error))
-            self.dll.AfxMessageBox(sz_error, self.dll.MB_ICONSTOP)
+            self.check_error()
 
     def close(self):
         self.dll.MCCMSG_DestroyObject(self.msg_handler)
