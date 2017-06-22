@@ -156,7 +156,7 @@ class Application(Frame):
                 elif unit == 4:
                     unit = ' TOhm'
                 else:
-                    unit = str(unit)
+                    unit = ' 1E{} Ohm'.format(unit*3)
 
                 self.res_value['text'] = val[:length] + ',' + val[length:length+2] + unit
                 self.after(10, self.get_res)
