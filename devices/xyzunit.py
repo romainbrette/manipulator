@@ -139,8 +139,8 @@ class XYZUnit(Device):
         number_step = distance // 255
         last_step = distance % 255
         if number_step:
-            self.set_single_step_distance(axis, sign(distance)*255)
-            for _ in range(abs(number_step)):
+            self.set_single_step_distance(axis, 255)
+            for _ in range(int(abs(number_step))):
                 self.single_step(axis, sign(distance))
         if last_step:
             self.set_single_step_distance(axis, last_step)

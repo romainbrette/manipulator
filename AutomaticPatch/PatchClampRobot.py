@@ -267,6 +267,7 @@ class PatchClampRobot(object):
                 weight += [bin_edge.min()]
 
         index = weight.index(max(weight))
+        index = 5
         j = index % 3
         i = index // 3
         self.template_loc = [temp.shape[1] * (1 - j / 2.), temp.shape[0] * (1 - i / 2.)]
@@ -278,6 +279,8 @@ class PatchClampRobot(object):
             img = self.template_zone()
             height, width = img.shape[:2]
             img = img[i * height / 4:height / 2 + i * height / 4, j * width / 4:width / 2 + j * width / 4]
+            cv2.imshow('{}'.format(k), img)
+            cv2.waitKey(1)
             self.template += [img]
         self.go_to_zero()
         pass
@@ -338,13 +341,13 @@ class PatchClampRobot(object):
             self.step *= 2.
 
         # Move the arm
-        # self.arm.relative_move(self.step, axis)
-        self.arm.step_move(axis, self.step)
+        self.arm.relative_move(self.step, axis)
+        #self.arm.step_move(axis, self.step)
 
         # Move the platform to center the tip
         for i in range(3):
-            # self.microscope.relative_move(self.mat[i, axis] * self.step, i)
-            self.microscope.step_move(i, self.mat[i, axis] * self.step)
+            self.microscope.relative_move(self.mat[i, axis] * self.step, i)
+            #self.microscope.step_move(i, self.mat[i, axis] * self.step)
 
         # Waiting for motors to stop
         self.arm.wait_motor_stop(axis)
@@ -362,8 +365,8 @@ class PatchClampRobot(object):
         delta = matrix('{a}; {b}'.format(a=(self.x_init - loc[0]) * self.um_px, b=(self.y_init - loc[1]) * self.um_px))
         move = self.rot_inv * delta
         for i in range(2):
-            # self.microscope.relative_move(move[i, 0], i)
-            self.microscope.step_move(i, move[i, 0])
+            self.microscope.relative_move(move[i, 0], i)
+            #self.microscope.step_move(i, move[i, 0])
 
         self.microscope.wait_motor_stop([0, 1])
 

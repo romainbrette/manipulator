@@ -3,6 +3,7 @@ An XYZ unit made of an XY stage and another device representing the microscope Z
 """
 from device import *
 from numpy import array, sign
+from time import sleep
 
 __all__ = ['XYMicUnit']
 
@@ -139,7 +140,8 @@ class XYMicUnit(Device):
                 self.single_step(i, step)
         else:
             if axis == 2:
-                self.dev_mic.relative_move(self.dev_mic.step_distance)
+                print step*self.dev_mic.step_distance
+                self.dev_mic.relative_move(step*self.dev_mic.step_distance)
             else:
                 self.dev.single_step(self.axes[axis], step)
         sleep(.02)
@@ -159,12 +161,14 @@ class XYMicUnit(Device):
         number_step = distance // 255
         last_step = distance % 255
         if number_step:
-            self.set_single_step_distance(axis, sign(distance)*255)
-            for _ in range(abs(number_step)):
+            self.set_single_step_distance(axis, 255)
+            for _ in range(int(abs(number_step))):
                 self.single_step(axis, sign(distance))
+                self.wait_motor_stop(axis)
         if last_step:
             self.set_single_step_distance(axis, last_step)
             self.single_step(axis, 1)
+            self.wait_motor_stop(axis)
 
     def wait_motor_stop(self, axis):
         """
