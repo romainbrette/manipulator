@@ -158,17 +158,18 @@ class XYMicUnit(Device):
         sleep(.02)
 
     def step_move(self, axis, distance):
-        number_step = distance // 255
-        last_step = distance % 255
-        if number_step:
-            self.set_single_step_distance(axis, 255)
-            for _ in range(int(abs(number_step))):
+        if axis == 2:
+            self.relative_move(distance, axis)
+        else:
+            number_step = abs(distance) // 255
+            last_step = abs(distance) % 255
+            if number_step:
+                self.set_single_step_distance(axis, 255)
+                for _ in range(int(number_step)):
+                    self.single_step(axis, sign(distance))
+            if last_step:
+                self.set_single_step_distance(axis, last_step)
                 self.single_step(axis, sign(distance))
-                self.wait_motor_stop(axis)
-        if last_step:
-            self.set_single_step_distance(axis, last_step)
-            self.single_step(axis, 1)
-            self.wait_motor_stop(axis)
 
     def wait_motor_stop(self, axis):
         """
