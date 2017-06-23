@@ -1,3 +1,9 @@
+'''
+Functions to add drawings on images:
+* a box around the center
+* a cross at the center
+'''
+
 import cv2
 
 __all__ = ['disp_centered_cross', 'disp_template_zone']

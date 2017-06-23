@@ -1,3 +1,6 @@
+'''
+Initialization of controllers and camera
+'''
 from devices import *
 from serial import SerialException
 

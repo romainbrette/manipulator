@@ -1,3 +1,6 @@
+'''
+Simple GUI for the patch clamp robot
+'''
 from Tkinter import *
 from tkMessageBox import *
 import ttk

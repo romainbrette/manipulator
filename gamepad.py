@@ -35,7 +35,7 @@ class GamepadReader(threading.Thread):
     def run(self):
         while True:
             event = self.gamepad.read()[0]
-            if event.code in ['ABS_X', 'ABS_Y']:
+            if event.code in ['ABS_X', 'ABS_Y', 'ABS_Z', 'ABS_RZ']:
                 self.event_container.append(event)
 
 class GamepadControl(Frame):
@@ -49,6 +49,8 @@ class GamepadControl(Frame):
         self.force_label.pack()
         self.x = 0
         self.y = 0
+        self.left_z = 0
+        self.right_z = 0
         self.force = 0
         self.angle = 0
         self.previous_speed = 0
@@ -61,7 +63,9 @@ class GamepadControl(Frame):
         self.recording = False
         self.record_file = None
         self.start_time = None
-        self.speed_setting = [1, 2, 3]
+        self.speed_setting = [1, 3, 5]
+        # Z axis uses slowest speed
+        self.controller.set_single_step_factor_trackball(self.axes[2], self.speed_setting[1])
         gamepad = inputs.devices.gamepads[0]
         self.event_container = []
         reader = GamepadReader(self.event_container, gamepad)
@@ -84,7 +88,7 @@ class GamepadControl(Frame):
                 self.record_file = open(filename, 'a')
             else:
                 self.record_file = open(filename, 'w')
-                self.record_file.write('time,force,angle\n')
+                self.record_file.write('time,force,angle,z\n')
             self.start_time = time.time()
             self.record_button['text'] = 'Stop recording'
             self.recording = True
@@ -95,6 +99,10 @@ class GamepadControl(Frame):
                 self.x = event.state / 32768.0
             elif event.code == 'ABS_Y':
                 self.y = event.state / 32768.0
+            elif event.code == 'ABS_Z':
+                self.left_z = event.state / 255.
+            elif event.code == 'ABS_RZ':
+                self.right_z = event.state / 255.
             # Classify deviation from center (i.e. movement speed) into four classes
             # No movement, slow movement, medium movement, fast movement
             self.force = np.clip(int(np.sqrt(self.x**2 + self.y**2) * 4), 0, 3)
@@ -127,14 +135,23 @@ class GamepadControl(Frame):
                     self.controller.single_step_trackball(self.axes[1], 1)
                 else:
                     self.controller.single_step_trackball(self.axes[1], -2)
+
+        z = self.left_z - self.right_z
+        if abs(z) > 0.25:
+            z_step = 1 if z > 0 else -2
+            self.controller.single_step_trackball(self.axes[2], z_step)
+        else:
+            z_step = 0
+
         if self.recording:
             now = time.time() - self.start_time
-            angle = int(round(self.angle / (np.pi/4)))
-            self.record_file.write('%f,%d,%d\n' % (now, self.force, angle))
+            angle = ((int(round(self.angle / (np.pi/4))) + 4 )% 8) -4
+            self.record_file.write('%f,%d,%d,%d\n' % (now, self.force, angle, z_step))
+        self.z = 0
         self.after(50, self.update_speed)
 
 if __name__ == '__main__':
     root = Tk()
-    # dev = LuigsNeumann_SM10('COM3')
-    GamepadControl(None, axes=[7, 8], scale=[-1, 1], master=root).pack()
+    dev = LuigsNeumann_SM10('COM3')
+    GamepadControl(dev, axes=[7, 8, 9], scale=[-1, 1, 1], master=root).pack()
     root.mainloop()
