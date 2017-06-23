@@ -57,7 +57,7 @@ class XYZUnit(Device):
             self.dev.absolute_move_group(x, self.axes)
         else:
             self.dev.absolute_move(x, self.axes[axis])
-        sleep(.05)
+        sleep(.02)
 
     def relative_move(self, x, axis = None):
         '''
@@ -75,7 +75,7 @@ class XYZUnit(Device):
             self.dev.relative_move_group(x, self.axes)
         else:
             self.dev.relative_move(x, self.axes[axis])
-        sleep(.05)
+        sleep(.02)
 
     def save(self, name):
         self.memory[name] = self.position()
@@ -105,7 +105,7 @@ class XYZUnit(Device):
                 self.set_to_zero(i)
         else:
             self.dev.set_to_zero([self.axes[axis]])
-        sleep(.05)
+        sleep(.02)
 
     def go_to_zero(self, axis):
         """
@@ -117,7 +117,7 @@ class XYZUnit(Device):
                 self.go_to_zero(i)
         else:
             self.dev.go_to_zero([self.axes[axis]])
-        sleep(.05)
+        sleep(.02)
 
     def wait_motor_stop(self, axis):
         """
@@ -130,4 +130,4 @@ class XYZUnit(Device):
                 self.wait_motor_stop(i)
         else:
             self.dev.wait_motor_stop([self.axes[axis]])
-        sleep(.05)
+        sleep(.02)

@@ -6,7 +6,7 @@ from numpy.linalg import inv
 import numpy as np
 import cv2
 from math import fabs
-from time import sleep
+from time import sleep, time
 import os
 import errno
 import time
@@ -278,8 +278,6 @@ class PatchClampRobot(object):
             img = self.template_zone()
             height, width = img.shape[:2]
             img = img[i * height / 4:height / 2 + i * height / 4, j * width / 4:width / 2 + j * width / 4]
-            cv2.imshow('{}'.format(k), img)
-            cv2.waitKey(1)
             self.template += [img]
         self.go_to_zero()
         pass

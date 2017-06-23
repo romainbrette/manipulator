@@ -91,7 +91,7 @@ class Application(Frame):
                 self.controllist['state'] = 'disabled'
                 self.armlist['state'] = 'disabled'
                 self.imgsave.config(state='normal', command=self.robot.save_img)
-                self.load_calibrate.config(state='normal', command=self.robot.load_calibration)
+                self.load_calibrate.config(state='normal', command=self.load_cali)
                 self.calibrate.config(state='normal', command=self.calibration)
                 self.zero.config(state='normal')
                 self.connection.config(state='disabled')

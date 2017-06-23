@@ -256,7 +256,7 @@ class LuigsNeumann_SM10(SerialDevice):
         axes4 = [0, 0, 0, 0]
         axes4[:len(axes)] = axes
         data = [0xA0] + axes + [0]
-        time.sleep(0.05)  # right after a motor command the motors are not moving yet
+        time.sleep(0.1)  # right after a motor command the motors are not moving yet
         ret = struct.unpack('20B', self.send_command('A120', data, 20))
         moving = [ret[6 + i*4] for i in range(len(axes))]
         is_moving = any(moving)
