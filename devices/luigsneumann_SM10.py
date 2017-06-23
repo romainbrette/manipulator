@@ -198,7 +198,7 @@ class LuigsNeumann_SM10(SerialDevice):
         # Send move command
         self.send_command(ID, [0xA0] + axes4 + pos, -1)
 
-    def single_step(self, axis, steps):
+    def single_step_trackball(self, axis, steps):
         '''
         '''
         ID = '01E8'
@@ -206,11 +206,43 @@ class LuigsNeumann_SM10(SerialDevice):
             steps += 256
         self.send_command(ID, [axis, steps], 0)
 
-    def set_single_step_factor(self, axis, factor):
+    def set_single_step_factor_trackball(self, axis, factor):
         ID = '019F'
         if factor < 0:
             factor += 256
         data = (axis, factor)
+        self.send_command(ID, data, 0)
+
+    def single_step(self, axis, steps):
+        '''
+        Moves the given axis using the StepIncrement or StepDecrement command.
+        Using a steps argument different from 1 (or -1) simply sends multiple
+        StepIncrement/StepDecrement commands.
+        Uses distance and velocity set by `set_single_step_distance` resp.
+        `set_single_step_velocity`.
+        '''
+        if steps > 0:
+            ID = '0140'
+        else:
+            ID = '0141'
+        for _ in range(abs(steps)):
+            self.send_command(ID, [axis], 0)
+            time.sleep(0.02)
+
+    def set_single_step_distance(self, axis, distance):
+        '''
+        Distance (in um) for `single_step`.
+        '''
+        if distance > 255:
+            print('Step distance too long, setting distance at 255um')
+            distance = 255
+        ID = '044F'
+        data = [axis] + list(bytearray(struct.pack('f', distance)))
+        self.send_command(ID, data, 0)
+
+    def set_single_step_velocity(self, axis, velocity):
+        ID = '0158'
+        data = (axis, velocity)
         self.send_command(ID, data, 0)
 
     def stop(self, axis):
@@ -226,7 +258,7 @@ class LuigsNeumann_SM10(SerialDevice):
         """
         Set the current position of the axes as the zero position
         :param axes:
-        :return: 
+        :return:
         """
         # # collection command does not seem to work...
         # ID = 'A0F0'
@@ -239,7 +271,7 @@ class LuigsNeumann_SM10(SerialDevice):
     def go_to_zero(self, axis):
         """
         Make axis go to zero position
-        :return: 
+        :return:
         """
         ID = '0024'
         for axes in axis:
@@ -250,13 +282,13 @@ class LuigsNeumann_SM10(SerialDevice):
         Wait for the motor to stop
         On SM10, motors' commands seems to block
         :param axes:
-        :return: 
+        :return:
         """
 
         axes4 = [0, 0, 0, 0]
         axes4[:len(axes)] = axes
         data = [0xA0] + axes + [0]
-        time.sleep(0.05)  # right after a motor command the motors are not moving yet
+        time.sleep(0.1)  # right after a motor command the motors are not moving yet
         ret = struct.unpack('20B', self.send_command('A120', data, 20))
         moving = [ret[6 + i*4] for i in range(len(axes))]
         is_moving = any(moving)

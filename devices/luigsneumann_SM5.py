@@ -148,6 +148,33 @@ class LuigsNeumann_SM5(SerialDevice):
         for axes in axis:
             self.send_command(ID, [axes], 0)
 
+    def single_step(self, axis, steps):
+        '''
+        Moves the given axis using the StepIncrement or StepDecrement command.
+        Using a steps argument different from 1 (or -1) simply sends multiple
+        StepIncrement/StepDecrement commands.
+        Uses distance and velocity set by `set_single_step_distance` resp.
+        `set_single_step_velocity`.
+        '''
+        if steps > 0:
+            ID = '0140'
+        else:
+            ID = '0141'
+        for _ in range(abs(steps)):
+            self.send_command(ID, [axis], 0)
+            time.sleep(0.02)
+
+    def set_single_step_distance(self, axis, distance):
+        '''
+        Distance (in um) for `single_step`.
+        '''
+        if distance > 255:
+            print('Step distance too long, setting distance at 255um')
+            distance = 255
+        ID = '0146'
+        data = [axis] + list(bytearray(struct.pack('f', distance)))
+        self.send_command(ID, data, 0)
+
     def wait_motor_stop(self, axis):
         """
         Wait for the motor to stop
