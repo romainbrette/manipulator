@@ -60,7 +60,7 @@ class XYMicUnit(Device):
                 self.dev_mic.absolute_move(x)
             else:
                 self.dev.absolute_move(x, self.axes[axis])
-        sleep(.05)
+        sleep(.02)
 
     def relative_move(self, x, axis = None):
         '''
@@ -79,7 +79,7 @@ class XYMicUnit(Device):
                 self.dev_mic.relative_move(x)
             else:
                 self.dev.relative_move(x, self.axes[axis])
-        sleep(.05)
+        sleep(.02)
 
     def save(self, name):
         self.memory[name] = self.position()
@@ -116,7 +116,7 @@ class XYMicUnit(Device):
                 self.dev_mic.set_to_zero()
             else:
                 self.dev.set_to_zero([self.axes[axis]])
-        sleep(.05)
+        sleep(.02)
 
     def go_to_zero(self, axis):
         """
@@ -131,7 +131,7 @@ class XYMicUnit(Device):
                 self.dev_mic.go_to_zero()
             else:
                 self.dev.go_to_zero([self.axes[axis]])
-        sleep(.05)
+        sleep(.02)
 
     def wait_motor_stop(self, axis):
         """
@@ -147,7 +147,7 @@ class XYMicUnit(Device):
                 self.dev_mic.wait_motor_stop()
             else:
                 self.dev.wait_motor_stop([self.axes[axis]])
-        sleep(.05)
+        sleep(.02)
 
 if __name__ == '__main__':
     from luigsneumann_SM5 import *
