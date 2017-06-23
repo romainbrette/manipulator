@@ -1,8 +1,8 @@
 # coding=utf-8
+import os
 import threading
 import time
 from Tkinter import *
-import ttk
 
 import inputs
 import numpy as np
@@ -54,6 +54,13 @@ class GamepadControl(Frame):
         self.previous_speed = 0
         self.angle_label = Label(self, text='angle: -')
         self.angle_label.pack()
+        self.file_entry = Entry(self)
+        self.file_entry.pack()
+        self.record_button = Button(self, text='Start recording', command=self.record)
+        self.record_button.pack()
+        self.recording = False
+        self.record_file = None
+        self.start_time = None
         self.speed_setting = [1, 2, 3]
         gamepad = inputs.devices.gamepads[0]
         self.event_container = []
@@ -61,6 +68,26 @@ class GamepadControl(Frame):
         reader.start()
         self.after(10, self.update_labels)
         self.after(50, self.update_speed)
+
+    def record(self):
+        if self.recording:
+            # stop recording
+            self.record_file.close()
+            self.record_file = None
+            self.record_button['text'] = 'Start recording'
+            self.recording = False
+        else:
+            # start recording
+            filename = self.file_entry.get()
+            if os.path.isfile(filename):
+                print('File %s already exists, appending to the existing file' % filename)
+                self.record_file = open(filename, 'a')
+            else:
+                self.record_file = open(filename, 'w')
+                self.record_file.write('time,force,angle\n')
+            self.start_time = time.time()
+            self.record_button['text'] = 'Stop recording'
+            self.recording = True
 
     def update_labels(self):
         for event in self.event_container:
@@ -82,7 +109,6 @@ class GamepadControl(Frame):
         self.after(10, self.update_labels)
 
     def update_speed(self):
-        factor = 21
         if self.force > 0:
             speed = self.speed_setting[self.force - 1]
             if self.previous_speed != speed:
@@ -101,11 +127,14 @@ class GamepadControl(Frame):
                     self.controller.single_step_trackball(self.axes[1], 1)
                 else:
                     self.controller.single_step_trackball(self.axes[1], -2)
-
+        if self.recording:
+            now = time.time() - self.start_time
+            angle = int(round(self.angle / (np.pi/4)))
+            self.record_file.write('%f,%d,%d\n' % (now, self.force, angle))
         self.after(50, self.update_speed)
 
 if __name__ == '__main__':
     root = Tk()
-    dev = LuigsNeumann_SM10('COM3')
-    GamepadControl(dev, axes=[7, 8], scale=[-1, 1], master=root).pack()
+    # dev = LuigsNeumann_SM10('COM3')
+    GamepadControl(None, axes=[7, 8], scale=[-1, 1], master=root).pack()
     root.mainloop()
