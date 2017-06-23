@@ -227,11 +227,15 @@ class LuigsNeumann_SM10(SerialDevice):
             ID = '0141'
         for _ in range(abs(steps)):
             self.send_command(ID, [axis], 0)
+            time.sleep(0.02)
 
     def set_single_step_distance(self, axis, distance):
         '''
         Distance (in um) for `single_step`.
         '''
+        if distance > 255:
+            print('Step distance too long, setting distance at 255um')
+            distance = 255
         ID = '044F'
         data = [axis] + list(bytearray(struct.pack('f', distance)))
         self.send_command(ID, data, 0)

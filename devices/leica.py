@@ -26,6 +26,7 @@ class Leica(Device):
         self.memory = dict() # A dictionary of positions
 
         self.zero_position = 0
+        self.step_distance = 0
 
         self.port_name = name
         mmc = MMCorePy.CMMCore()
