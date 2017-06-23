@@ -5,6 +5,7 @@ TODO: group queries, based on array or list
 """
 from device import *
 from numpy import array
+from time import sleep
 
 __all__ = ['XYZUnit']
 
@@ -56,6 +57,7 @@ class XYZUnit(Device):
             self.dev.absolute_move_group(x, self.axes)
         else:
             self.dev.absolute_move(x, self.axes[axis])
+        sleep(.05)
 
     def relative_move(self, x, axis = None):
         '''
@@ -73,6 +75,7 @@ class XYZUnit(Device):
             self.dev.relative_move_group(x, self.axes)
         else:
             self.dev.relative_move(x, self.axes[axis])
+        sleep(.05)
 
     def save(self, name):
         self.memory[name] = self.position()
@@ -97,8 +100,12 @@ class XYZUnit(Device):
         :param axis: 
         :return: 
         """
-        axes = [self.axes[i] for i in axis]
-        self.dev.set_to_zero(axes)
+        if isinstance(axis, list):
+            for i in axis:
+                self.set_to_zero(i)
+        else:
+            self.dev.set_to_zero([self.axes[axis]])
+        sleep(.05)
 
     def go_to_zero(self, axis):
         """
@@ -110,6 +117,7 @@ class XYZUnit(Device):
                 self.go_to_zero(i)
         else:
             self.dev.go_to_zero([self.axes[axis]])
+        sleep(.05)
 
     def wait_motor_stop(self, axis):
         """
@@ -122,3 +130,4 @@ class XYZUnit(Device):
                 self.wait_motor_stop(i)
         else:
             self.dev.wait_motor_stop([self.axes[axis]])
+        sleep(.05)
