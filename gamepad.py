@@ -86,21 +86,21 @@ class GamepadControl(Frame):
         if self.force > 0:
             speed = self.speed_setting[self.force - 1]
             if self.previous_speed != speed:
-                self.controller.set_single_step_factor(self.axes[0], speed)
-                self.controller.set_single_step_factor(self.axes[1], speed)
+                self.controller.set_single_step_factor_trackball(self.axes[0], speed)
+                self.controller.set_single_step_factor_trackball(self.axes[1], speed)
                 self.previous_speed = speed
             x = np.sin(self.angle) * self.scale[0]
             y = np.cos(self.angle) * self.scale[1]
             if abs(x) > .01:
                 if x> 0:
-                    self.controller.single_step(self.axes[0], 1)
+                    self.controller.single_step_trackball(self.axes[0], 1)
                 else:
-                    self.controller.single_step(self.axes[0], -2)
+                    self.controller.single_step_trackball(self.axes[0], -2)
             if abs(y) > .01:
                 if y> 0:
-                    self.controller.single_step(self.axes[1], 1)
+                    self.controller.single_step_trackball(self.axes[1], 1)
                 else:
-                    self.controller.single_step(self.axes[1], -2)
+                    self.controller.single_step_trackball(self.axes[1], -2)
 
         self.after(50, self.update_speed)
 
