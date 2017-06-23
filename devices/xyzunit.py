@@ -136,15 +136,15 @@ class XYZUnit(Device):
         sleep(.02)
 
     def step_move(self, axis, distance):
-        number_step = distance // 255
-        last_step = distance % 255
+        number_step = abs(distance) // 255
+        last_step = abs(distance) % 255
         if number_step:
             self.set_single_step_distance(axis, 255)
-            for _ in range(int(abs(number_step))):
+            for _ in range(int(number_step)):
                 self.single_step(axis, sign(distance))
         if last_step:
             self.set_single_step_distance(axis, last_step)
-            self.single_step(axis, 1)
+            self.single_step(axis, sign(distance))
 
     def wait_motor_stop(self, axis):
         """
