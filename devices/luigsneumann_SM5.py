@@ -154,7 +154,7 @@ class LuigsNeumann_SM5(SerialDevice):
         for axes in axis:
             self.send_command('00f0', [axes], 0)
 
-    def set_to_zero_seond_counter(self, axes):
+    def set_to_zero_second_counter(self, axes):
         """
         Set the current position of the axes as the zero position
         :param axes:

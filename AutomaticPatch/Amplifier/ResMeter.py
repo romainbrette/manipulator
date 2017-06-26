@@ -49,9 +49,6 @@ class ResistanceMeter(Thread):
 
     def run(self):
         while self.acquisition:
-            lock = RLock()
-            lock.acquire()
-
             if self.continuous:
 
                 self.mcc.freq_pulse_enable(True)
@@ -81,8 +78,6 @@ class ResistanceMeter(Thread):
 
             else:
                 pass
-
-            lock.release()
         self.mcc.set_holding_enable(False)
 
     def stop(self):

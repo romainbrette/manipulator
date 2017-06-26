@@ -29,7 +29,7 @@ class PatchClampRobot(object):
         self.calibrated = 0
 
         # Maximum distance from initial position allowed
-        self.maxdist = 500
+        self.maxdist = 1000
 
         # Initial displacement of the arm to do during autocalibration, in um
         self.first_step = 2.
@@ -93,7 +93,7 @@ class PatchClampRobot(object):
         self.get_template_series(5)
 
         # Saving initial position of the tip on the screen
-        _, _, loc = templatematching(self.cam.frame, self.template[len(self.template) / 2])
+        _, _, loc = templatematching(self.cam.frame, self.template[len(self.template) // 2])
         self.x_init, self.y_init = loc[:2]
 
         # Getting the rotation matrix between the platform and the camera
@@ -105,7 +105,7 @@ class PatchClampRobot(object):
             sleep(.5)
 
             # Getting the displacement, in pixels, of the tip on the screen
-            _, _, loc = templatematching(self.cam.frame, self.template[len(self.template) / 2])
+            _, _, loc = templatematching(self.cam.frame, self.template[len(self.template) // 2])
             dx = loc[0] - self.x_init
             dy = loc[1] - self.y_init
 
@@ -155,7 +155,7 @@ class PatchClampRobot(object):
         :return: 0 if calibration failed, 1 otherwise
         """
 
-        print 'Calibrating pkatform'
+        print 'Calibrating platform'
 
         self.calibrate_platform()
 
@@ -263,7 +263,6 @@ class PatchClampRobot(object):
         template = self.template_zone()
         height, width = template.shape[:2]
         weight = []
-        template = cv2.bilateralFilter(template, 9, 75, 75)
         for i in range(3):
             for j in range(3):
                 temp = template[i * height / 4:height / 2 + i * height / 4, j * width / 4:width / 2 + j * width / 4]
@@ -323,10 +322,10 @@ class PatchClampRobot(object):
             # At least one template has been detected, setting the microscope at corresponding height
             index = vals.index(maxval)
             loc = locs[index]
-            focus_height = current_z + len(self.template) / 2 - index
+            focus_height = current_z + len(self.template) // 2 - index
             self.microscope.absolute_move(focus_height, 2)
             self.microscope.wait_motor_stop(2)
-            dep = len(self.template) / 2 - index
+            dep = len(self.template) // 2 - index
         else:
             # No template has been detected, focus can not be achieved
             raise ValueError('The template image has not been detected.')
