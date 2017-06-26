@@ -48,7 +48,7 @@ while(True):
 
     cv2.line(frame, (height/2, width/2-10), (height/2, width/2+10), (0, 0, 255))
     cv2.line(frame, (height/2-10, width/2), (height/2+10, width/2), (0, 0, 255))
-    frame = cv2.flip(frame, 1)
+    #frame = cv2.flip(frame, 1)
 
     # Display the resulting frame
     cv2.imshow('Camera',frame)
