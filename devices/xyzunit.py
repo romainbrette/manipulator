@@ -41,6 +41,9 @@ class XYZUnit(Device):
         else:
             return self.dev.position(self.axes[axis])
 
+    def position_second_counter(self, axis):
+        return self.dev.position_second_counter(self.axes[axis])
+
     def absolute_move(self, x, axis = None):
         '''
         Moves the device axis to position x in um.
@@ -74,9 +77,7 @@ class XYZUnit(Device):
             #    self.dev.relative_move(x[i], axis)
             self.dev.relative_move_group(x, self.axes)
         else:
-            pos = self.position(axis)
-            self.absolute_move(pos+x, axis)
-            # self.dev.relative_move(x, self.axes[axis])
+            self.dev.relative_move(x, self.axes[axis])
         sleep(.02)
 
     def save(self, name):
@@ -107,6 +108,19 @@ class XYZUnit(Device):
                 self.set_to_zero(i)
         else:
             self.dev.set_to_zero([self.axes[axis]])
+        sleep(.02)
+
+    def set_to_zero_second_counter(self, axis):
+        """
+        Set the current position of the axis as the zero position
+        :param axis: 
+        :return: 
+        """
+        if isinstance(axis, list):
+            for i in axis:
+                self.set_to_zero_second_counter(i)
+        else:
+            self.dev.set_to_zero_second_counter([self.axes[axis]])
         sleep(.02)
 
     def go_to_zero(self, axis):
@@ -142,8 +156,7 @@ class XYZUnit(Device):
         last_step = abs(distance) % 255
         if number_step:
             self.set_single_step_distance(axis, 255)
-            for _ in range(int(number_step)):
-                self.single_step(axis, sign(distance))
+            self.single_step(axis, number_step*sign(distance))
         if last_step:
             self.set_single_step_distance(axis, last_step)
             self.single_step(axis, sign(distance))

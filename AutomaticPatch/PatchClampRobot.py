@@ -85,6 +85,10 @@ class PatchClampRobot(object):
         self.arm.set_to_zero([0, 1, 2])
         self.microscope.set_to_zero([0, 1, 2])
 
+        # Testing if difference exits between first and second counter
+        self.arm.set_to_zero_second_counter([0, 1, 2])
+        self.microscope.set_to_zero_second_counter([0, 1, 2])
+
         # Get a series of template images for auto focus
         self.get_template_series(5)
 
@@ -368,6 +372,9 @@ class PatchClampRobot(object):
             #self.microscope.step_move(i, move[i, 0])
 
         self.microscope.wait_motor_stop([0, 1])
+
+        print 'Mic dif: {}'.format([self.microscope.position(i) - self.microscope.position_second_counter(i) for i in range(3)])
+        print 'Arm dif: {}'.format([self.arm.position(i) - self.arm.position_second_counter(i) for i in range(3)])
 
         # Update the estimated move to do for a move of 1 um of the arm
         for i in range(3):

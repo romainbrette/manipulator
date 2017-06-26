@@ -88,6 +88,21 @@ class LuigsNeumann_SM10(SerialDevice):
         res = self.send_command('0101', [axis], 4)
         return struct.unpack('f', res)[0]
 
+    def position_second_counter(self, axis):
+        '''
+        Current position along an axis.
+
+        Parameters
+        ----------
+        axis : axis number (starting at 1)
+
+        Returns
+        -------
+        The current position of the device axis in um.
+        '''
+        res = self.send_command('0131', [axis], 4)
+        return struct.unpack('f', res)[0]
+
     def slow_speed(self, axis):
         '''
         Query the slow speed setting for a given axis
@@ -267,6 +282,20 @@ class LuigsNeumann_SM10(SerialDevice):
         ID = '00F0'
         for axis in axes:
             self.send_command(ID, [axis], 0)
+
+    def set_to_zero_seond_counter(self, axes):
+        """
+        Set the current position of the axes as the zero position
+        :param axes:
+        :return:
+        """
+        # # collection command does not seem to work...
+        # ID = 'A0F0'
+        # address = group_address(axes)
+        # self.send_command(ID, address, -1)
+        ID = '0132'
+        for axis in axes:
+            self.send_command(ID, [axis, 02], 0)
 
     def go_to_zero(self, axis):
         """

@@ -43,6 +43,12 @@ class XYMicUnit(Device):
             else:
                 return self.dev.position(self.axes[axis])
 
+    def position_second_counter(self, axis):
+        if axis == 2:
+            return self.dev_mic.position()
+        else:
+            return self.dev.position_second_counter(self.axes[axis])
+
     def absolute_move(self, x, axis = None):
         '''
         Moves the device axis to position x in um.
@@ -119,6 +125,22 @@ class XYMicUnit(Device):
                 self.dev.set_to_zero([self.axes[axis]])
         sleep(.02)
 
+    def set_to_zero_second_counter(self, axis):
+        """
+        Set the current position of the axis as the zero position
+        :param axis: 
+        :return: 
+        """
+        if isinstance(axis, list):
+            for i in axis:
+                self.set_to_zero_second_counter(i)
+        else:
+            if axis == 2:
+                self.dev_mic.set_to_zero()
+            else:
+                self.dev.set_to_zero_second_counter([self.axes[axis]])
+        sleep(.02)
+
     def go_to_zero(self, axis):
         """
         Make axis go to zero position
@@ -140,7 +162,6 @@ class XYMicUnit(Device):
                 self.single_step(i, step)
         else:
             if axis == 2:
-                print step*self.dev_mic.step_distance
                 self.dev_mic.relative_move(step*self.dev_mic.step_distance)
             else:
                 self.dev.single_step(self.axes[axis], step)
@@ -165,8 +186,7 @@ class XYMicUnit(Device):
             last_step = abs(distance) % 255
             if number_step:
                 self.set_single_step_distance(axis, 255)
-                for _ in range(int(number_step)):
-                    self.single_step(axis, sign(distance))
+                self.single_step(axis, number_step*sign(distance))
             if last_step:
                 self.set_single_step_distance(axis, last_step)
                 self.single_step(axis, sign(distance))
