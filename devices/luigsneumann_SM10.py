@@ -283,7 +283,7 @@ class LuigsNeumann_SM10(SerialDevice):
         for axis in axes:
             self.send_command(ID, [axis], 0)
 
-    def set_to_zero_seond_counter(self, axes):
+    def set_to_zero_second_counter(self, axes):
         """
         Set the current position of the axes as the zero position
         :param axes:

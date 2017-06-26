@@ -146,6 +146,7 @@ class PatchClampRobot(object):
 
         # Resetting position of arm and microscope so no error gets to the next axis calibration
         self.go_to_zero()
+        sleep(1)
 
         return 1
 
@@ -371,9 +372,6 @@ class PatchClampRobot(object):
             #self.microscope.step_move(i, move[i, 0])
 
         self.microscope.wait_motor_stop([0, 1])
-
-        print 'Mic dif: {}'.format([self.microscope.position(i) - self.microscope.position_second_counter(i) for i in range(3)])
-        print 'Arm dif: {}'.format([self.arm.position(i) - self.arm.position_second_counter(i) for i in range(3)])
 
         # Update the estimated move to do for a move of 1 um of the arm
         for i in range(3):
