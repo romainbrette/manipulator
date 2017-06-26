@@ -225,7 +225,7 @@ class LuigsNeumann_SM10(SerialDevice):
             ID = '0140'
         else:
             ID = '0141'
-        for _ in range(abs(steps)):
+        for _ in range(int(abs(steps))):
             self.send_command(ID, [axis], 0)
             time.sleep(0.02)
 

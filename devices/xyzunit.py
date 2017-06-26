@@ -74,7 +74,9 @@ class XYZUnit(Device):
             #    self.dev.relative_move(x[i], axis)
             self.dev.relative_move_group(x, self.axes)
         else:
-            self.dev.relative_move(x, self.axes[axis])
+            pos = self.position(axis)
+            self.absolute_move(pos+x, axis)
+            # self.dev.relative_move(x, self.axes[axis])
         sleep(.02)
 
     def save(self, name):
@@ -136,15 +138,15 @@ class XYZUnit(Device):
         sleep(.02)
 
     def step_move(self, axis, distance):
-        number_step = distance // 255
-        last_step = distance % 255
+        number_step = abs(distance) // 255
+        last_step = abs(distance) % 255
         if number_step:
-            self.set_single_step_distance(axis, sign(distance)*255)
-            for _ in range(abs(number_step)):
+            self.set_single_step_distance(axis, 255)
+            for _ in range(int(number_step)):
                 self.single_step(axis, sign(distance))
         if last_step:
             self.set_single_step_distance(axis, last_step)
-            self.single_step(axis, 1)
+            self.single_step(axis, sign(distance))
 
     def wait_motor_stop(self, axis):
         """
