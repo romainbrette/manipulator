@@ -74,7 +74,9 @@ class XYZUnit(Device):
             #    self.dev.relative_move(x[i], axis)
             self.dev.relative_move_group(x, self.axes)
         else:
-            self.dev.relative_move(x, self.axes[axis])
+            pos = self.position(axis)
+            self.absolute_move(pos+x, axis)
+            # self.dev.relative_move(x, self.axes[axis])
         sleep(.02)
 
     def save(self, name):

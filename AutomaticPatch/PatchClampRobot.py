@@ -71,7 +71,7 @@ class PatchClampRobot(object):
         self.microscope.go_to_zero([0, 1, 2])
         self.arm.wait_motor_stop([0, 1, 2])
         self.microscope.wait_motor_stop([0, 1, 2])
-        sleep(.5)
+        sleep(.2)
         pass
 
     def calibrate_platform(self):
@@ -267,7 +267,6 @@ class PatchClampRobot(object):
                 weight += [bin_edge.min()]
 
         index = weight.index(max(weight))
-        index = 5
         j = index % 3
         i = index // 3
         self.template_loc = [temp.shape[1] * (1 - j / 2.), temp.shape[0] * (1 - i / 2.)]
