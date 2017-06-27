@@ -29,7 +29,7 @@ class PatchClampRobot(object):
         self.calibrated = 0
 
         # Maximum distance from initial position allowed
-        self.maxdist = 4000
+        self.maxdist = 2000
 
         # Initial displacement of the arm to do during autocalibration, in um
         self.first_step = 2.
@@ -62,11 +62,7 @@ class PatchClampRobot(object):
         """
         Make the arm and platform go to the origin: state before the calibration
         """
-        '''
-        for i in range(3):
-            self.arm.absolute_move(0, i)
-            self.microscope.absolute_move(0, i)
-        '''
+
         self.arm.go_to_zero([0, 1, 2])
         self.microscope.go_to_zero([0, 1, 2])
         self.arm.wait_motor_stop([0, 1, 2])
@@ -344,12 +340,12 @@ class PatchClampRobot(object):
             self.step *= 2.
 
         # Move the arm
-        #self.arm.relative_move(self.step, axis)
+        # self.arm.relative_move(self.step, axis)
         self.arm.step_move(axis, self.step)
 
         # Move the platform to center the tip
         for i in range(3):
-            #self.microscope.relative_move(self.mat[i, axis] * self.step, i)
+            # self.microscope.relative_move(self.mat[i, axis] * self.step, i)
             self.microscope.step_move(i, self.mat[i, axis] * self.step)
 
         # Waiting for motors to stop
@@ -366,7 +362,7 @@ class PatchClampRobot(object):
         delta = matrix('{a}; {b}'.format(a=(self.x_init - loc[0]) * self.um_px, b=(self.y_init - loc[1]) * self.um_px))
         move = self.rot_inv * delta
         for i in range(2):
-            #self.microscope.relative_move(move[i, 0], i)
+            #  self.microscope.relative_move(move[i, 0], i)
             self.microscope.step_move(i, move[i, 0])
 
         self.microscope.wait_motor_stop([0, 1])
