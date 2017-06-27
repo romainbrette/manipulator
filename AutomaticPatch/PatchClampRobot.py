@@ -29,7 +29,7 @@ class PatchClampRobot(object):
         self.calibrated = 0
 
         # Maximum distance from initial position allowed
-        self.maxdist = 2000
+        self.maxdist = 4000
 
         # Initial displacement of the arm to do during autocalibration, in um
         self.first_step = 2.
@@ -146,7 +146,7 @@ class PatchClampRobot(object):
 
         # Resetting position of arm and microscope so no error gets to the next axis calibration
         self.go_to_zero()
-        sleep(1)
+        sleep(2)
 
         return 1
 
@@ -357,9 +357,7 @@ class PatchClampRobot(object):
         self.microscope.wait_motor_stop([0, 1, 2])
 
         # Focus around the estimated focus height
-        # Focus two times to minimize error
         try:
-            _, _, loc = self.focus()
             _, _, loc = self.focus()
         except ValueError:
             raise EnvironmentError('Could not focus on the tip')
