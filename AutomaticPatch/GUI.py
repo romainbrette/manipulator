@@ -115,24 +115,27 @@ class Application(Frame):
         pass
 
     def calibration(self):
-        if showinfo('Calibrating',
-                    'Please put the tip of the pipette in focus and at the center of the image.'):
+        if askokcancel('Calibrating',
+                       'Please put the tip of the pipette in focus and at the center of the image.',
+                       icon=INFO):
 
             if self.robot.calibrate():
                 showinfo('Calibrating', 'Calibration succesfull.')
             else:
                 showerror('Calibrating', 'Calibration canceled.')
-            pass
+        pass
 
     def load_cali(self):
 
-        if showinfo('Loading calibration',
-                    'Please put the tip of the pipette in focus and at the center of the image.'):
+        if askokcancel('Loading calibration',
+                       'Please put the tip of the pipette in focus and at the center of the image.',
+                       icon=INFO):
             if self.robot.load_calibration():
                 self.robot.arm.set_to_zero([0, 1, 2])
                 self.robot.microscope.set_to_zero([0, 1, 2])
             else:
                 showerror('Loading calibration', 'The device has never been calibrated.')
+        pass
 
     def reset_pos(self):
         if self.robot:
