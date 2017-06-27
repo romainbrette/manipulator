@@ -32,4 +32,7 @@ def init_device(devtype, armdev):
     else:
         raise NameError('Unknown device for arm control.')
 
+    microscope.set_ramp_length([0, 1, 2], 2)
+    arm.set_ramp_length([0, 1, 2], 2)
+
     return dev, microscope, arm

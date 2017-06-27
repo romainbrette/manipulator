@@ -204,6 +204,15 @@ class LuigsNeumann_SM5(SerialDevice):
         data = [axis] + list(bytearray(struct.pack('f', distance)))
         self.send_command(ID, data, 0)
 
+    def set_ramp_length(self, axis, length):
+        """
+        Set the ramp length for the chosen axis
+        :param axis: axis which ramp shall be changed
+        :param length: 0<length<=16 
+        :return: 
+        """
+        self.send_command('003A', [axis, length], 0)
+
     def wait_motor_stop(self, axis):
         """
         Wait for the motor to stop

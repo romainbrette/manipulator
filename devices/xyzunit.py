@@ -161,6 +161,14 @@ class XYZUnit(Device):
             self.set_single_step_distance(axis, last_step)
             self.single_step(axis, sign(distance))
 
+    def set_ramp_length(self, axis, length):
+        if isinstance(axis, list):
+            for i in axis:
+                self.set_ramp_length(i, length)
+        else:
+            self.dev.set_ramp_length(self.axes[axis], length)
+        sleep(.02)
+
     def wait_motor_stop(self, axis):
         """
         Wait for the motor to stop
