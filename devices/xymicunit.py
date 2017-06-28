@@ -36,7 +36,7 @@ class XYMicUnit(Device):
         The current position of the device axis in um.
         '''
         if axis is None: # all positions in a vector
-            return array(list(self.dev.position_group(self.axes)) + [self.dev_mic.position()])
+            return array([self.position(i) for i in range(len(self.axes))])
         else:
             if axis == 2: # Z
                 return self.dev_mic.position()

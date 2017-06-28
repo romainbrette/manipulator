@@ -276,9 +276,11 @@ class PatchClampRobot(object):
         """
         if self.calibrated:
             if event == cv2.EVENT_LBUTTONUP:
-                pos = np.array([[0], [0], [0]])
-                for i in range(3):
-                    pos[i, 0] = self.microscope.position(i)
+                #pos = np.array([[0], [0], [0]])
+                #for i in range(3):
+                #    pos[i, 0] = self.microscope.position(i)
+
+                pos = np.transpose(self.microscope.position())
 
                 temp = self.rot_inv * np.array([[(self.x_init - (x - self.template_loc[0])) * self.um_px],
                                                 [(self.y_init - (y - self.template_loc[1])) * self.um_px]])
@@ -288,6 +290,31 @@ class PatchClampRobot(object):
                 move = self.inv_mat * pos
 
                 self.arm.absolute_move_group(move, [0, 1, 2])
+
+            elif event == cv2.EVENT_RBUTTONUP:
+
+                final_pos = np.transpose(self.microscope.position())
+
+                temp = self.rot_inv * np.array([[(self.x_init - (x - self.template_loc[0])) * self.um_px],
+                                                [(self.y_init - (y - self.template_loc[1])) * self.um_px]])
+                final_pos[0, 0] += temp[0, 0]
+                final_pos[1, 0] += temp[1, 0]
+
+                tip_pos = self.mat*np.transpose(self.arm.position())
+
+                if tip_pos[2, 0] < final_pos[2, 0]:
+                    self.arm.relative_move(0,
+                                           self.withdraw_sign*((final_pos[2, 0]-tip_pos[2, 0])/abs(self.mat[2, 0]))+15)
+                    self.arm.wait_motor_stop([0])
+                else:
+                    self.arm.relative_move(self.withdraw_sign*15, 0)
+
+                position = self.mat * np.transpose(self.arm.position())
+                intermediate_pos = self.inv_mat*np.transpose(self.microscope.position())
+                intermediate_pos[2, 0] = position[2, 0]
+                self.linear_move(position, intermediate_pos)
+                self.arm.wait_motor_stop([0, 1, 2])
+                self.linear_move(intermediate_pos, final_pos)
 
         pass
 
