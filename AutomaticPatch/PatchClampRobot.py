@@ -410,9 +410,10 @@ class PatchClampRobot(object):
         weight = []
         for i in range(3):
             for j in range(3):
-                temp = template[i * height / 4:height / 2 + i * height / 4, j * width / 4:width / 2 + j * width / 4]
-                bin_edge, _ = np.histogram(temp.flatten())
-                weight += [bin_edge.min()]
+                if (i != 1) & (j != 1):
+                    temp = template[i * height / 4:height / 2 + i * height / 4, j * width / 4:width / 2 + j * width / 4]
+                    bin_edge, _ = np.histogram(temp.flatten())
+                    weight += [bin_edge.min()]
 
         index = weight.index(max(weight))
         j = index % 3
