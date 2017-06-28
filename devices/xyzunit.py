@@ -65,8 +65,9 @@ class XYZUnit(Device):
     def absolute_move_group(self, x, axes):
         if isinstance(x, ndarray):
             pos = []
-            for i in x[0]:
-                pos += [i]
+            for j in range(len(x)):
+                for i in x[j]:
+                    pos += [i]
         else:
             pos = x
 
