@@ -64,7 +64,7 @@ class CameraThread(Thread):
                     raise
 
         img = self.frame*256
-        n_img = len(os.listdir(path))
+        n_img = len(os.listdir(path))+1
         cv2.imwrite('./{i}/screenshots/screenshot{n}.jpg'.format(i=self.controller, n=n_img), img)
         pass
 
