@@ -1,8 +1,6 @@
 from Autofocus import *
 from Camera import *
 from Amplifier import *
-from numpy import matrix
-from numpy.linalg import inv
 import numpy as np
 import cv2
 from math import fabs
@@ -36,12 +34,12 @@ class PatchClampRobot(object):
         self.step = 0
 
         # Rotation matrix of the platform compared to the camera
-        self.rot = matrix('0. 0.; 0. 0.')
-        self.rot_inv = matrix('0. 0.; 0. 0.')
+        self.rot = np.matrix('0. 0.; 0. 0.')
+        self.rot_inv = np.matrix('0. 0.; 0. 0.')
 
         # Initializing transformation matrix (Jacobian) between the camera and the tip
-        self.mat = matrix('0. 0. 0.; 0. 0. 0.; 0. 0. 0.')
-        self.inv_mat = matrix('0. 0. 0.; 0. 0. 0.; 0. 0. 0.')
+        self.mat = np.matrix('0. 0. 0.; 0. 0. 0.; 0. 0. 0.')
+        self.inv_mat = np.matrix('0. 0. 0.; 0. 0. 0.; 0. 0. 0.')
 
         # Initial position of the tip in the image, before calibration
         self.x_init, self.y_init = 0, 0
@@ -51,6 +49,9 @@ class PatchClampRobot(object):
 
         # Position of the tip in the template image
         self.template_loc = [0., 0.]
+
+        # Withdraw direction - changed at end of calibration
+        self.withdraw_sign = 1
 
         # Camera
         self.multi = ResistanceMeter()
@@ -117,7 +118,7 @@ class PatchClampRobot(object):
             self.microscope.go_to_zero([i])
 
         # Inverse rotation matrix for future use
-        self.rot_inv = inv(self.rot)
+        self.rot_inv = np.linalg.inv(self.rot)
         pass
 
     def calibrate_arm(self, axis):
@@ -185,11 +186,132 @@ class PatchClampRobot(object):
         else:
             print 'z axis calibrated'
 
-        self.inv_mat = inv(self.mat)
+        # Getting the direction to withdraw pipette along x axis
+        if fabs(self.mat[0, 0] / self.mat[1, 0]) > 1:
+            i = 0
+        else:
+            i = 1
+        if (self.template_loc[i] != 0) ^ (self.mat[i, 0] > 0):
+            self.withdraw_sign = 1
+        else:
+            self.withdraw_sign = -1
+
+        self.inv_mat = np.linalg.inv(self.mat)
         self.calibrated = 1
         self.cam.clic_on_window = True
         self.save_calibration()
         return 1
+
+    def save_calibration(self):
+
+        path = './{}/'.format(self.controller)
+        if not os.path.exists(os.path.dirname(path)):
+            try:
+                os.makedirs(os.path.dirname(path))
+            except OSError as exc:
+                # Guard against race condition
+                if exc.errno != errno.EEXIST:
+                    raise
+
+        with open("./{i}/mat.txt".format(i=self.controller), 'wt') as f:
+            for i in range(3):
+                f.write('{a},{b},{c}\n'.format(a=self.mat[i, 0], b=self.mat[i, 1], c=self.mat[i, 2]))
+
+        with open("./{i}/rotmat.txt".format(i=self.controller), 'wt') as f:
+            for i in range(2):
+                f.write('{a},{b}\n'.format(a=self.rot[i, 0], b=self.rot[i, 1]))
+
+        with open('./{i}/data.txt'.format(i=self.controller), 'wt') as f:
+            f.write('{d}\n'.format(d=self.um_px))
+            f.write('{d}\n'.format(d=self.x_init))
+            f.write('{d}\n'.format(d=self.y_init))
+            f.write('{d}\n'.format(d=self.template_loc[0]))
+            f.write('{d}\n'.format(d=self.template_loc[1]))
+
+    def load_calibration(self):
+        try:
+            with open("./{i}/mat.txt".format(i=self.controller), 'rt') as f:
+                i = 0
+                for line in f:
+                    line = line.split(',')
+                    for j in range(3):
+                        self.mat[i, j] = float(line[j])
+                    i += 1
+                self.inv_mat = np.linalg.inv(self.mat)
+
+            with open("./{i}/rotmat.txt".format(i=self.controller), 'rt') as f:
+                i = 0
+                for line in f:
+                    line = line.split(',')
+                    for j in range(2):
+                        self.rot[i, j] = float(line[j])
+                    i += 1
+                self.rot_inv = np.linalg.inv(self.rot)
+
+            with open('./{i}/data.txt'.format(i=self.controller), 'rt') as f:
+                self.um_px = float(f.readline())
+                self.x_init = float(f.readline())
+                self.y_init = float(f.readline())
+                self.template_loc[0] = float(f.readline())
+                self.template_loc[1] = float(f.readline())
+
+            self.calibrated = 1
+            self.cam.clic_on_window = True
+            return 1
+
+        except IOError:
+            print '{i} has not been calibrated.'.format(i=self.controller)
+            return 0
+
+    def clic_position(self, event, x, y, flags, param):
+        """
+        Position the tip where the user has clic on the window image.
+        Shall be used along cv2.setMouseCallback
+        :param event: Type of mouse interaction with the window (auto) 
+        :param x: position x of the event (auto)
+        :param y: position y of the event (auto)
+        :param flags: extra flags (auto)
+        :param param: extra parameters (auto)
+        :return: 
+        """
+        if self.calibrated:
+            if event == cv2.EVENT_LBUTTONUP:
+                pos = np.matrix('0.; 0.; 0.')
+                for i in range(3):
+                    pos[i, 0] = self.microscope.position(i)
+
+                temp = self.rot_inv * np.matrix([[(self.x_init - (x - self.template_loc[0])) * self.um_px],
+                                              [(self.y_init - (y - self.template_loc[1])) * self.um_px]])
+                pos[0, 0] += temp[0, 0]
+                pos[1, 0] += temp[1, 0]
+
+                move = self.inv_mat * pos
+
+                for i in [2, 1, 0]:
+                    self.arm.absolute_move(move[i, 0], i)
+
+        pass
+
+    def enable_clic_position(self):
+        cv2.setMouseCallback(self.cam.winname, self.clic_position)
+        pass
+
+    def linear_move(self, initial_position, final_position):
+        """
+        Goes to an absolute position in straight line.
+        The initial position can be hypothetical (to auto correct motors limit) or true current position
+        :param initial_position: absolute position to begin the movement with. (np.array)
+        :param final_position: absolute position to go. (np.array)
+        :return: none
+        """
+        
+        dir_vector = final_position - initial_position
+        step_vector = 10. * dir_vector/np.linalg.norm(dir_vector)
+        nb_step = np.linalg.norm(dir_vector) / 10.
+        for step in range(1, int(nb_step)+1):
+            intermediate_position = step * self.mat * step_vector
+            self.arm.absolute_move_group(initial_position + intermediate_position, [0, 1, 2])
+        self.arm.absolute_move_group(final_position, [0, 1, 2])
 
     def pipettechange(self):
 
@@ -237,7 +359,7 @@ class PatchClampRobot(object):
                 while val < 0.98:
                     val, _, loc = self.focus()
 
-                delta = matrix('{a}; {b}'.format(a=(self.x_init - loc[0]) * self.um_px,
+                delta = np.matrix('{a}; {b}'.format(a=(self.x_init - loc[0]) * self.um_px,
                                                  b=(self.y_init - loc[1]) * self.um_px))
                 move = self.rot_inv * delta
                 for i in range(2):
@@ -278,8 +400,6 @@ class PatchClampRobot(object):
             img = self.template_zone()
             height, width = img.shape[:2]
             img = img[i * height / 4:height / 2 + i * height / 4, j * width / 4:width / 2 + j * width / 4]
-            cv2.imshow('{}'.format(k), img)
-            cv2.waitKey(1)
             self.template += [img]
         self.go_to_zero()
         pass
@@ -359,7 +479,7 @@ class PatchClampRobot(object):
             raise EnvironmentError('Could not focus on the tip')
 
         # Move the platform for compensation
-        delta = matrix('{a}; {b}'.format(a=(self.x_init - loc[0]) * self.um_px, b=(self.y_init - loc[1]) * self.um_px))
+        delta = np.matrix('{a}; {b}'.format(a=(self.x_init - loc[0]) * self.um_px, b=(self.y_init - loc[1]) * self.um_px))
         move = self.rot_inv * delta
         for i in range(2):
             #  self.microscope.relative_move(move[i, 0], i)
@@ -396,7 +516,7 @@ class PatchClampRobot(object):
             raise EnvironmentError('Could not focus on the tip')
 
         # Move the platform for compensation
-        delta = matrix('{a}; {b}'.format(a=(self.x_init - loc[0]) * self.um_px, b=(self.y_init - loc[1]) * self.um_px))
+        delta = np.matrix('{a}; {b}'.format(a=(self.x_init - loc[0]) * self.um_px, b=(self.y_init - loc[1]) * self.um_px))
         move = self.rot_inv * delta
         for i in range(2):
             self.microscope.relative_move(move[i, 0], i)
@@ -431,100 +551,6 @@ class PatchClampRobot(object):
     def save_img(self):
         self.cam.save_img()
         pass
-
-    def clic_position(self, event, x, y, flags, param):
-        """
-        Position the tip where the user has clic on the window image.
-        Shall be used along cv2.setMouseCallback
-        :param event: Type of mouse interaction with the window (auto) 
-        :param x: position x of the event (auto)
-        :param y: position y of the event (auto)
-        :param flags: extra flags (auto)
-        :param param: extra parameters (auto)
-        :return: 
-        """
-        if self.calibrated:
-            if event == cv2.EVENT_LBUTTONUP:
-                pos = matrix('0.; 0.; 0.')
-                for i in range(3):
-                    pos[i, 0] = self.microscope.position(i)
-
-                temp = self.rot_inv * matrix([[(self.x_init - (x - self.template_loc[0])) * self.um_px],
-                                              [(self.y_init - (y - self.template_loc[1])) * self.um_px]])
-                pos[0, 0] += temp[0, 0]
-                pos[1, 0] += temp[1, 0]
-
-                move = self.inv_mat * pos
-
-                for i in [2, 1, 0]:
-                    self.arm.absolute_move(move[i, 0], i)
-
-        pass
-
-    def enable_clic_position(self):
-        cv2.setMouseCallback(self.cam.winname, self.clic_position)
-        pass
-
-    def save_calibration(self):
-
-        path = './{}/'.format(self.controller)
-        if not os.path.exists(os.path.dirname(path)):
-            try:
-                os.makedirs(os.path.dirname(path))
-            except OSError as exc:
-                # Guard against race condition
-                if exc.errno != errno.EEXIST:
-                    raise
-
-        with open("./{i}/mat.txt".format(i=self.controller), 'wt') as f:
-            for i in range(3):
-                f.write('{a},{b},{c}\n'.format(a=self.mat[i, 0], b=self.mat[i, 1], c=self.mat[i, 2]))
-
-        with open("./{i}/rotmat.txt".format(i=self.controller), 'wt') as f:
-            for i in range(2):
-                f.write('{a},{b}\n'.format(a=self.rot[i, 0], b=self.rot[i, 1]))
-
-        with open('./{i}/data.txt'.format(i=self.controller), 'wt') as f:
-            f.write('{d}\n'.format(d=self.um_px))
-            f.write('{d}\n'.format(d=self.x_init))
-            f.write('{d}\n'.format(d=self.y_init))
-            f.write('{d}\n'.format(d=self.template_loc[0]))
-            f.write('{d}\n'.format(d=self.template_loc[1]))
-
-    def load_calibration(self):
-        try:
-            with open("./{i}/mat.txt".format(i=self.controller), 'rt') as f:
-                i = 0
-                for line in f:
-                    line = line.split(',')
-                    for j in range(3):
-                        self.mat[i, j] = float(line[j])
-                    i += 1
-                self.inv_mat = inv(self.mat)
-
-            with open("./{i}/rotmat.txt".format(i=self.controller), 'rt') as f:
-                i = 0
-                for line in f:
-                    line = line.split(',')
-                    for j in range(2):
-                        self.rot[i, j] = float(line[j])
-                    i += 1
-                self.rot_inv = inv(self.rot)
-
-            with open('./{i}/data.txt'.format(i=self.controller), 'rt') as f:
-                self.um_px = float(f.readline())
-                self.x_init = float(f.readline())
-                self.y_init = float(f.readline())
-                self.template_loc[0] = float(f.readline())
-                self.template_loc[1] = float(f.readline())
-
-            self.calibrated = 1
-            self.cam.clic_on_window = True
-            return 1
-
-        except IOError:
-            print '{i} has not been calibrated.'.format(i=self.controller)
-            return 0
 
     def set_continuous_res_meter(self, bool):
         if bool:

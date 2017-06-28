@@ -2,7 +2,7 @@
 An XYZ unit made of an XY stage and another device representing the microscope Z axis
 """
 from device import *
-from numpy import array, sign
+from numpy import array, sign, ndarray
 from time import sleep
 
 __all__ = ['XYMicUnit']
@@ -68,6 +68,24 @@ class XYMicUnit(Device):
             else:
                 self.dev.absolute_move(x, self.axes[axis])
         sleep(.02)
+
+    def absolute_move_group(self, x, axes):
+        if isinstance(x, ndarray):
+            pos = []
+            for i in x[0]:
+                pos += [i]
+        else:
+            pos = x
+
+        if len(pos) != len(axes):
+            raise ValueError('Length of arrays do not match.')
+
+        if any([axis == 2 for axis in axes]):
+            self.dev_mic.absolute_move(pos[axes.index(2)])
+            pos.remove(pos[axes.index(2)])
+            axes.remove(2)
+
+        self.dev.absolute_move_group(pos, [self.axes[i] for i in axes])
 
     def relative_move(self, x, axis = None):
         '''
