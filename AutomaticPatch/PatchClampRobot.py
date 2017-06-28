@@ -293,28 +293,30 @@ class PatchClampRobot(object):
 
             elif event == cv2.EVENT_RBUTTONUP:
 
-                final_pos = np.transpose(self.microscope.position())
+                mic_pos = np.transpose(self.microscope.position())
 
                 temp = self.rot_inv * np.array([[(self.x_init - (x - self.template_loc[0])) * self.um_px],
                                                 [(self.y_init - (y - self.template_loc[1])) * self.um_px]])
-                final_pos[0, 0] += temp[0, 0]
-                final_pos[1, 0] += temp[1, 0]
+                mic_pos[0, 0] += temp[0, 0]
+                mic_pos[1, 0] += temp[1, 0]
 
+                final_tip_pos = self.inv_mat*mic_pos
                 tip_pos = self.mat*np.transpose(self.arm.position())
 
-                if tip_pos[2, 0] < final_pos[2, 0]:
+                if tip_pos[2, 0] < mic_pos[2, 0]:
                     self.arm.relative_move(0,
-                                           self.withdraw_sign*((final_pos[2, 0]-tip_pos[2, 0])/abs(self.mat[2, 0]))+15)
+                                           self.withdraw_sign*((mic_pos[2, 0]-tip_pos[2, 0])/abs(self.mat[2, 0]))+15)
                     self.arm.wait_motor_stop([0])
                 else:
                     self.arm.relative_move(self.withdraw_sign*15, 0)
 
-                position = self.mat * np.transpose(self.arm.position())
-                intermediate_pos = self.inv_mat*np.transpose(self.microscope.position())
-                intermediate_pos[2, 0] = position[2, 0]
+                position = self.mat*np.transpose(self.arm.position())
+                intermediate_pos = mic_pos
+                intermediate_pos[2, 0] = intermediate_pos[2, 0] - position[2, 0]/abs(self.mat[2, 0])
+
                 self.linear_move(position, intermediate_pos)
                 self.arm.wait_motor_stop([0, 1, 2])
-                self.linear_move(intermediate_pos, final_pos)
+                self.linear_move(intermediate_pos, final_tip_pos)
 
         pass
 
@@ -335,9 +337,9 @@ class PatchClampRobot(object):
         step_vector = 10. * dir_vector/np.linalg.norm(dir_vector)
         nb_step = np.linalg.norm(dir_vector) / 10.
         for step in range(1, int(nb_step)+1):
-            intermediate_position = step * self.inv_mat * step_vector
+            intermediate_position = step * self.inv_mat * np.transpose(step_vector)
             self.arm.absolute_move_group(initial_position + intermediate_position, [0, 1, 2])
-        self.arm.absolute_move_group(final_position, [0, 1, 2])
+        self.arm.absolute_move_group(self.inv_mat*np.transpose(final_position), [0, 1, 2])
 
     def pipettechange(self):
 
