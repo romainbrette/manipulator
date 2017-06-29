@@ -315,6 +315,7 @@ class PatchClampRobot(PressureController):
                     mic_pos[0, 0] += temp[0, 0]
                     mic_pos[1, 0] += temp[1, 0]
 
+                    final_tip_pos = self.inv_mat*mic_pos
                     tip_pos = self.mat*np.transpose(self.arm.position())
 
                     if tip_pos[2, 0] < mic_pos[2, 0]:
@@ -332,6 +333,19 @@ class PatchClampRobot(PressureController):
                     self.linear_move(theorical_tip_pos, intermediate_pos)
                     self.arm.wait_motor_stop([0, 1, 2])
                     self.linear_move(intermediate_pos, mic_pos)
+                    #self.linear_move(intermediate_pos, mic_pos+self.mat*np.array([[self.withdraw_sign*10], [0], [0]]))
+
+                    if abs(self.pipette_resistance-self.get_resistance()) > 3e5:
+                        raise ValueError
+                    else:
+                        self.amplifier.auto_pipette_offset()
+                        while self.arm.position(0)-final_tip_pos[0, 0]-self.withdraw_sign*5 > 0:
+                            self.arm.relative_move(-self.withdraw_sign)
+                            if self.pipette_resistance*1.25 < self.get_resistance():
+                                break
+                        sleep(10)
+                        if self.pipette_resistance*1.25 < self.get_resistance():
+                            self.seal()
 
         pass
 
