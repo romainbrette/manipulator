@@ -31,46 +31,45 @@ class ResistanceMeter(Thread, MultiClamp, FakeMultiClamp):
         self.set_freq_pulse_frequency(1e-2)
         self.freq_pulse_enable(False)
 
-        self.auto_pipette_offset()
-        self.set_holding(0.)
-        self.set_holding_enable(True)
-        self.meter_resist_enable(True)
         self.acquisition = True
         self.continuous = False
         self.discrete = False
-        self.res = None
+        self.res = 0.
 
     def run(self):
         while self.acquisition:
-            if self.continuous:
+            if self.get_meter_resist_enable().value:
+                if self.continuous:
 
-                self.freq_pulse_enable(True)
-                while self.continuous:
+                    self.freq_pulse_enable(True)
+                    while self.continuous:
 
+                        res = []
+
+                        for _ in range(3):
+                            res += [self.get_meter_value().value]
+                        self.res = np.mean(res)
+
+                    self.freq_pulse_enable(False)
+
+                elif self.discrete:
+
+                    self.freq_pulse_enable(True)
                     res = []
 
                     for _ in range(3):
+
                         res += [self.get_meter_value().value]
+
                     self.res = np.mean(res)
 
-                self.freq_pulse_enable(False)
+                    self.freq_pulse_enable(False)
+                    self.discrete = False
 
-            elif self.discrete:
-
-                self.freq_pulse_enable(True)
-                res = []
-
-                for _ in range(3):
-
-                    res += [self.get_meter_value().value]
-
-                self.res = np.mean(res)
-
-                self.freq_pulse_enable(False)
-                self.discrete = False
-
+                else:
+                    pass
             else:
-                pass
+                self.res = 0.
         self.set_holding_enable(False)
 
     def stop(self):

@@ -8,8 +8,6 @@ import numpy as np
 
 __all__ = ['CameraThread']
 
-locked = Lock()
-
 
 class CameraThread(Thread):
 

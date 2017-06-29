@@ -36,12 +36,12 @@ class PatchClampRobot(PressureController):
         self.step = 0
 
         # Rotation matrix of the platform compared to the camera
-        self.rot = np.matrix('0. 0.; 0. 0.')
-        self.rot_inv = np.matrix('0. 0.; 0. 0.')
+        self.rot = np.matrix([[0., 0.], [0., 0.]])
+        self.rot_inv = np.matrix([[0., 0.], [0., 0.]])
 
         # Initializing transformation matrix (Jacobian) between the camera and the tip
-        self.mat = np.matrix('0. 0. 0.; 0. 0. 0.; 0. 0. 0.')
-        self.inv_mat = np.matrix('0. 0. 0.; 0. 0. 0.; 0. 0. 0.')
+        self.mat = np.matrix([[0., 0., 0.], [0., 0., 0.], [0., 0., 0.]])
+        self.inv_mat = np.matrix([[0., 0., 0.], [0., 0., 0.], [0., 0., 0.]])
 
         # Initial position of the tip in the image, before calibration
         self.x_init, self.y_init = 0, 0
@@ -55,9 +55,13 @@ class PatchClampRobot(PressureController):
         # Withdraw direction - changed at end of calibration
         self.withdraw_sign = 1
 
+        # Resistance data
+        self.pipette_resistance = 0.
+        self.pipette_resistance_checked = False
+
         # Camera
-        self.multi = ResistanceMeter()
-        self.multi.start()
+        self.amplifier = ResistanceMeter()
+        self.amplifier.start()
         self.cam = CameraThread(controller, self.clic_position)
         pass
 
@@ -302,30 +306,32 @@ class PatchClampRobot(PressureController):
 
             elif event == cv2.EVENT_RBUTTONUP:
 
-                mic_pos = np.transpose(self.microscope.position())
+                if self.pipette_resistance_checked | (not self.pipette_resistance_checked):
 
-                temp = self.rot_inv * np.array([[(self.x_init - (x - self.template_loc[0])) * self.um_px],
-                                                [(self.y_init - (y - self.template_loc[1])) * self.um_px]])
-                mic_pos[0, 0] += temp[0, 0]
-                mic_pos[1, 0] += temp[1, 0]
+                    mic_pos = np.transpose(self.microscope.position())
 
-                tip_pos = self.mat*np.transpose(self.arm.position())
+                    temp = self.rot_inv * np.array([[(self.x_init - (x - self.template_loc[0])) * self.um_px],
+                                                    [(self.y_init - (y - self.template_loc[1])) * self.um_px]])
+                    mic_pos[0, 0] += temp[0, 0]
+                    mic_pos[1, 0] += temp[1, 0]
 
-                if tip_pos[2, 0] < mic_pos[2, 0]:
-                    move = self.withdraw_sign*((mic_pos[2, 0]-tip_pos[2, 0])/abs(self.mat[2, 0]))+15
-                    self.arm.relative_move(0, move)
-                    theorical_tip_pos = tip_pos + np.array([[move], [0], [0]])
-                else:
-                    self.arm.relative_move(self.withdraw_sign*15, 0)
-                    theorical_tip_pos = tip_pos + np.array([[self.withdraw_sign*15], [0], [0]])
+                    tip_pos = self.mat*np.transpose(self.arm.position())
 
-                self.arm.wait_motor_stop([0])
-                intermediate_x_tip_pos = self.withdraw_sign*(theorical_tip_pos[2, 0]-mic_pos[2, 0])/abs(self.mat[2, 0])
-                intermediate_pos = mic_pos
-                intermediate_pos += self.mat*np.array([[intermediate_x_tip_pos], [0], [0]])
-                self.linear_move(theorical_tip_pos, intermediate_pos)
-                self.arm.wait_motor_stop([0, 1, 2])
-                self.linear_move(intermediate_pos, mic_pos)
+                    if tip_pos[2, 0] < mic_pos[2, 0]:
+                        move = self.withdraw_sign*(mic_pos[2, 0]-tip_pos[2, 0]+15)/abs(self.mat[2, 0])
+                        self.arm.relative_move(0, move)
+                        theorical_tip_pos = tip_pos + np.array([[move], [0], [0]])
+                    else:
+                        self.arm.relative_move(self.withdraw_sign*15/abs(self.mat[2, 0]), 0)
+                        theorical_tip_pos = tip_pos + np.array([[self.withdraw_sign*15/abs(self.mat[2, 0])], [0], [0]])
+
+                    self.arm.wait_motor_stop([0])
+                    intermediate_x_tip_pos = self.withdraw_sign*(theorical_tip_pos[2, 0]-mic_pos[2, 0])/abs(self.mat[2, 0])
+                    intermediate_pos = mic_pos
+                    intermediate_pos += self.mat*np.array([[intermediate_x_tip_pos], [0], [0]])
+                    self.linear_move(theorical_tip_pos, intermediate_pos)
+                    self.arm.wait_motor_stop([0, 1, 2])
+                    self.linear_move(intermediate_pos, mic_pos)
 
         pass
 
@@ -337,8 +343,8 @@ class PatchClampRobot(PressureController):
         """
         Goes to an absolute position in straight line.
         The initial position can be hypothetical (to auto correct motors limit) or true current position
-        :param initial_position: absolute position to begin the movement with. (np.array)
-        :param final_position: absolute position to go. (np.array)
+        :param initial_position: absolute position to begin the movement with. (ndarray)
+        :param final_position: absolute position to go. (ndarray)
         :return: none
         """
         
@@ -393,11 +399,10 @@ class PatchClampRobot(PressureController):
             isin, val, loc = templatematching(img, self.template[len(self.template) / 2])
 
             if isin:
-                while val < 0.98:
+                while 0.98 > val:
                     val, _, loc = self.focus()
 
-                delta = np.matrix('{a}; {b}'.format(a=(self.x_init - loc[0]) * self.um_px,
-                                                 b=(self.y_init - loc[1]) * self.um_px))
+                delta = np.array([[(self.x_init - loc[0]) * self.um_px], [(self.y_init - loc[1]) * self.um_px]])
                 move = self.rot_inv * delta
                 for i in range(2):
                     self.arm.relative_move(move[i, 0], i)
@@ -498,12 +503,10 @@ class PatchClampRobot(PressureController):
             self.step *= 2.
 
         # Move the arm
-        # self.arm.relative_move(self.step, axis)
         self.arm.step_move(axis, self.step)
 
         # Move the platform to center the tip
         for i in range(3):
-            # self.microscope.relative_move(self.mat[i, axis] * self.step, i)
             self.microscope.step_move(i, self.mat[i, axis] * self.step)
 
         # Waiting for motors to stop
@@ -517,10 +520,9 @@ class PatchClampRobot(PressureController):
             raise EnvironmentError('Could not focus on the tip')
 
         # Move the platform for compensation
-        delta = np.matrix('{a}; {b}'.format(a=(self.x_init - loc[0]) * self.um_px, b=(self.y_init - loc[1]) * self.um_px))
+        delta = np.array([[(self.x_init - loc[0]) * self.um_px], [(self.y_init - loc[1]) * self.um_px]])
         move = self.rot_inv * delta
         for i in range(2):
-            #  self.microscope.relative_move(move[i, 0], i)
             self.microscope.step_move(i, move[i, 0])
 
         self.microscope.wait_motor_stop([0, 1])
@@ -554,7 +556,7 @@ class PatchClampRobot(PressureController):
             raise EnvironmentError('Could not focus on the tip')
 
         # Move the platform for compensation
-        delta = np.matrix('{a}; {b}'.format(a=(self.x_init - loc[0]) * self.um_px, b=(self.y_init - loc[1]) * self.um_px))
+        delta = np.array([[(self.x_init - loc[0]) * self.um_px], [(self.y_init - loc[1]) * self.um_px]])
         move = self.rot_inv * delta
         for i in range(2):
             self.microscope.relative_move(move[i, 0], i)
@@ -590,19 +592,19 @@ class PatchClampRobot(PressureController):
         self.cam.save_img()
         pass
 
-    def set_continuous_res_meter(self, bool):
-        if bool:
-            self.multi.start_continuous_acquisition()
+    def set_continuous_res_meter(self, enable):
+        if enable:
+            self.amplifier.start_continuous_acquisition()
         else:
-            self.multi.stop_continuous_acquisition()
+            self.amplifier.stop_continuous_acquisition()
 
     def get_one_res_metering(self, res_type='float'):
-        self.multi.get_discrete_acquisition()
+        self.amplifier.get_discrete_acquisition()
         return self.get_resistance(res_type=res_type)
 
     def get_resistance(self, res_type='float'):
         if res_type == 'text':
-            val = str(self.multi.res).split('.')
+            val = str(self.amplifier.res).split('.')
             unit = (len(val[0]) - 1) // 3
             length = len(val[0]) - unit * 3
             if unit <= 0:
@@ -624,11 +626,31 @@ class PatchClampRobot(PressureController):
                 text_value = val[0][:length] + '.' + val[0][length:length + 2] + unit
             return text_value
         elif res_type == 'float':
-            return self.multi.res
+            return self.amplifier.res
+
+    def init_patch_clamp(self):
+        self.amplifier.meter_resist_enable(False)
+        self.amplifier.auto_pipette_offset()
+        self.amplifier.set_holding(0.)
+        self.amplifier.set_holding_enable(True)
+        self.amplifier.meter_resist_enable(True)
+        sleep(3)
+        self.pipette_resistance = self.get_one_res_metering(res_type='float')
+        if 4.5e6 > self.pipette_resistance:
+            self.amplifier.meter_resist_enable(False)
+            return 2
+        if 10.2e6 < self.pipette_resistance:
+            self.amplifier.meter_resist_enable(False)
+            return 1
+        else:
+            self.pipette_resistance_checked = True
+            self.nearing()
+            self.set_continuous_res_meter(True)
+            return 0
 
     def stop(self):
         self.cam.stop()
-        self.multi.stop()
+        self.amplifier.stop()
         cv2.destroyAllWindows()
         pass
 
