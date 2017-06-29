@@ -7,34 +7,34 @@ from threading import Thread
 __all__ = ['ResistanceMeter']
 
 
-class ResistanceMeter(Thread):
+class ResistanceMeter(Thread, MultiClamp, FakeMultiClamp):
 
     def __init__(self):
 
         Thread.__init__(self)
         print('Connecting to the MultiClamp amplifier')
         try:
-            self.mcc = MultiClamp(channel=1)
+            MultiClamp.__init__(self, channel=1)
         except (AttributeError, RuntimeError):
             print 'No multiclamp detected, switching to fake amplifier.'
-            self.mcc = FakeMultiClamp()
+            FakeMultiClamp.__init__(self)
         print('Switching to voltage clamp')
-        self.mcc.voltage_clamp()
+        self.voltage_clamp()
         print('Running automatic slow compensation')
-        self.mcc.auto_slow_compensation()
+        self.auto_slow_compensation()
         print('Running automatic fast compensation')
-        self.mcc.auto_fast_compensation()
+        self.auto_fast_compensation()
 
-        self.mcc.meter_resist_enable(False)
+        self.meter_resist_enable(False)
 
-        self.mcc.set_freq_pulse_amplitude(1e-2)
-        self.mcc.set_freq_pulse_frequency(1e-3)
-        self.mcc.freq_pulse_enable(False)
+        self.set_freq_pulse_amplitude(1e-2)
+        self.set_freq_pulse_frequency(1e-2)
+        self.freq_pulse_enable(False)
 
-        self.mcc.auto_pipette_offset()
-        self.mcc.set_holding(0.)
-        self.mcc.set_holding_enable(True)
-        self.mcc.meter_resist_enable(True)
+        self.auto_pipette_offset()
+        self.set_holding(0.)
+        self.set_holding_enable(True)
+        self.meter_resist_enable(True)
         self.acquisition = True
         self.continuous = False
         self.discrete = False
@@ -44,34 +44,34 @@ class ResistanceMeter(Thread):
         while self.acquisition:
             if self.continuous:
 
-                self.mcc.freq_pulse_enable(True)
+                self.freq_pulse_enable(True)
                 while self.continuous:
 
                     res = []
 
                     for _ in range(3):
-                        res += [self.mcc.get_meter_value().value]
+                        res += [self.get_meter_value().value]
                     self.res = np.mean(res)
 
-                self.mcc.freq_pulse_enable(False)
+                self.freq_pulse_enable(False)
 
             elif self.discrete:
 
-                self.mcc.freq_pulse_enable(True)
+                self.freq_pulse_enable(True)
                 res = []
 
                 for _ in range(3):
 
-                    res += [self.mcc.get_meter_value().value]
+                    res += [self.get_meter_value().value]
 
                 self.res = np.mean(res)
 
-                self.mcc.freq_pulse_enable(False)
+                self.freq_pulse_enable(False)
                 self.discrete = False
 
             else:
                 pass
-        self.mcc.set_holding_enable(False)
+        self.set_holding_enable(False)
 
     def stop(self):
         self.continuous = False
@@ -95,7 +95,7 @@ class ResistanceMeter(Thread):
 
     def __del__(self):
         self.stop()
-        self.mcc.close()
+        self.close()
 
 
 if __name__ == '__main__':
