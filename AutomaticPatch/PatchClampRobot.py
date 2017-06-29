@@ -287,9 +287,10 @@ class PatchClampRobot(object):
                 pos[0, 0] += temp[0, 0]
                 pos[1, 0] += temp[1, 0]
 
-                move = self.inv_mat * pos
+                self.linear_move(self.mat*np.transpose(self.arm.position()), pos)
+                #move = self.inv_mat * pos
 
-                self.arm.absolute_move_group(move, [0, 1, 2])
+                #self.arm.absolute_move_group(move, [0, 1, 2])
 
             elif event == cv2.EVENT_RBUTTONUP:
 
@@ -300,23 +301,23 @@ class PatchClampRobot(object):
                 mic_pos[0, 0] += temp[0, 0]
                 mic_pos[1, 0] += temp[1, 0]
 
-                final_tip_pos = self.inv_mat*mic_pos
                 tip_pos = self.mat*np.transpose(self.arm.position())
 
                 if tip_pos[2, 0] < mic_pos[2, 0]:
-                    self.arm.relative_move(0,
-                                           self.withdraw_sign*((mic_pos[2, 0]-tip_pos[2, 0])/abs(self.mat[2, 0]))+15)
-                    self.arm.wait_motor_stop([0])
+                    move = self.withdraw_sign*((mic_pos[2, 0]-tip_pos[2, 0])/abs(self.mat[2, 0]))+15
+                    self.arm.relative_move(0, move)
+                    theorical_tip_pos = tip_pos + np.array([[move], [0], [0]])
                 else:
                     self.arm.relative_move(self.withdraw_sign*15, 0)
+                    theorical_tip_pos = tip_pos + np.array([[self.withdraw_sign*15], [0], [0]])
 
-                position = self.mat*np.transpose(self.arm.position())
+                self.arm.wait_motor_stop([0])
+                intermediate_x_tip_pos = self.withdraw_sign*(theorical_tip_pos[2, 0]-mic_pos[2, 0])/abs(self.mat[2, 0])
                 intermediate_pos = mic_pos
-                intermediate_pos[2, 0] = intermediate_pos[2, 0] - position[2, 0]/abs(self.mat[2, 0])
-
-                self.linear_move(position, intermediate_pos)
+                intermediate_pos += self.mat*np.array([[intermediate_x_tip_pos], [0], [0]])
+                self.linear_move(theorical_tip_pos, intermediate_pos)
                 self.arm.wait_motor_stop([0, 1, 2])
-                self.linear_move(intermediate_pos, final_tip_pos)
+                self.linear_move(intermediate_pos, mic_pos)
 
         pass
 
