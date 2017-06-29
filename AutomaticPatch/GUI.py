@@ -23,37 +23,56 @@ class Application(Frame):
         self.continuous = False
 
         # GUI
-        self.robot_box = LabelFrame(self, text='Connection')
+        self.robot_box = LabelFrame(self,
+                                    text='Connection')
         self.robot_box.grid(row=0, column=0, padx=5, pady=5)
 
-        self.ask_controller = Label(self.robot_box, text='Controller: ')
+        self.ask_controller = Label(self.robot_box,
+                                    text='Controller: ')
         self.ask_controller.grid(row=0, column=0, padx=2, pady=2)
 
-        self.controllist = ttk.Combobox(self.robot_box, state='readonly', values='SM5 SM10')
+        self.controllist = ttk.Combobox(self.robot_box,
+                                        state='readonly',
+                                        values='SM5 SM10')
         self.controllist.grid(row=0, column=1, columnspan=2, padx=2, pady=2)
 
-        self.ask_arm = Label(self.robot_box, text='Arm: ')
+        self.ask_arm = Label(self.robot_box,
+                             text='Arm: ')
         self.ask_arm.grid(row=1, column=0, padx=2, pady=2)
 
-        self.armlist = ttk.Combobox(self.robot_box, state='readonly', values='dev1 dev2')
+        self.armlist = ttk.Combobox(self.robot_box,
+                                    state='readonly',
+                                    values='dev1 dev2')
         self.armlist.grid(row=1, column=1, columnspan=2, padx=2, pady=2)
 
-        self.connection = Button(self.robot_box, text='Connect', command=self.connect, bg='green', fg='white')
+        self.connection = Button(self.robot_box,
+                                 text='Connect',
+                                 command=self.connect,
+                                 bg='green', fg='white')
         self.connection.grid(row=2, column=0, padx=2, pady=2)
 
-        self.disconnection = Button(self.robot_box, text='Disconnect', command=self.disconnect, state='disable')
+        self.disconnection = Button(self.robot_box,
+                                    text='Disconnect',
+                                    command=self.disconnect,
+                                    state='disable')
         self.disconnection.grid(row=2, column=1, padx=2, pady=2)
 
-        self.calibrate_box = LabelFrame(self, text='Calibration')
+        self.calibrate_box = LabelFrame(self,
+                                        text='Calibration')
         self.calibrate_box.grid(row=0, column=1, padx=2, pady=2)
 
-        self.calibrate = Button(self.calibrate_box, text='Calibrate', state='disable')
+        self.calibrate = Button(self.calibrate_box,
+                                text='Calibrate',
+                                state='disable')
         self.calibrate.grid(row=0, column=0, padx=2, pady=2)
 
-        self.load_calibrate = Button(self.calibrate_box, text='Load calibration', state='disable')
+        self.load_calibrate = Button(self.calibrate_box,
+                                     text='Load calibration',
+                                     state='disable')
         self.load_calibrate.grid(row=0, column=1, padx=2, pady=2)
 
-        self.meter_box = LabelFrame(self, text='Resistance metering')
+        self.meter_box = LabelFrame(self,
+                                    text='Resistance metering')
         self.meter_box.grid(row=1, column=1, padx=2, pady=2)
 
         self.continuous_meter = Checkbutton(self.meter_box, text='Continiuous metering',
@@ -61,22 +80,40 @@ class Application(Frame):
                                             state='disable')
         self.continuous_meter.grid(row=0, column=0, padx=2, pady=2)
 
-        self.res_window = Label(self.meter_box, text='Resistance: ')
+        self.res_window = Label(self.meter_box,
+                                text='Resistance: ')
         self.res_window.grid(row=1, column=0, padx=2, pady=2)
 
-        self.res_value = Label(self.meter_box, text='0 Ohm')
+        self.res_value = Label(self.meter_box,
+                               text='0 Ohm')
         self.res_value.grid(row=1, column=1, padx=2, pady=2)
 
-        self.misc = LabelFrame(self, text='misc')
+        self.check_pipette_resistance = Button(self.meter_box,
+                                               text='Check pipette',
+                                               command=self.init_patch_clamp,
+                                               state='disable')
+        self.check_pipette_resistance.grid(row=2, column=0, padx=2, pady=2)
+
+        self.misc = LabelFrame(self,
+                               text='misc')
         self.misc.grid(row=1, column=0, padx=2, pady=2)
 
-        self.zero = Button(self.misc, text='Go to zero', command=self.reset_pos, state='disable')
+        self.zero = Button(self.misc,
+                           text='Go to zero',
+                           command=self.reset_pos,
+                           state='disable')
         self.zero.grid(row=0, column=0, padx=2, pady=2)
 
-        self.imgsave = Button(self.misc, text='Screenshot', state='disable')
+        self.imgsave = Button(self.misc,
+                              text='Screenshot',
+                              state='disable')
         self.imgsave.grid(row=0, column=1, padx=2, pady=2)
 
-        self.QUIT = Button(self, text='QUIT', bg='orange', fg='white', command=self.exit)
+        self.QUIT = Button(self,
+                           text='QUIT',
+                           bg='orange',
+                           fg='white',
+                           command=self.exit)
         self.QUIT.grid(row=2, column=0, padx=2, pady=2)
 
         self.pack()
@@ -97,10 +134,10 @@ class Application(Frame):
                 self.load_calibrate.config(state='normal', command=self.load_cali)
                 self.calibrate.config(state='normal', command=self.calibration)
                 self.zero.config(state='normal')
-                self.connection.config(state='disabled')
+                self.connection.config(state='disable')
                 self.disconnection.config(state='normal')
                 self.continuous_meter.config(state='normal')
-                self.init_patch_clamp()
+                self.check_pipette_resistance.config(state='normal')
         pass
 
     def disconnect(self):
@@ -112,7 +149,8 @@ class Application(Frame):
         self.controllist['state'] = "readonly"
         self.armlist['state'] = 'readonly'
         self.connection.config(state='normal')
-        self.disconnection.config(state='disabled')
+        self.disconnection.config(state='disable')
+        self.check_pipette_resistance.config(state='disable')
         pass
 
     def calibration(self):
