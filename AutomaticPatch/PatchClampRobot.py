@@ -1,6 +1,7 @@
 from Autofocus import *
 from Camera import *
 from Amplifier import *
+from Pump import *
 import numpy as np
 import cv2
 from math import fabs
@@ -12,13 +13,14 @@ import time
 __all__ = ['PatchClampRobot']
 
 
-class PatchClampRobot(object):
+class PatchClampRobot(PressureController):
 
     def __init__(self, controller, arm):
 
         # devices
         self.dev, self.microscope, self.arm = init_device(controller, arm)
         self.controller = controller
+        PressureController.__init__(self)
 
         # Tab for template images
         self.template = []
