@@ -594,9 +594,9 @@ class PatchClampRobot(object):
         else:
             self.multi.stop_continuous_acquisition()
 
-    def get_one_res_metering(self):
+    def get_one_res_metering(self, res_type='float'):
         self.multi.get_discrete_acquisition()
-        return self.get_resistance()
+        return self.get_resistance(res_type=res_type)
 
     def get_resistance(self, res_type='float'):
         if res_type == 'text':

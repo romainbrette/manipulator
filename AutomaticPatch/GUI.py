@@ -155,7 +155,7 @@ class Application(Frame):
             elif tip_resistance > 10e6:
                 showinfo('Tip resistance', 'Tip resistance is too high. Should be lower than 10 MOhm.')
             else:
-                showinfo('Tip resistance', 'Tip resistance is good')
+                showinfo('Tip resistance', 'Tip resistance is good: '+self.robot.get_one_res_metering(res_type='text'))
                 self.enable_continuous_meter()
 
     def enable_continuous_meter(self):
