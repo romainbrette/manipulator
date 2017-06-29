@@ -28,7 +28,15 @@ class ManipulatorApplication(Frame):
         self.stage = stage
         self.unit = unit
 
+        Button(self, text="Reference", command=self.reference).pack()
         Button(self, text="Go", command=self.go).pack()
+
+    def reference(self):
+        '''
+        Sets the reference point
+        '''
+        self.refx = self.unit.position(0)
+        self.refz = self.unit.position(2)
 
     def go(self):
         '''
@@ -36,19 +44,40 @@ class ManipulatorApplication(Frame):
         '''
         # Go up, move stage, go down
 
-        z = self.unit.position(axis = 2)
-        x = self.stage.position(axis = 0)
-        self.unit.single_step_distance(2, 250)
-        self.stage.single_step_distance(2, 250)
+        x = self.unit.position(0)
+        z = self.unit.position(2)
+
+        self.unit.set_single_step_distance(0, (x-self.refx)/8)
+        self.unit.set_single_step_distance(1, 250)
+        self.unit.set_single_step_distance(2, (z-self.refz)/8)
         #self.unit.absolute_move(z-1000,axis = 2) # I should put a flag until_still = True
-        self.unit.single_step(2, -4)
-        sleep(1)
-        self.stage.single_step(0, 8)
-        #self.stage.absolute_move(x+2000, axis = 0)
-        sleep(1)
-        #self.unit.absolute_move(z, axis = 2)
+
+        sign = 1
+        for j in range(2):
+            for i in range(2):
+                if sign == 1:
+                    self.unit.single_step(2, 8)
+                    self.unit.wait_motor_stop(2)
+                    self.unit.single_step(0, 8)
+                    #self.stage.absolute_move(x+2000, axis = 0)
+                    self.unit.wait_motor_stop(0)
+                    sleep(1) # put drop
+                else:
+                    self.unit.single_step(0, -8)
+                    self.unit.wait_motor_stop(0)
+                    self.unit.single_step(2, -8)
+                    sleep(1)
+                self.unit.wait_motor_stop(2)
+            sign=-sign
+            self.unit.single_step(2, 8)
+            self.unit.wait_motor_stop(2)
+            self.unit.single_step(1, 4)
+            self.unit.wait_motor_stop(1)
+            self.unit.single_step(2, -8)
+            self.unit.wait_motor_stop(2)
+            sleep(1)
         self.unit.single_step(2, 4)
-        sleep(1)
+        sleep(3)
         print "done"
 
 if __name__ == '__main__':
@@ -73,6 +102,9 @@ if __name__ == '__main__':
     else:
         microscope = XYZUnit(dev, [7, 8, 9])
         unit = XYZUnit(dev, [1, 2, 3])
+        dev.set_single_step_velocity(2, 15)
+        dev.set_single_step_velocity(3, 15)
+        dev.set_single_step_velocity(1, 15)
 
     print "Device initialized"
 
