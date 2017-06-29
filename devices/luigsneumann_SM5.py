@@ -125,6 +125,10 @@ class LuigsNeumann_SM5(SerialDevice):
         # TODO: always goes fast (use 0049 for slow)
         self.send_command('0048', data, 0)
 
+    def absolute_move_group(self, x, axes):
+        for i in range(len(x)):
+            self.absolute_move(x[i], axes[i])
+
     def relative_move(self, x, axis):
         '''
         Moves the device axis by relative amount x in um.

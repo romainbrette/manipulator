@@ -115,24 +115,27 @@ class Application(Frame):
         pass
 
     def calibration(self):
-        if showinfo('Calibrating',
-                    'Please put the tip of the pipette in focus and at the center of the image.'):
-            calibrate = self.robot.calibrate()
+        if askokcancel('Calibrating',
+                       'Please put the tip of the pipette in focus and at the center of the image.',
+                       icon=INFO):
 
-            if calibrate:
+            if self.robot.calibrate():
                 showinfo('Calibrating', 'Calibration succesfull.')
             else:
                 showerror('Calibrating', 'Calibration canceled.')
-            pass
+        pass
 
     def load_cali(self):
-        if self.robot.load_calibration():
-            if showinfo('Loading calibration',
-                        'Please put the tip of the pipette in focus and at the center of the image.'):
+
+        if askokcancel('Loading calibration',
+                       'Please put the tip of the pipette in focus and at the center of the image.',
+                       icon=INFO):
+            if self.robot.load_calibration():
                 self.robot.arm.set_to_zero([0, 1, 2])
                 self.robot.microscope.set_to_zero([0, 1, 2])
-        else:
-            showerror('Loading calibration', 'The device has never been calibrated.')
+            else:
+                showerror('Loading calibration', 'The device has never been calibrated.')
+        pass
 
     def reset_pos(self):
         if self.robot:
@@ -188,6 +191,7 @@ if __name__ == '__main__':
     root.title('Automatic Patch Clamp')
     root.resizable(width=False, height=False)
     app = Application(master=root)
+    root.protocol("WM_DELETE_WINDOW", app.exit)
     app.mainloop()
     try:
         root.destroy()

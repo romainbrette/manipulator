@@ -2,7 +2,7 @@ from devices import *
 import numpy as np
 from FakeMulticlamp import *
 import time
-from threading import Thread, RLock
+from threading import Thread
 
 __all__ = ['ResistanceMeter']
 
@@ -31,17 +31,10 @@ class ResistanceMeter(Thread):
         self.mcc.set_freq_pulse_frequency(1e-3)
         self.mcc.freq_pulse_enable(False)
 
-        self.mcc.set_primary_signal_membcur()
-        self.mcc.set_primary_signal_lpf(2000)
-        self.mcc.set_primary_signal_gain(5)
-        self.mcc.set_secondary_signal_membpot()
-        self.mcc.set_secondary_signal_lpf(2000)
-        self.mcc.set_secondary_signal_gain(5)
-        time.sleep(1)
         self.mcc.auto_pipette_offset()
-        self.mcc.meter_resist_enable(True)
         self.mcc.set_holding(0.)
         self.mcc.set_holding_enable(True)
+        self.mcc.meter_resist_enable(True)
         self.acquisition = True
         self.continuous = False
         self.discrete = False

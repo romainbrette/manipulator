@@ -2,7 +2,7 @@
 An XYZ unit made of an XY stage and another device representing the microscope Z axis
 """
 from device import *
-from numpy import array, sign
+from numpy import array, sign, ndarray
 from time import sleep
 
 __all__ = ['XYMicUnit']
@@ -36,7 +36,7 @@ class XYMicUnit(Device):
         The current position of the device axis in um.
         '''
         if axis is None: # all positions in a vector
-            return array(list(self.dev.position_group(self.axes)) + [self.dev_mic.position()])
+            return array([self.position(i) for i in range(len(self.axes))])
         else:
             if axis == 2: # Z
                 return self.dev_mic.position()
@@ -68,6 +68,25 @@ class XYMicUnit(Device):
             else:
                 self.dev.absolute_move(x, self.axes[axis])
         sleep(.02)
+
+    def absolute_move_group(self, x, axes):
+        if isinstance(x, ndarray):
+            pos = []
+            for j in range(len(x)):
+                for i in x[j]:
+                    pos += [i]
+        else:
+            pos = x
+
+        if len(pos) != len(axes):
+            raise ValueError('Length of arrays do not match.')
+
+        if any([axis == 2 for axis in axes]):
+            self.dev_mic.absolute_move(pos[axes.index(2)])
+            pos.remove(pos[axes.index(2)])
+            axes.remove(2)
+
+        self.dev.absolute_move_group(pos, [self.axes[i] for i in axes])
 
     def relative_move(self, x, axis = None):
         '''

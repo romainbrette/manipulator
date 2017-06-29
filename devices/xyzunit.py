@@ -4,7 +4,7 @@ A class for access to a particular XYZ unit managed by a device
 TODO: group queries, based on array or list
 """
 from device import *
-from numpy import array, sign
+from numpy import ndarray, sign
 from time import sleep
 
 __all__ = ['XYZUnit']
@@ -61,6 +61,20 @@ class XYZUnit(Device):
         else:
             self.dev.absolute_move(x, self.axes[axis])
         sleep(.02)
+
+    def absolute_move_group(self, x, axes):
+        if isinstance(x, ndarray):
+            pos = []
+            for j in range(len(x)):
+                for i in x[j]:
+                    pos += [i]
+        else:
+            pos = x
+
+        if len(pos) != len(axes):
+            raise ValueError('Length of arrays do not match.')
+
+        self.dev.absolute_move_group(pos, [self.axes[i] for i in axes])
 
     def relative_move(self, x, axis = None):
         '''
