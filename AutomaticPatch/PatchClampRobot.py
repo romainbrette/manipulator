@@ -259,6 +259,8 @@ class PatchClampRobot(object):
                 self.template_loc[1] = float(f.readline())
 
             self.get_withdraw_sign()
+            self.arm.set_to_zero([0, 1, 2])
+            self.microscope.set_to_zero([0, 1, 2])
             self.calibrated = 1
             self.cam.clic_on_window = True
             return 1
@@ -596,8 +598,31 @@ class PatchClampRobot(object):
         self.multi.get_discrete_acquisition()
         return self.get_resistance()
 
-    def get_resistance(self):
-        return self.multi.res
+    def get_resistance(self, res_type='float'):
+        if res_type == 'text':
+            val = str(self.multi.res).split('.')
+            unit = (len(val[0]) - 1) // 3
+            length = len(val[0]) - unit * 3
+            if unit <= 0:
+                unit = ' Ohm'
+            elif unit == 1:
+                unit = ' kOhm'
+            elif unit == 2:
+                unit = ' MOhm'
+            elif unit == 3:
+                unit = ' GOhm'
+            elif unit == 4:
+                unit = ' TOhm'
+            else:
+                unit = ' 1E{} Ohm'.format(unit * 3)
+
+            if len(val[0]) < length + 3:
+                text_value = val[0][:length] + '.' + val[0][length:] + unit
+            else:
+                text_value = val[0][:length] + '.' + val[0][length:length + 2] + unit
+            return text_value
+        elif res_type == 'float':
+            return self.multi.res
 
     def stop(self):
         self.cam.stop()

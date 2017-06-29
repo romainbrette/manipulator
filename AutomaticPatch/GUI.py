@@ -131,10 +131,7 @@ class Application(Frame):
         if askokcancel('Loading calibration',
                        'Please put the tip of the pipette in focus and at the center of the image.',
                        icon=INFO):
-            if self.robot.load_calibration():
-                self.robot.arm.set_to_zero([0, 1, 2])
-                self.robot.microscope.set_to_zero([0, 1, 2])
-            else:
+            if not self.robot.load_calibration():
                 showerror('Loading calibration', 'The device has never been calibrated.')
         pass
 
@@ -146,26 +143,7 @@ class Application(Frame):
     def get_res(self):
         if self.robot:
             if self.continuous:
-                val = str(self.robot.get_resistance()).split('.')
-                unit = (len(val[0])-1) // 3
-                length = len(val[0]) - unit*3
-                if unit <= 0:
-                    unit = ' Ohm'
-                elif unit == 1:
-                    unit = ' kOhm'
-                elif unit == 2:
-                    unit = ' MOhm'
-                elif unit == 3:
-                    unit = ' GOhm'
-                elif unit == 4:
-                    unit = ' TOhm'
-                else:
-                    unit = ' 1E{} Ohm'.format(unit*3)
-
-                if len(val[0]) < length+3:
-                    self.res_value['text'] = val[0][:length] + '.' + val[0][length:] + unit
-                else:
-                    self.res_value['text'] = val[0][:length] + '.' + val[0][length:length+2] + unit
+                self.res_value['text'] = self.robot.get_resistance(res_type='text')
                 self.after(10, self.get_res)
         pass
 
