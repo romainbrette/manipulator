@@ -38,12 +38,17 @@ class ManipulatorApplication(Frame):
 
         z = self.unit.position(axis = 2)
         x = self.stage.position(axis = 0)
-        self.unit.absolute_move(z-1000,axis = 2) # I should put a flag until_still = True
-        sleep(3)
-        self.stage.absolute_move(x+2000, axis = 0)
-        sleep(3)
-        self.unit.absolute_move(z, axis = 2)
-        sleep(3)
+        self.unit.single_step_distance(2, 250)
+        self.stage.single_step_distance(2, 250)
+        #self.unit.absolute_move(z-1000,axis = 2) # I should put a flag until_still = True
+        self.unit.single_step(2, -4)
+        sleep(1)
+        self.stage.single_step(0, 8)
+        #self.stage.absolute_move(x+2000, axis = 0)
+        sleep(1)
+        #self.unit.absolute_move(z, axis = 2)
+        self.unit.single_step(2, 4)
+        sleep(1)
         print "done"
 
 if __name__ == '__main__':
