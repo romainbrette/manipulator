@@ -147,6 +147,17 @@ class PatchClampRobot(object):
 
         return 1
 
+    def get_withdraw_sign(self):
+        if fabs(self.mat[0, 0] / self.mat[1, 0]) > 1:
+            i = 0
+        else:
+            i = 1
+        if (self.template_loc[i] != 0) ^ (self.mat[i, 0] > 0):
+            self.withdraw_sign = 1
+        else:
+            self.withdraw_sign = -1
+        pass
+
     def calibrate(self):
         """
         Calibrate the entire Robot
@@ -187,15 +198,7 @@ class PatchClampRobot(object):
             print 'z axis calibrated'
 
         # Getting the direction to withdraw pipette along x axis
-        if fabs(self.mat[0, 0] / self.mat[1, 0]) > 1:
-            i = 0
-        else:
-            i = 1
-        if (self.template_loc[i] != 0) ^ (self.mat[i, 0] > 0):
-            self.withdraw_sign = 1
-        else:
-            self.withdraw_sign = -1
-
+        self.get_withdraw_sign()
         self.inv_mat = np.linalg.inv(self.mat)
         self.calibrated = 1
         self.cam.clic_on_window = True
@@ -255,6 +258,7 @@ class PatchClampRobot(object):
                 self.template_loc[0] = float(f.readline())
                 self.template_loc[1] = float(f.readline())
 
+            self.get_withdraw_sign()
             self.calibrated = 1
             self.cam.clic_on_window = True
             return 1
