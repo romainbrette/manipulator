@@ -36,12 +36,12 @@ class PatchClampRobot(PressureController):
         self.step = 0
 
         # Rotation matrix of the platform compared to the camera
-        self.rot = np.matrix('0. 0.; 0. 0.')
-        self.rot_inv = np.matrix('0. 0.; 0. 0.')
+        self.rot = np.matrix([[0., 0.], [0., 0.]])
+        self.rot_inv = np.matrix([[0., 0.], [0., 0.]])
 
         # Initializing transformation matrix (Jacobian) between the camera and the tip
-        self.mat = np.matrix('0. 0. 0.; 0. 0. 0.; 0. 0. 0.')
-        self.inv_mat = np.matrix('0. 0. 0.; 0. 0. 0.; 0. 0. 0.')
+        self.mat = np.matrix([[0., 0., 0.], [0., 0., 0.], [0., 0., 0.]])
+        self.inv_mat = np.matrix([[0., 0., 0.], [0., 0., 0.], [0., 0., 0.]])
 
         # Initial position of the tip in the image, before calibration
         self.x_init, self.y_init = 0, 0
@@ -54,6 +54,10 @@ class PatchClampRobot(PressureController):
 
         # Withdraw direction - changed at end of calibration
         self.withdraw_sign = 1
+
+        # Resistance data
+        self.pipette_resistance = 0.
+        self.pipette_resistance_checked = False
 
         # Camera
         self.multi = ResistanceMeter()
@@ -393,11 +397,10 @@ class PatchClampRobot(PressureController):
             isin, val, loc = templatematching(img, self.template[len(self.template) / 2])
 
             if isin:
-                while val < 0.98:
+                while 0.98 > val:
                     val, _, loc = self.focus()
 
-                delta = np.matrix('{a}; {b}'.format(a=(self.x_init - loc[0]) * self.um_px,
-                                                 b=(self.y_init - loc[1]) * self.um_px))
+                delta = np.array([[(self.x_init - loc[0]) * self.um_px], [(self.y_init - loc[1]) * self.um_px]])
                 move = self.rot_inv * delta
                 for i in range(2):
                     self.arm.relative_move(move[i, 0], i)
@@ -517,7 +520,7 @@ class PatchClampRobot(PressureController):
             raise EnvironmentError('Could not focus on the tip')
 
         # Move the platform for compensation
-        delta = np.matrix('{a}; {b}'.format(a=(self.x_init - loc[0]) * self.um_px, b=(self.y_init - loc[1]) * self.um_px))
+        delta = np.array([[(self.x_init - loc[0]) * self.um_px], [(self.y_init - loc[1]) * self.um_px]])
         move = self.rot_inv * delta
         for i in range(2):
             #  self.microscope.relative_move(move[i, 0], i)
@@ -554,7 +557,7 @@ class PatchClampRobot(PressureController):
             raise EnvironmentError('Could not focus on the tip')
 
         # Move the platform for compensation
-        delta = np.matrix('{a}; {b}'.format(a=(self.x_init - loc[0]) * self.um_px, b=(self.y_init - loc[1]) * self.um_px))
+        delta = np.array([[(self.x_init - loc[0]) * self.um_px], [(self.y_init - loc[1]) * self.um_px]])
         move = self.rot_inv * delta
         for i in range(2):
             self.microscope.relative_move(move[i, 0], i)
@@ -590,8 +593,8 @@ class PatchClampRobot(PressureController):
         self.cam.save_img()
         pass
 
-    def set_continuous_res_meter(self, bool):
-        if bool:
+    def set_continuous_res_meter(self, enable):
+        if enable:
             self.multi.start_continuous_acquisition()
         else:
             self.multi.stop_continuous_acquisition()
@@ -625,6 +628,26 @@ class PatchClampRobot(PressureController):
             return text_value
         elif res_type == 'float':
             return self.multi.res
+
+    def init_patch_clamp(self):
+        self.multi.meter_resist_enable(False)
+        self.multi.auto_pipette_offset()
+        self.multi.set_holding(0.)
+        self.multi.set_holding_enable(True)
+        self.multi.meter_resist_enable(True)
+        sleep(3)
+        self.pipette_resistance = self.get_one_res_metering(res_type='float')
+        if 4.5e6 > self.pipette_resistance:
+            self.multi.meter_resist_enable(False)
+            return 2
+        if 10.2e6 < self.pipette_resistance:
+            self.multi.meter_resist_enable(False)
+            return 1
+        else:
+            self.pipette_resistance_checked = True
+            self.nearing()
+            self.set_continuous_res_meter(True)
+            return 0
 
     def stop(self):
         self.cam.stop()

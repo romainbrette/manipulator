@@ -100,7 +100,7 @@ class Application(Frame):
                 self.connection.config(state='disabled')
                 self.disconnection.config(state='normal')
                 self.continuous_meter.config(state='normal')
-                self.after(4000, self.check_tip_resistance)
+                self.init_patch_clamp()
         pass
 
     def disconnect(self):
@@ -147,16 +147,17 @@ class Application(Frame):
                 self.after(10, self.get_res)
         pass
 
-    def check_tip_resistance(self):
+    def init_patch_clamp(self):
         if self.robot:
-            tip_resistance = self.robot.get_one_res_metering()
-            if tip_resistance < 4.5e6:
-                showinfo('Tip resistance', 'Tip resistance is too low. Should be higher than 5 MOhm.')
-            elif tip_resistance > 10e6:
-                showinfo('Tip resistance', 'Tip resistance is too high. Should be lower than 10 MOhm.')
-            else:
-                showinfo('Tip resistance', 'Tip resistance is good: '+self.robot.get_one_res_metering(res_type='text'))
+            err = self.robot.init_patch_clamp()
+            if err == 0:
+                showinfo('Tip resistance',
+                         'Tip resistance is good: {}'.format(self.robot.pipette_resistance))
                 self.enable_continuous_meter()
+            elif err == 1:
+                showinfo('Tip resistance', 'Tip resistance is too low. Should be higher than 5 MOhm.')
+            else:
+                showinfo('Tip resistance', 'Tip resistance is too high. Should be lower than 10 MOhm.')
 
     def enable_continuous_meter(self):
         if self.robot:
