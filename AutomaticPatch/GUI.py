@@ -100,6 +100,7 @@ class Application(Frame):
                 self.connection.config(state='disabled')
                 self.disconnection.config(state='normal')
                 self.continuous_meter.config(state='normal')
+                self.after(4000, self.check_tip_resistance)
         pass
 
     def disconnect(self):
@@ -145,9 +146,9 @@ class Application(Frame):
     def get_res(self):
         if self.robot:
             if self.continuous:
-                val = str(self.robot.get_resistance())
-                unit = (len(val)-3) // 3
-                length = len(val) - 2 - unit*3
+                val = str(self.robot.get_resistance()).split('.')
+                unit = (len(val[0])-1) // 3
+                length = len(val[0]) - unit*3
                 if unit <= 0:
                     unit = ' Ohm'
                 elif unit == 1:
@@ -161,9 +162,23 @@ class Application(Frame):
                 else:
                     unit = ' 1E{} Ohm'.format(unit*3)
 
-                self.res_value['text'] = val[:length] + ',' + val[length:length+2] + unit
+                if len(val[0]) < length+3:
+                    self.res_value['text'] = val[0][:length] + '.' + val[0][length:] + unit
+                else:
+                    self.res_value['text'] = val[0][:length] + '.' + val[0][length:length+2] + unit
                 self.after(10, self.get_res)
         pass
+
+    def check_tip_resistance(self):
+        if self.robot:
+            tip_resistance = self.robot.get_one_res_metering()
+            if tip_resistance < 4.5e6:
+                showinfo('Tip resistance', 'Tip resistance is too low. Should be higher than 5 MOhm.')
+            elif tip_resistance > 10e6:
+                showinfo('Tip resistance', 'Tip resistance is too high. Should be lower than 10 MOhm.')
+            else:
+                showinfo('Tip resistance', 'Tip resistance is good')
+                self.enable_continuous_meter()
 
     def enable_continuous_meter(self):
         if self.robot:
