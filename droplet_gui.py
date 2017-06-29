@@ -7,8 +7,9 @@ from devices import *
 from geometry import *
 import pickle
 from serial import SerialException
-from numpy import array
+from numpy import array, pi, sin, cos
 from time import sleep
+from AutomaticPatch.Pump.ob1 import *
 
 class ManipulatorApplication(Frame):
     '''
@@ -28,8 +29,21 @@ class ManipulatorApplication(Frame):
         self.stage = stage
         self.unit = unit
 
+        # angle of the manipulator
+        self.angle = 35./180*pi
+
+        self.pump = OB1()
+
         Button(self, text="Reference", command=self.reference).pack()
         Button(self, text="Go", command=self.go).pack()
+        Button(self, text="Droplet", command=self.droplet).pack()
+
+        self.pump.set_pressure(30)
+
+    def droplet(self):
+        self.pump.set_pressure(100)
+        sleep(.05)
+        self.pump.set_pressure(30)
 
     def reference(self):
         '''
@@ -47,38 +61,50 @@ class ManipulatorApplication(Frame):
         x = self.unit.position(0)
         z = self.unit.position(2)
 
-        self.unit.set_single_step_distance(0, (x-self.refx)/8)
+        # We calculate dx and dz for a 1 mm move on the coverslip
+        '''
+        dx = x-self.refx
+        dz = z-self.refz
+        '''
+        dx = -1000/cos(self.angle)
+        dz = dx*sin(self.angle)
+
+        self.unit.set_single_step_distance(0, dx/8)
         self.unit.set_single_step_distance(1, 250)
-        self.unit.set_single_step_distance(2, (z-self.refz)/8)
+        self.unit.set_single_step_distance(2, dz/8)
         #self.unit.absolute_move(z-1000,axis = 2) # I should put a flag until_still = True
 
         sign = 1
-        for j in range(2):
-            for i in range(2):
+        for j in range(4):
+            for i in range(4):
                 if sign == 1:
                     self.unit.single_step(2, 8)
                     self.unit.wait_motor_stop(2)
+                    self.droplet()
                     self.unit.single_step(0, 8)
                     #self.stage.absolute_move(x+2000, axis = 0)
                     self.unit.wait_motor_stop(0)
-                    sleep(1) # put drop
                 else:
                     self.unit.single_step(0, -8)
                     self.unit.wait_motor_stop(0)
+                    self.droplet()
                     self.unit.single_step(2, -8)
                     sleep(1)
                 self.unit.wait_motor_stop(2)
             sign=-sign
             self.unit.single_step(2, 8)
             self.unit.wait_motor_stop(2)
+            self.droplet()
             self.unit.single_step(1, 4)
             self.unit.wait_motor_stop(1)
             self.unit.single_step(2, -8)
             self.unit.wait_motor_stop(2)
             sleep(1)
-        self.unit.single_step(2, 4)
+        self.unit.single_step(2, 8)
         sleep(3)
         print "done"
+
+        self.pump.set_pressure(0)
 
 if __name__ == '__main__':
     root = Tk()
