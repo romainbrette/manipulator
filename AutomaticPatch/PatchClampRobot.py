@@ -8,7 +8,6 @@ from math import fabs
 from time import sleep, time
 import os
 import errno
-import time
 
 __all__ = ['PatchClampRobot']
 
@@ -335,7 +334,7 @@ class PatchClampRobot(object):
                     #self.linear_move(intermediate_pos, mic_pos+self.mat*np.array([[self.withdraw_sign*10], [0], [0]]))
 
                     if abs(self.pipette_resistance-self.get_resistance()) > 3e5:
-                        raise ValueError
+                        return None
                     else:
                         self.amplifier.auto_pipette_offset()
                         while self.arm.position(0)-final_tip_pos[0, 0]-self.withdraw_sign*5 > 0:
@@ -343,9 +342,20 @@ class PatchClampRobot(object):
                             if self.pipette_resistance*1.25 < self.get_resistance():
                                 break
                         sleep(10)
-                        if self.pipette_resistance*1.25 < self.get_resistance():
+                        if self.pipette_resistance*1.25 >= self.get_resistance():
+                            # continuer avancer
+                            pass
+                        else:
                             self.pressure.seal()
-
+                            init_time = time.time()
+                            while time.time() - init_time < 10:
+                                self.amplifier.set_holding(-7*(time.time()-init_time))
+                            init_time = time.time()
+                            while self.amplifier.get_meter_value() < 1e9:
+                                if time.time() - init_time >= 90:
+                                    return None
+                            self.pressure.release()
+                            sleep(120)
         pass
 
     def enable_clic_position(self):
@@ -452,7 +462,7 @@ class PatchClampRobot(object):
         for k in range(nb_images):
             self.microscope.absolute_move(k - (nb_images - 1) / 2, 2)
             self.microscope.wait_motor_stop(2)
-            time.sleep(0.5)
+            sleep(0.5)
             img = self.template_zone()
             height, width = img.shape[:2]
             img = img[i * height / 4:height / 2 + i * height / 4, j * width / 4:width / 2 + j * width / 4]
