@@ -356,6 +356,13 @@ class PatchClampRobot(object):
                                     return None
                             self.pressure.release()
                             sleep(120)
+                            # Make a seperate function to clamp, not always wanted
+                            nb_try = 0
+                            while self.amplifier.get_meter_value() > 300e6:
+                                self.pressure.break_in()
+                                nb_try += 1
+                                if nb_try == 4:
+                                    return None
         pass
 
     def enable_clic_position(self):
