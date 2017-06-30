@@ -14,7 +14,7 @@ class CameraThread(Thread):
     def __init__(self, controller, mouse_fun, winname='Camera'):
         Thread.__init__(self)
         self.controller = controller
-        self.cam = camera_init(controller)
+        self.cam, self.flip = camera_init(controller)
         self.frame = None
         self.img_to_display = None
         self.width, self.height = None, None
@@ -34,10 +34,8 @@ class CameraThread(Thread):
                 img **= 2
                 img = cv2.bilateralFilter(img, 1, 10, 10)
 
-                if self.controller == 'SM5':
-                    img = cv2.flip(img, 2)
-                elif self.controller == 'SM10':
-                    img = cv2.flip(img, 1)
+                if self.flip[0]:
+                    cv2.flip(img, self.flip[1])
 
                 self.frame = img
                 self.height, self.width = img.shape[:2]

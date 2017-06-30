@@ -23,8 +23,12 @@ def camera_init(devtype):
 
     if devtype == 'SM5':
         mmc.loadDevice('Camera', 'HamamatsuHam', 'HamamatsuHam_DCAM')
+        flip = [True, 2]
     elif devtype == 'SM10':
         mmc.loadDevice('Camera', 'Lumenera', 'LuCam')
+        flip = [True, 1]
+    else:
+        raise SystemError('Unkown camera.')
 
     mmc.initializeDevice('Camera')
     print "done"
@@ -37,7 +41,7 @@ def camera_init(devtype):
 
     time.sleep(1)  # the microscope gives a wrong position in the very beginning, so wait a bit
 
-    return mmc
+    return mmc, flip
 
 
 def camera_unload(mmc):
