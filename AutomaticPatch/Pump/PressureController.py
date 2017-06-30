@@ -1,6 +1,10 @@
 from ob1 import *
 from FakeOB import *
+from numpy import savetxt, array
 from time import sleep
+from os.path import expanduser
+home = expanduser("~")
+filename = home+'/pressure.txt'
 
 
 class PressureController(OB1, FakeOB1):
@@ -11,6 +15,8 @@ class PressureController(OB1, FakeOB1):
         except (AttributeError, RuntimeError):
             FakeOB1.__init__(self)
 
+        self.isrecording = False
+        self.measurement = list()
         self.release()
     pass
 
@@ -37,3 +43,26 @@ class PressureController(OB1, FakeOB1):
         self.set_pressure(-150)
         sleep(1)
         self.release()
+
+    def record(self):
+        self.isrecording = not self.isrecording
+        if self.isrecording:
+            # Here we start clocked recording using a timer - could be different depending on the interface
+            self.sample()  # 20 Hz recording
+        else:
+            # Save to while when it's finished
+            savetxt(filename, array(self.measurement))
+
+    def sample(self):
+        if self.isrecording:
+            pressure = self.measure()
+            print pressure
+            self.measurement.append(pressure)
+            sleep(0.05)
+            self.sample()
+
+if __name__ == '__main__':
+    pressure_controler = PressureController()
+    pressure_controler.record()
+    sleep(5)
+    pressure_controler.record()
