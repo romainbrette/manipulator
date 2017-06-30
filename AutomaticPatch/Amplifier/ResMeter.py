@@ -1,7 +1,7 @@
-from devices import *
 import numpy as np
 from FakeMulticlamp import *
-import time
+from MultiClamp import *
+from time import sleep
 from threading import Thread
 
 __all__ = ['ResistanceMeter']
@@ -75,22 +75,22 @@ class ResistanceMeter(Thread, MultiClamp, FakeMultiClamp):
     def stop(self):
         self.continuous = False
         self.acquisition = False
-        time.sleep(.2)
+        sleep(.2)
 
     def start_continuous_acquisition(self):
         self.continuous = True
         self.discrete = False
-        time.sleep(.2)
+        sleep(.2)
 
     def stop_continuous_acquisition(self):
         self.continuous = False
         self.discrete = False
-        time.sleep(.2)
+        sleep(.2)
 
     def get_discrete_acquisition(self):
         self.continuous = False
         self.discrete = True
-        time.sleep(.2)
+        sleep(.2)
 
     def __del__(self):
         self.stop()

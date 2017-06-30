@@ -15,7 +15,7 @@ class FakeMultiClamp(object):
 
     """
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.fast_comp = ctypes.c_float(00000.0)
         self.slow_comp = ctypes.c_float(00000.0)
         self.pulse_amp = ctypes.c_float(00000.0)
