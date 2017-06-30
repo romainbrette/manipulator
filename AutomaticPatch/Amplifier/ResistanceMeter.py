@@ -14,17 +14,17 @@ class ResistanceMeter(Thread, Amplifier):
         print('Connecting to the MultiClamp amplifier')
         Amplifier.__init__(self, amplifier)
         print('Switching to voltage clamp')
-        self.amp.voltage_clamp()
+        self.voltage_clamp()
         print('Running automatic slow compensation')
-        self.amp.auto_slow_compensation()
+        self.auto_slow_compensation()
         print('Running automatic fast compensation')
-        self.amp.auto_fast_compensation()
+        self.auto_fast_compensation()
 
-        self.amp.meter_resist_enable(False)
+        self.meter_resist_enable(False)
 
-        self.amp.set_freq_pulse_amplitude(1e-2)
-        self.amp.set_freq_pulse_frequency(1e-2)
-        self.amp.freq_pulse_enable(False)
+        self.set_freq_pulse_amplitude(1e-2)
+        self.set_freq_pulse_frequency(1e-2)
+        self.freq_pulse_enable(False)
 
         self.acquisition = True
         self.continuous = False
@@ -36,39 +36,39 @@ class ResistanceMeter(Thread, Amplifier):
 
     def run(self):
         while self.acquisition:
-            if self.amp.get_meter_resist_enable().value:
+            if self.get_meter_resist_enable().value:
                 if self.continuous:
 
-                    self.amp.freq_pulse_enable(True)
+                    self.freq_pulse_enable(True)
                     while self.continuous:
 
                         res = []
 
                         for _ in range(3):
-                            res += [self.amp.get_meter_value().value]
+                            res += [self.get_meter_value().value]
                         self.res = np.mean(res)
 
-                    self.amp.freq_pulse_enable(False)
+                    self.freq_pulse_enable(False)
 
                 elif self.discrete:
 
-                    self.amp.freq_pulse_enable(True)
+                    self.freq_pulse_enable(True)
                     res = []
 
                     for _ in range(3):
 
-                        res += [self.amp.get_meter_value().value]
+                        res += [self.get_meter_value().value]
 
                     self.res = np.mean(res)
 
-                    self.amp.freq_pulse_enable(False)
+                    self.freq_pulse_enable(False)
                     self.discrete = False
 
                 else:
                     pass
             else:
                 self.res = 0.
-        self.amp.set_holding_enable(False)
+        self.set_holding_enable(False)
 
     def stop(self):
         self.continuous = False
@@ -92,7 +92,7 @@ class ResistanceMeter(Thread, Amplifier):
 
     def __del__(self):
         self.stop()
-        self.amp.close()
+        self.close()
 
 
 if __name__ == '__main__':

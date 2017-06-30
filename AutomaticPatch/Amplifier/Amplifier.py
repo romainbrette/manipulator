@@ -1,8 +1,7 @@
 """
 Amplifier class that connects to amplifier or switch to a fake one if none is found. 
 """
-from FakeMulticlamp import *
-from MultiClamp import *
+from amp_devices import *
 
 __all__ = ['Amplifier']
 
@@ -20,7 +19,7 @@ class Amplifier(object):
                 raise AttributeError
         except (AttributeError, RuntimeError):
             print 'No multiclamp detected, switching to fake amplifier.'
-            self.amp = FakeMultiClamp()
+            self.amp = FakeAmplifier()
         pass
 
     def voltage_clamp(self):

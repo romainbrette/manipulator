@@ -1,3 +1,2 @@
+from amp_devices import *
 from ResistanceMeter import *
-from MultiClamp import *
-from FakeMulticlamp import *

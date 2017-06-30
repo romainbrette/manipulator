@@ -3,4 +3,4 @@ from Autofocus import *
 from GUI import *
 from PatchClampRobot import *
 from Amplifier import *
-from Pump import *
+from Pressure_controller import *

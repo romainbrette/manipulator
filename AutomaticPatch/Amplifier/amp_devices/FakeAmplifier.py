@@ -4,10 +4,10 @@ Fake multiclamp class in case no multiclamp is connected
 
 import ctypes
 
-__all__ = ['FakeMultiClamp']
+__all__ = ['FakeAmplifier']
 
 
-class FakeMultiClamp(object):
+class FakeAmplifier(object):
     """
     Fake device representing a MultiClamp amplifer channel (i.e., one amplifier with
     two channels is represented by two devices).
@@ -156,7 +156,7 @@ if __name__ == '__main__':
 
     val = []
     print('Connecting to the MultiClamp amplifier')
-    mcc = FakeMultiClamp()
+    mcc = FakeAmplifier()
     print('Switching to voltage clamp')
     mcc.voltage_clamp()
     print('Running automatic slow compensation')

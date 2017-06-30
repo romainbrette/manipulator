@@ -1,7 +1,7 @@
 from Autofocus import *
 from Camera import *
 from Amplifier import *
-from Pump import *
+from Pressure_controller import *
 import numpy as np
 import cv2
 from math import fabs
