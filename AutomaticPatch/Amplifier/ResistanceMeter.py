@@ -1,23 +1,18 @@
 import numpy as np
-from FakeMulticlamp import *
-from MultiClamp import *
-from time import sleep
+from Amplifier import *
+from time import sleep, time
 from threading import Thread
 
 __all__ = ['ResistanceMeter']
 
 
-class ResistanceMeter(Thread):
+class ResistanceMeter(Thread, Amplifier):
 
-    def __init__(self):
+    def __init__(self, amplifier):
 
         Thread.__init__(self)
         print('Connecting to the MultiClamp amplifier')
-        try:
-            self.amp = MultiClamp(channel=1)
-        except (AttributeError, RuntimeError):
-            print 'No multiclamp detected, switching to fake amplifier.'
-            self.amp = FakeMultiClamp()
+        Amplifier.__init__(self, amplifier)
         print('Switching to voltage clamp')
         self.amp.voltage_clamp()
         print('Running automatic slow compensation')
@@ -35,6 +30,9 @@ class ResistanceMeter(Thread):
         self.continuous = False
         self.discrete = False
         self.res = 0.
+
+        self.start()
+        pass
 
     def run(self):
         while self.acquisition:
@@ -100,12 +98,11 @@ class ResistanceMeter(Thread):
 if __name__ == '__main__':
     from matplotlib.pyplot import *
     val = []
-    multi = ResistanceMeter()
-    multi.start()
+    multi = ResistanceMeter('Multiclamp')
     multi.start_continuous_acquisition()
     print('Getting resistance')
-    init = time.time()
-    while time.time() - init < 5:
+    init = time()
+    while time() - init < 5:
         val += [multi.res]
     multi.stop_continuous_acquisition()
     multi.stop()

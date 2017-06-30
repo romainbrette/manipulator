@@ -13,14 +13,13 @@ import time
 __all__ = ['PatchClampRobot']
 
 
-class PatchClampRobot(PressureController):
+class PatchClampRobot(object):
 
     def __init__(self, controller, arm):
 
         # devices
         self.dev, self.microscope, self.arm = init_device(controller, arm)
         self.controller = controller
-        PressureController.__init__(self)
 
         # Tab for template images
         self.template = []
@@ -60,8 +59,8 @@ class PatchClampRobot(PressureController):
         self.pipette_resistance_checked = False
 
         # Camera
-        self.amplifier = ResistanceMeter()
-        self.amplifier.start()
+        self.amplifier = ResistanceMeter('Multiclamp')
+        self.pressure = PressureController('OB1')
         self.cam = CameraThread(controller, self.clic_position)
         pass
 
@@ -345,7 +344,7 @@ class PatchClampRobot(PressureController):
                                 break
                         sleep(10)
                         if self.pipette_resistance*1.25 < self.get_resistance():
-                            self.seal()
+                            self.pressure.seal()
 
         pass
 
@@ -658,7 +657,7 @@ class PatchClampRobot(PressureController):
             return 1
         else:
             self.pipette_resistance_checked = True
-            self.nearing()
+            self.pressure.nearing()
             self.set_continuous_res_meter(True)
             return 0
 

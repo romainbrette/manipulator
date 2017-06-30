@@ -7,18 +7,27 @@ home = expanduser("~")
 filename = home+'/pressure.txt'
 
 
-class PressureController(OB1, FakeOB1):
+class PressureController(object):
 
-    def __init__(self):
+    def __init__(self, pressure_controller=None):
         try:
-            OB1.__init__(self)
+            if pressure_controller == 'OB1':
+                self.controller = OB1()
+            else:
+                raise AttributeError
         except (AttributeError, RuntimeError):
-            FakeOB1.__init__(self)
+            self.controller = FakeOB1()
 
         self.isrecording = False
         self.measurement = list()
         self.release()
     pass
+
+    def set_pressure(self, value):
+        self.controller.set_pressure(value)
+
+    def measure(self):
+        return self.controller.measure()
 
     def high_pressure(self):
         self.set_pressure(800)
@@ -33,14 +42,14 @@ class PressureController(OB1, FakeOB1):
 
     def release(self):
         # Release the pressure
-        self.set_pressure(0)
+        self.controller.set_pressure(0)
         # -15 to -20 in Kodandaramaiah paper?
 
     def break_in(self):
         # Breaks in with a ramp
         # Holst thesis: 0 to -345 mBar in 1.5 second
         # Desai: -150 mBar for 1 second; repeated attempts
-        self.set_pressure(-150)
+        self.controller.set_pressure(-150)
         sleep(1)
         self.release()
 
