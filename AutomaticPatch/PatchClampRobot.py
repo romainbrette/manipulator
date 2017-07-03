@@ -302,9 +302,6 @@ class PatchClampRobot(object):
                                                   [(self.y_init - (y - self.template_loc[1])) * self.um_px],
                                                   [0]])
                 pos = pos + offset
-
-                print pos
-                print self.microscope.position()
                 self.linear_move(self.mat*np.transpose(self.arm.position()), pos)
                 #move = self.inv_mat * pos
 
@@ -369,10 +366,7 @@ class PatchClampRobot(object):
         nb_step = np.linalg.norm(dir_vector) / 10.
         for step in range(1, int(nb_step)+1):
             intermediate_position = step * self.inv_mat * step_vector
-            move = self.inv_mat * initial_position + intermediate_position
-            for i in range(3):
-                self.arm.absolute_move(move[i, 0], i)
-
+            self.arm.step_move(intermediate_position, [0, 1, 2])
         self.arm.absolute_move_group(self.inv_mat*final_position, [0, 1, 2])
 
     def pipettechange(self):

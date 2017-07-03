@@ -167,14 +167,27 @@ class XYZUnit(Device):
         sleep(.02)
 
     def step_move(self, distance, axis):
-        number_step = abs(distance) // 255
-        last_step = abs(distance) % 255
-        if number_step:
-            self.set_single_step_distance(axis, 255)
-            self.single_step(axis, number_step*sign(distance))
-        if last_step:
-            self.set_single_step_distance(axis, last_step)
-            self.single_step(axis, sign(distance))
+        print distance
+        if isinstance(distance, ndarray):
+            move = []
+            for j in range(len(distance)):
+                for i in range(len(distance[j])):
+                    move += [distance[j, i]]
+            self.step_move(move, axis)
+        elif isinstance(distance, list):
+            if len(distance) != len(axis):
+                raise ValueError('Length of arguments do not match')
+            for i in range(len(distance)):
+                self.step_move(distance[i], axis[i])
+        else:
+            number_step = abs(distance) // 255
+            last_step = abs(distance) % 255
+            if number_step:
+                self.set_single_step_distance(axis, 255)
+                self.single_step(axis, number_step*sign(distance))
+            if last_step:
+                self.set_single_step_distance(axis, last_step)
+                self.single_step(axis, sign(distance))
 
     def set_ramp_length(self, axis, length):
         if isinstance(axis, list):
