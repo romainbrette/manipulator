@@ -75,6 +75,7 @@ class XYZUnit(Device):
             raise ValueError('Length of arrays do not match.')
 
         self.dev.absolute_move_group(pos, [self.axes[i] for i in axes])
+        sleep(.05)
 
     def relative_move(self, x, axis = None):
         '''

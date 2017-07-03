@@ -35,7 +35,7 @@ class CameraThread(Thread):
                 img = cv2.bilateralFilter(img, 1, 10, 10)
 
                 if self.flip[0]:
-                    cv2.flip(img, self.flip[1])
+                    img = cv2.flip(img, self.flip[1])
 
                 self.frame = img
                 self.height, self.width = img.shape[:2]
