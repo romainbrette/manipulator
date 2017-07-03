@@ -14,7 +14,7 @@ __all__ = ['PatchClampRobot']
 
 class PatchClampRobot(object):
 
-    def __init__(self, controller, arm):
+    def __init__(self, controller, arm, verbose=True):
 
         # devices
         self.dev, self.microscope, self.arm = init_device(controller, arm)
@@ -34,8 +34,8 @@ class PatchClampRobot(object):
         self.step = 0
 
         # Rotation matrix of the platform compared to the camera
-        self.rot = np.matrix([[0., 0.], [0., 0.]])
-        self.rot_inv = np.matrix([[0., 0.], [0., 0.]])
+        self.rot = np.matrix([[0., 0., 0.], [0., 0., 0.], [0., 0., 1.]])
+        self.rot_inv = np.matrix([[0., 0., 0.], [0., 0., 0.], [0., 0., 1.]])
 
         # Initializing transformation matrix (Jacobian) between the camera and the tip
         self.mat = np.matrix([[0., 0., 0.], [0., 0., 0.], [0., 0., 0.]])
@@ -61,6 +61,13 @@ class PatchClampRobot(object):
         self.amplifier = ResistanceMeter('Multiclamp')
         self.pressure = PressureController('OB1')
         self.cam = CameraThread(controller, self.clic_position)
+
+        # Patch Clamp variables
+        self.enable_clamp = False
+
+        # Messages
+        self.verbose = verbose
+        self.message = ''
         pass
 
     def go_to_zero(self):
@@ -140,7 +147,7 @@ class PatchClampRobot(object):
             try:
                 self.exp_focus_track(axis)
             except EnvironmentError:
-                print 'Could not track the tip.'
+                self.update_message('Could not track the tip.')
                 return 0
 
         # When calibration is finished:
@@ -168,38 +175,41 @@ class PatchClampRobot(object):
         :return: 0 if calibration failed, 1 otherwise
         """
 
-        print 'Calibrating platform'
+        self.update_message('Calibrating platform...')
 
         self.calibrate_platform()
 
-        print 'Platform Calibrated'
+        self.update_message('Platform Calibrated.')
 
         # calibrate arm x axis
-        print 'Calibrating x axis'
+        self.update_message('Calibrating x axis...')
         calibrated = self.calibrate_arm(0)
 
         if not calibrated:
+            self.update_message('ERROR: Could not calibrate x axis.')
             return 0
         else:
-            print 'x axis calibrated'
+            self.update_message('x axis calibrated.')
 
         # calibrate arm y axis
-        print 'Calibrating y axis'
+        self.update_message('Calibrating y axis...')
         calibrated = self.calibrate_arm(1)
 
         if not calibrated:
+            self.update_message('ERROR: Could not calibrate y axis.')
             return 0
         else:
-            print 'y axis calibrated'
+            self.update_message('y axis calibrated.')
 
         # calibrate arm z axis
-        print 'Calibrating z axis'
+        self.update_message('Calibrating z axis...')
         calibrated = self.calibrate_arm(2)
 
         if not calibrated:
+            self.update_message('ERROR: Could not calibrate z axis.')
             return 0
         else:
-            print 'z axis calibrated'
+            self.update_message('z axis calibrated.')
 
         # Getting the direction to withdraw pipette along x axis
         self.get_withdraw_sign()
@@ -270,7 +280,7 @@ class PatchClampRobot(object):
             return 1
 
         except IOError:
-            print '{i} has not been calibrated.'.format(i=self.controller)
+            self.update_message('{i} has not been calibrated.'.format(i=self.controller))
             return 0
 
     def clic_position(self, event, x, y, flags, param):
@@ -292,10 +302,10 @@ class PatchClampRobot(object):
 
                 pos = np.transpose(self.microscope.position())
 
-                temp = self.rot_inv * np.array([[(self.x_init - (x - self.template_loc[0])) * self.um_px],
-                                                [(self.y_init - (y - self.template_loc[1])) * self.um_px]])
-                pos[0, 0] += temp[0, 0]
-                pos[1, 0] += temp[1, 0]
+                offset = self.rot_inv * np.array([[(self.x_init - (x - self.template_loc[0])) * self.um_px],
+                                                  [(self.y_init - (y - self.template_loc[1])) * self.um_px],
+                                                  [0]])
+                pos += offset
 
                 self.linear_move(self.mat*np.transpose(self.arm.position()), pos)
                 #move = self.inv_mat * pos
@@ -308,26 +318,25 @@ class PatchClampRobot(object):
 
                     mic_pos = np.transpose(self.microscope.position())
 
-                    temp = self.rot_inv * np.array([[(self.x_init - (x - self.template_loc[0])) * self.um_px],
-                                                    [(self.y_init - (y - self.template_loc[1])) * self.um_px]])
-                    mic_pos[0, 0] += temp[0, 0]
-                    mic_pos[1, 0] += temp[1, 0]
+                    offset = self.rot_inv * np.array([[(self.x_init - (x - self.template_loc[0])) * self.um_px],
+                                                      [(self.y_init - (y - self.template_loc[1])) * self.um_px],
+                                                      [0]])
+                    mic_pos += offset
 
-                    final_tip_pos = self.inv_mat*mic_pos
                     tip_pos = self.mat*np.transpose(self.arm.position())
 
                     if tip_pos[2, 0] < mic_pos[2, 0]:
                         move = self.withdraw_sign*(mic_pos[2, 0]-tip_pos[2, 0]+15)/abs(self.mat[2, 0])
-                        self.arm.relative_move(0, move)
-                        theorical_tip_pos = tip_pos + np.array([[move], [0], [0]])
                     else:
-                        self.arm.relative_move(self.withdraw_sign*15/abs(self.mat[2, 0]), 0)
-                        theorical_tip_pos = tip_pos + np.array([[self.withdraw_sign*15/abs(self.mat[2, 0])], [0], [0]])
+                        move = self.withdraw_sign*15/abs(self.mat[2, 0])
+
+                    self.arm.relative_move(move, 0)
+                    theorical_tip_pos = tip_pos + np.array([[move], [0], [0]])
 
                     self.arm.wait_motor_stop([0])
-                    intermediate_x_tip_pos = self.withdraw_sign*(theorical_tip_pos[2, 0]-mic_pos[2, 0])/abs(self.mat[2, 0])
+                    intermediate_x_pos = self.withdraw_sign*(theorical_tip_pos[2, 0]-mic_pos[2, 0])/abs(self.mat[2, 0])
                     intermediate_pos = mic_pos
-                    intermediate_pos += self.mat*np.array([[intermediate_x_tip_pos], [0], [0]])
+                    intermediate_pos += self.mat*np.array([[intermediate_x_pos], [0], [0]])
                     self.linear_move(theorical_tip_pos, intermediate_pos)
                     self.arm.wait_motor_stop([0, 1, 2])
                     self.linear_move(intermediate_pos, mic_pos)
@@ -337,32 +346,11 @@ class PatchClampRobot(object):
                         return None
                     else:
                         self.amplifier.auto_pipette_offset()
-                        while self.arm.position(0)-final_tip_pos[0, 0]-self.withdraw_sign*5 > 0:
-                            self.arm.relative_move(-self.withdraw_sign)
-                            if self.pipette_resistance*1.25 < self.get_resistance():
-                                break
-                        sleep(10)
-                        if self.pipette_resistance*1.25 >= self.get_resistance():
-                            # continuer avancer
-                            pass
-                        else:
-                            self.pressure.seal()
-                            init_time = time.time()
-                            while time.time() - init_time < 10:
-                                self.amplifier.set_holding(-7*(time.time()-init_time))
-                            init_time = time.time()
-                            while self.amplifier.get_meter_value() < 1e9:
-                                if time.time() - init_time >= 90:
-                                    return None
-                            self.pressure.release()
-                            sleep(120)
-                            # Make a seperate function to clamp, not always wanted
-                            nb_try = 0
-                            while self.amplifier.get_meter_value() > 300e6:
-                                self.pressure.break_in()
-                                nb_try += 1
-                                if nb_try == 4:
-                                    return None
+                        if not self.patch(mic_pos):
+                            return 0
+                        sleep(120)
+                        if self.enable_clamp:
+                            self.clamp()
         pass
 
     def enable_clic_position(self):
@@ -533,11 +521,11 @@ class PatchClampRobot(object):
             self.step *= 2.
 
         # Move the arm
-        self.arm.step_move(axis, self.step)
+        self.arm.step_move(self.step, axis)
 
         # Move the platform to center the tip
         for i in range(3):
-            self.microscope.step_move(i, self.mat[i, axis] * self.step)
+            self.microscope.step_move(self.mat[i, axis] * self.step, i)
 
         # Waiting for motors to stop
         self.arm.wait_motor_stop(axis)
@@ -550,10 +538,10 @@ class PatchClampRobot(object):
             raise EnvironmentError('Could not focus on the tip')
 
         # Move the platform for compensation
-        delta = np.array([[(self.x_init - loc[0]) * self.um_px], [(self.y_init - loc[1]) * self.um_px]])
+        delta = np.array([[(self.x_init - loc[0]) * self.um_px], [(self.y_init - loc[1]) * self.um_px], [0]])
         move = self.rot_inv * delta
         for i in range(2):
-            self.microscope.step_move(i, move[i, 0])
+            self.microscope.step_move(move[i, 0], i)
 
         self.microscope.wait_motor_stop([0, 1])
 
@@ -586,7 +574,7 @@ class PatchClampRobot(object):
             raise EnvironmentError('Could not focus on the tip')
 
         # Move the platform for compensation
-        delta = np.array([[(self.x_init - loc[0]) * self.um_px], [(self.y_init - loc[1]) * self.um_px]])
+        delta = np.array([[(self.x_init - loc[0]) * self.um_px], [(self.y_init - loc[1]) * self.um_px], [0]])
         move = self.rot_inv * delta
         for i in range(2):
             self.microscope.relative_move(move[i, 0], i)
@@ -677,6 +665,52 @@ class PatchClampRobot(object):
             self.pressure.nearing()
             self.set_continuous_res_meter(True)
             return 0
+
+    def patch(self, position):
+        tip_position = self.mat * position
+        self.update_message('Approaching cel...')
+        while self.arm.position(0) - tip_position[0, 0] - self.withdraw_sign * 5 > 0:
+            self.arm.step_move(-self.withdraw_sign, 0)
+            self.arm.wait_motor_stop([0])
+            if self.pipette_resistance * 1.25 < self.get_resistance():
+                break
+        sleep(10)
+        if self.arm.position(0) - position[0, 0] - self.withdraw_sign * 5 < 0:
+            self.update_message('ERROR: Could not find the cell.')
+            return 0
+        elif self.pipette_resistance * 1.25 >= self.get_resistance():
+            return self.patch(position)
+        else:
+            self.update_message('Cell found. Sealing...')
+            self.pressure.seal()
+            init_time = time.time()
+            while time.time() - init_time < 10:
+                self.amplifier.set_holding(-7 * (time.time() - init_time))
+            init_time = time.time()
+            while self.amplifier.get_meter_value() < 1e9:
+                if time.time() - init_time >= 90:
+                    self.update_message('ERROR: Seal unsuccessful.')
+                    return 0
+            self.pressure.release()
+            self.update_message('Patch done.')
+            return 1
+
+    def clamp(self):
+        nb_try = 0
+        self.update_message('Clamping...')
+        while self.amplifier.get_meter_value() > 300e6:
+            self.pressure.break_in()
+            nb_try += 1
+            if nb_try == 4:
+                self.update_message('ERROR: Clamp unsuccessful.')
+                return 0
+        self.update_message('Clamp done.')
+        return 1
+
+    def update_message(self, text):
+        self.message = text
+        if self.verbose:
+            print self.message
 
     def stop(self):
         self.cam.stop()
