@@ -116,6 +116,8 @@ class Application(Frame):
                            command=self.exit)
         self.QUIT.grid(row=2, column=0, padx=2, pady=2)
 
+        self.message = ''
+
         self.pack()
 
     def connect(self):
@@ -128,6 +130,8 @@ class Application(Frame):
                 print 'Please specify a device for the arm.'
             else:
                 self.robot = PatchClampRobot(self.controller, self.arm)
+                self.message = self.robot.message
+
                 self.controllist['state'] = 'disabled'
                 self.armlist['state'] = 'disabled'
                 self.imgsave.config(state='normal', command=self.robot.save_img)
@@ -138,10 +142,14 @@ class Application(Frame):
                 self.disconnection.config(state='normal')
                 self.continuous_meter.config(state='normal')
                 self.check_pipette_resistance.config(state='normal')
+
+                self.check_message()
         pass
 
     def disconnect(self):
         self.robot.stop()
+        del self.robot
+        self.robot = None
         self.calibrate.config(command=None, state='disable')
         self.imgsave.config(state='disable', command=None)
         self.load_calibrate.config(state='disable', command=None)
@@ -210,6 +218,16 @@ class Application(Frame):
             self.robot.set_continuous_res_meter(False)
             self.continuous = False
             self.continuous_meter.config(command=self.enable_continuous_meter)
+
+    def check_message(self):
+        if self.robot:
+            if self.message != self.robot.message:
+                self.message = self.robot.message
+                if self.message[:5] == 'ERROR':
+                    showerror('ERROR', self.message)
+                else:
+                    pass
+            self.after(10, self.check_message)
 
     def exit(self):
         if self.robot:
