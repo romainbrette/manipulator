@@ -407,9 +407,10 @@ class PatchClampRobot(object):
         dir_vector = final_position - initial_position
         step_vector = 10 * dir_vector/np.linalg.norm(dir_vector)
         nb_step = np.linalg.norm(dir_vector) / 10.
-        intermediate_position = self.inv_mat * step_vector
-        for _ in range(int(nb_step)):
-            self.arm.step_move(intermediate_position, [0, 1, 2])
+        for step in range(1, int(nb_step)+1):
+            intermediate_position = step * self.inv_mat * step_vector
+            self.arm.absolute_move_group(self.inv_mat*initial_position + intermediate_position, [0, 1, 2])
+            time.sleep(0.1)
         self.arm.wait_motor_stop([0, 1, 2])
         self.arm.absolute_move_group(self.inv_mat*final_position, [0, 1, 2])
 
