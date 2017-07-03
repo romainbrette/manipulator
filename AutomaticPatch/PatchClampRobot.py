@@ -347,9 +347,9 @@ class PatchClampRobot(object):
                     else:
                         self.amplifier.auto_pipette_offset()
                         if not self.patch(mic_pos):
-                            return 0
-                        sleep(120)
+                            return None
                         if self.enable_clamp:
+                            sleep(120)
                             self.clamp()
         pass
 
