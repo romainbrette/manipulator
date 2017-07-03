@@ -346,13 +346,10 @@ class PatchClampRobot(object):
                                                   [0]])
                 pos = pos + offset
                 self.linear_move(tip_pos, pos)
-                #move = self.inv_mat * pos
-
-                #self.arm.absolute_move_group(move, [0, 1, 2])
 
             elif event == cv2.EVENT_RBUTTONUP:
 
-                if self.pipette_resistance_checked | (not self.pipette_resistance_checked):
+                if self.pipette_resistance_checked:
 
                     mic_pos = np.transpose(self.microscope.position())
 
@@ -377,8 +374,7 @@ class PatchClampRobot(object):
 
                     self.linear_move(theorical_tip_pos, intermediate_pos)
                     self.arm.wait_motor_stop([0, 1, 2])
-                    self.linear_move(intermediate_pos, mic_pos)
-                    #self.linear_move(intermediate_pos, mic_pos+self.mat*np.array([[self.withdraw_sign*10], [0], [0]]))
+                    self.linear_move(intermediate_pos, mic_pos+self.mat*np.array([[self.withdraw_sign*10], [0], [0]]))
 
                     if abs(self.pipette_resistance-self.get_resistance()) > 3e5:
                         return None
