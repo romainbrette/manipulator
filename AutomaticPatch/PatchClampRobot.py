@@ -5,7 +5,7 @@ from Pressure_controller import *
 import numpy as np
 import cv2
 from math import fabs
-from time import sleep, time
+import time
 import os
 import errno
 
@@ -79,7 +79,7 @@ class PatchClampRobot(object):
         self.microscope.go_to_zero([0, 1, 2])
         self.arm.wait_motor_stop([0, 1, 2])
         self.microscope.wait_motor_stop([0, 1, 2])
-        sleep(.2)
+        time.sleep(.2)
         pass
 
     def calibrate_platform(self):
@@ -110,7 +110,7 @@ class PatchClampRobot(object):
             # Moving the microscope
             self.microscope.relative_move(120, i)
             self.microscope.wait_motor_stop(i)
-            sleep(.5)
+            time.sleep(.5)
 
             # Getting the displacement, in pixels, of the tip on the screen
             _, _, loc = templatematching(self.cam.frame, self.template[len(self.template) // 2])
@@ -154,7 +154,7 @@ class PatchClampRobot(object):
 
         # Resetting position of arm and microscope so no error gets to the next axis calibration
         self.go_to_zero()
-        sleep(2)
+        time.sleep(2)
 
         return 1
 
@@ -337,13 +337,15 @@ class PatchClampRobot(object):
         """
         if self.calibrated:
             if event == cv2.EVENT_LBUTTONUP:
+
                 pos = np.transpose(self.microscope.position())
+                tip_pos = self.mat*np.transpose(self.arm.position())
 
                 offset = self.rot_inv * np.array([[(self.x_init - (x - self.template_loc[0])) * self.um_px],
                                                   [(self.y_init - (y - self.template_loc[1])) * self.um_px],
                                                   [0]])
                 pos = pos + offset
-                self.linear_move(self.mat*np.transpose(self.arm.position()), pos)
+                self.linear_move(tip_pos, pos)
                 #move = self.inv_mat * pos
 
                 #self.arm.absolute_move_group(move, [0, 1, 2])
@@ -385,7 +387,7 @@ class PatchClampRobot(object):
                         if not self.patch(mic_pos):
                             return None
                         if self.enable_clamp:
-                            sleep(120)
+                            time.sleep(120)
                             self.clamp()
         pass
 
@@ -403,12 +405,13 @@ class PatchClampRobot(object):
         """
         
         dir_vector = final_position - initial_position
-        step_vector = 10. * dir_vector/np.linalg.norm(dir_vector)
+        step_vector = 10 * dir_vector/np.linalg.norm(dir_vector)
         nb_step = np.linalg.norm(dir_vector) / 10.
         intermediate_position = self.inv_mat * step_vector
         for _ in range(int(nb_step)):
             self.arm.step_move(intermediate_position, [0, 1, 2])
-        #self.arm.absolute_move_group(self.inv_mat*final_position, [0, 1, 2])
+        self.arm.wait_motor_stop([0, 1, 2])
+        self.arm.absolute_move_group(self.inv_mat*final_position, [0, 1, 2])
 
     def pipettechange(self):
 
@@ -493,7 +496,7 @@ class PatchClampRobot(object):
         for k in range(nb_images):
             self.microscope.absolute_move(k - (nb_images - 1) / 2, 2)
             self.microscope.wait_motor_stop(2)
-            sleep(0.5)
+            time.sleep(0.5)
             img = self.template_zone()
             height, width = img.shape[:2]
             img = img[i * height / 4:height / 2 + i * height / 4, j * width / 4:width / 2 + j * width / 4]
@@ -647,7 +650,7 @@ class PatchClampRobot(object):
         self.amplifier.set_holding(0.)
         self.amplifier.set_holding_enable(True)
         self.amplifier.meter_resist_enable(True)
-        sleep(3)
+        time.sleep(3)
         self.pipette_resistance = self.get_one_res_metering(res_type='float')
         if 4.5e6 > self.pipette_resistance:
             self.amplifier.meter_resist_enable(False)
@@ -669,7 +672,7 @@ class PatchClampRobot(object):
             self.arm.wait_motor_stop([0])
             if self.pipette_resistance * 1.25 < self.get_resistance():
                 break
-        sleep(10)
+        time.sleep(10)
         if self.arm.position(0) - position[0, 0] - self.withdraw_sign * 5 < 0:
             self.update_message('ERROR: Could not find the cell.')
             return 0
