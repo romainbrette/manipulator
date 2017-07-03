@@ -1,3 +1,4 @@
+from threading import Thread
 from Autofocus import *
 from Camera import *
 from Amplifier import *
@@ -12,9 +13,11 @@ import errno
 __all__ = ['PatchClampRobot']
 
 
-class PatchClampRobot(object):
+class PatchClampRobot(Thread):
 
     def __init__(self, controller, arm, verbose=True):
+
+        Thread.__init__(self)
 
         # devices
         self.dev, self.microscope, self.arm = init_device(controller, arm)
@@ -69,6 +72,12 @@ class PatchClampRobot(object):
         self.verbose = verbose
         self.message = ''
         pass
+
+    def run(self):
+        while 1:
+            # TODO: check if position of pipette should be changed (after a mouse callback),
+            #  Change clic_position and put it here
+            pass
 
     def go_to_zero(self):
         """
@@ -257,6 +266,7 @@ class PatchClampRobot(object):
         self.inv_mat = np.linalg.inv(self.mat)
         self.calibrated = 1
         self.cam.clic_on_window = True
+        self.start()
         self.save_calibration()
         return 1
 
