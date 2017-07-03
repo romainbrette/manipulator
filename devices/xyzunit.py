@@ -165,7 +165,7 @@ class XYZUnit(Device):
             self.dev.set_single_step_distance(self.axes[axis], distance)
         sleep(.02)
 
-    def step_move(self, axis, distance):
+    def step_move(self, distance, axis):
         number_step = abs(distance) // 255
         last_step = abs(distance) % 255
         if number_step:
