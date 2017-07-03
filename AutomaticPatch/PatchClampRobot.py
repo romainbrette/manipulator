@@ -158,6 +158,47 @@ class PatchClampRobot(object):
 
         return 1
 
+    def exp_focus_track(self, axis):
+        """
+        Focus after a move of the arm along axis
+        """
+
+        if self.arm.position(axis) == 0:
+            self.step = self.first_step
+        else:
+            self.step *= 2.
+
+        # Move the arm
+        self.arm.step_move(self.step, axis)
+
+        # Move the platform to center the tip
+        for i in range(3):
+            self.microscope.step_move(self.mat[i, axis] * self.step, i)
+
+        # Waiting for motors to stop
+        self.arm.wait_motor_stop(axis)
+        self.microscope.wait_motor_stop([0, 1, 2])
+
+        # Focus around the estimated focus height
+        try:
+            _, _, loc = self.focus()
+        except ValueError:
+            raise EnvironmentError('Could not focus on the tip')
+
+        # Move the platform for compensation
+        delta = np.array([[(self.x_init - loc[0]) * self.um_px], [(self.y_init - loc[1]) * self.um_px], [0]])
+        move = self.rot_inv * delta
+        for i in range(2):
+            self.microscope.step_move(move[i, 0], i)
+
+        self.microscope.wait_motor_stop([0, 1])
+
+        # Update the estimated move to do for a move of 1 um of the arm
+        for i in range(3):
+            self.mat[i, axis] = self.microscope.position(i) / self.arm.position(axis)
+
+        pass
+
     def get_withdraw_sign(self):
         if fabs(self.mat[0, 0] / self.mat[1, 0]) > 1:
             i = 0
@@ -364,10 +405,10 @@ class PatchClampRobot(object):
         dir_vector = final_position - initial_position
         step_vector = 10. * dir_vector/np.linalg.norm(dir_vector)
         nb_step = np.linalg.norm(dir_vector) / 10.
-        for step in range(1, int(nb_step)+1):
-            intermediate_position = step * self.inv_mat * step_vector
+        intermediate_position = self.inv_mat * step_vector
+        for _ in range(int(nb_step)):
             self.arm.step_move(intermediate_position, [0, 1, 2])
-        self.arm.absolute_move_group(self.inv_mat*final_position, [0, 1, 2])
+        #self.arm.absolute_move_group(self.inv_mat*final_position, [0, 1, 2])
 
     def pipettechange(self):
 
@@ -504,47 +545,6 @@ class PatchClampRobot(object):
             raise ValueError('The template image has not been detected.')
 
         return maxval, dep, loc
-
-    def exp_focus_track(self, axis):
-        """
-        Focus after a move of the arm along axis
-        """
-
-        if self.arm.position(axis) == 0:
-            self.step = self.first_step
-        else:
-            self.step *= 2.
-
-        # Move the arm
-        self.arm.step_move(self.step, axis)
-
-        # Move the platform to center the tip
-        for i in range(3):
-            self.microscope.step_move(self.mat[i, axis] * self.step, i)
-
-        # Waiting for motors to stop
-        self.arm.wait_motor_stop(axis)
-        self.microscope.wait_motor_stop([0, 1, 2])
-
-        # Focus around the estimated focus height
-        try:
-            _, _, loc = self.focus()
-        except ValueError:
-            raise EnvironmentError('Could not focus on the tip')
-
-        # Move the platform for compensation
-        delta = np.array([[(self.x_init - loc[0]) * self.um_px], [(self.y_init - loc[1]) * self.um_px], [0]])
-        move = self.rot_inv * delta
-        for i in range(2):
-            self.microscope.step_move(move[i, 0], i)
-
-        self.microscope.wait_motor_stop([0, 1])
-
-        # Update the estimated move to do for a move of 1 um of the arm
-        for i in range(3):
-            self.mat[i, axis] = self.microscope.position(i)/self.arm.position(axis)
-
-        pass
 
     def focus_track(self, step, axis):
         """
