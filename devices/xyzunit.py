@@ -66,8 +66,8 @@ class XYZUnit(Device):
         if isinstance(x, ndarray):
             pos = []
             for j in range(len(x)):
-                for i in x[j]:
-                    pos += [i]
+                for i in range(len(x[j])):
+                    pos += [x[j, i]]
         else:
             pos = x
 
@@ -167,7 +167,6 @@ class XYZUnit(Device):
         sleep(.02)
 
     def step_move(self, distance, axis):
-        print distance
         if isinstance(distance, ndarray):
             move = []
             for j in range(len(distance)):
