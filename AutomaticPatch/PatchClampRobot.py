@@ -236,7 +236,7 @@ class PatchClampRobot(object):
 
         with open("./{i}/rotmat.txt".format(i=self.controller), 'wt') as f:
             for i in range(2):
-                f.write('{a},{b}\n'.format(a=self.rot[i, 0], b=self.rot[i, 1]))
+                f.write('{a},{b},{c}\n'.format(a=self.rot[i, 0], b=self.rot[i, 1], c=self.rot[i, 2]))
 
         with open('./{i}/data.txt'.format(i=self.controller), 'wt') as f:
             f.write('{d}\n'.format(d=self.um_px))
@@ -260,7 +260,7 @@ class PatchClampRobot(object):
                 i = 0
                 for line in f:
                     line = line.split(',')
-                    for j in range(2):
+                    for j in range(3):
                         self.rot[i, j] = float(line[j])
                     i += 1
                 self.rot_inv = np.linalg.inv(self.rot)
@@ -322,7 +322,6 @@ class PatchClampRobot(object):
                                                       [(self.y_init - (y - self.template_loc[1])) * self.um_px],
                                                       [0]])
                     mic_pos += offset
-
                     tip_pos = self.mat*np.transpose(self.arm.position())
 
                     if tip_pos[2, 0] < mic_pos[2, 0]:
@@ -331,12 +330,13 @@ class PatchClampRobot(object):
                         move = self.withdraw_sign*15/abs(self.mat[2, 0])
 
                     self.arm.relative_move(move, 0)
+                    self.arm.wait_motor_stop([0])
                     theorical_tip_pos = tip_pos + np.array([[move], [0], [0]])
 
-                    self.arm.wait_motor_stop([0])
                     intermediate_x_pos = self.withdraw_sign*(theorical_tip_pos[2, 0]-mic_pos[2, 0])/abs(self.mat[2, 0])
                     intermediate_pos = mic_pos
                     intermediate_pos += self.mat*np.array([[intermediate_x_pos], [0], [0]])
+
                     self.linear_move(theorical_tip_pos, intermediate_pos)
                     self.arm.wait_motor_stop([0, 1, 2])
                     self.linear_move(intermediate_pos, mic_pos)
@@ -668,7 +668,7 @@ class PatchClampRobot(object):
 
     def patch(self, position):
         tip_position = self.mat * position
-        self.update_message('Approaching cel...')
+        self.update_message('Approaching cell...')
         while self.arm.position(0) - tip_position[0, 0] - self.withdraw_sign * 5 > 0:
             self.arm.step_move(-self.withdraw_sign, 0)
             self.arm.wait_motor_stop([0])
