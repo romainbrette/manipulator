@@ -1,4 +1,4 @@
-from threading import Thread, Lock
+from threading import Thread
 from camera_init import *
 from img_functions import *
 import cv2
@@ -11,10 +11,10 @@ __all__ = ['CameraThread']
 
 class CameraThread(Thread):
 
-    def __init__(self, controller, mouse_fun, winname='Camera'):
+    def __init__(self, camera_name, mouse_fun, winname='Camera'):
         Thread.__init__(self)
-        self.controller = controller
-        self.cam, self.flip = camera_init(controller)
+        self.camera_name = camera_name
+        self.cam, self.flip = camera_init(camera_name)
         self.frame = None
         self.img_to_display = None
         self.width, self.height = None, None
@@ -50,7 +50,7 @@ class CameraThread(Thread):
         self.cam.reset()
 
     def save_img(self):
-        path = './{i}/screenshots/'.format(i=self.controller)
+        path = './{i}/screenshots/'.format(i=self.camera_name)
         if not os.path.exists(os.path.dirname(path)):
             try:
                 os.makedirs(os.path.dirname(path))
@@ -61,7 +61,7 @@ class CameraThread(Thread):
 
         img = self.frame*256
         n_img = len(os.listdir(path))+1
-        cv2.imwrite('./{i}/screenshots/screenshot{n}.jpg'.format(i=self.controller, n=n_img), img)
+        cv2.imwrite('./{i}/screenshots/screenshot{n}.jpg'.format(i=self.camera_name, n=n_img), img)
         pass
 
     def switch_mouse_callback(self):

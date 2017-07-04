@@ -4,7 +4,7 @@ Elveflow OB1 microfluidic flow control system
 import os
 import sys
 from ctypes import *
-from array import array
+from PumpClass import *
 
 sys.path.append(os.path.expanduser(r'~\Elveflow SDK V3_01_04\python_64').encode('utf-8'))
 
@@ -18,8 +18,9 @@ def _check_error(task, error):
         raise RuntimeError('{} failed with error code {}'.format(task, error))
 
 
-class OB1(object):
+class OB1(PumpClass):
     def __init__(self, calibrate=False):
+        PumpClass.__init__(self)
         self.instr_ID = c_int32()
         print('Instrument name and regulator types hardcoded in the python script'.encode('utf-8'))
         # see User guide to determine regulator type NI MAX to determine the instrument name
@@ -66,3 +67,4 @@ class OB1(object):
         set_pressure = c_double(pressure)  # convert to c_double
         error = OB1_Set_Press(self.instr_ID.value, set_channel, set_pressure, byref(self.calib), 1000)
         _check_error('Setting pressure', error)
+        pass

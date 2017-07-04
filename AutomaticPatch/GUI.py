@@ -20,6 +20,9 @@ class Application(Frame):
         self.robot = None
         self.controller = None
         self.arm = None
+        self.camera = None
+        self.amplifier = None
+        self.pump = None
         self.continuous = False
 
         # GUI
@@ -45,17 +48,44 @@ class Application(Frame):
                                     values='dev1 dev2')
         self.armlist.grid(row=1, column=1, columnspan=2, padx=2, pady=2)
 
+        self.ask_camera = Label(self.robot_box,
+                                text='Camera: ')
+        self.ask_camera.grid(row=2, column=0, padx=2, pady=2)
+
+        self.camlist = ttk.Combobox(self.robot_box,
+                                    state='readonly',
+                                    values='Hamamatsu Leica')
+        self.camlist.grid(row=2, column=1, columnspan=2, padx=2, pady=2)
+
+        self.ask_amp = Label(self.robot_box,
+                             text='Amplifier: ')
+        self.ask_amp.grid(row=3, column=0, padx=2, pady=2)
+
+        self.amplist = ttk.Combobox(self.robot_box,
+                                    state='readonly',
+                                    values='FakeAmplifier Multiclamp')
+        self.amplist.grid(row=3, column=1, columnspan=2, padx=2, pady=2)
+
+        self.ask_pump = Label(self.robot_box,
+                              text='Pump: ')
+        self.ask_pump.grid(row=4, column=0, padx=2, pady=2)
+
+        self.pumplist = ttk.Combobox(self.robot_box,
+                                     state='readonly',
+                                     values='FakePump OB1')
+        self.pumplist.grid(row=4, column=1, columnspan=2, padx=2, pady=2)
+
         self.connection = Button(self.robot_box,
                                  text='Connect',
                                  command=self.connect,
                                  bg='green', fg='white')
-        self.connection.grid(row=2, column=0, padx=2, pady=2)
+        self.connection.grid(row=5, column=0, padx=2, pady=2)
 
         self.disconnection = Button(self.robot_box,
                                     text='Disconnect',
                                     command=self.disconnect,
                                     state='disable')
-        self.disconnection.grid(row=2, column=1, padx=2, pady=2)
+        self.disconnection.grid(row=5, column=1, padx=2, pady=2)
 
         self.calibrate_box = LabelFrame(self,
                                         text='Calibration')
@@ -123,27 +153,31 @@ class Application(Frame):
     def connect(self):
         self.controller = self.controllist.get()
         self.arm = self.armlist.get()
+        self.amplifier = self.amplist.get()
+        self.pump = self.pumplist.get()
+        self.camera = self.camlist.get()
         if not self.controller:
-            print 'Please specify a controller.'
+            showerror('Connection error', 'Please specify a controller.')
+        elif not self.arm:
+            showerror('Connection error', 'Please specify a device for the arm.')
+        elif not self.camera:
+            showerror('Connection error', 'Please specify a camera.')
         else:
-            if not self.arm:
-                print 'Please specify a device for the arm.'
-            else:
-                self.robot = PatchClampRobot(self.controller, self.arm)
-                self.message = self.robot.message
+            self.robot = PatchClampRobot(self.controller, self.arm, self.amplifier, self.pump, verbose=False)
+            self.message = self.robot.message
 
-                self.controllist['state'] = 'disabled'
-                self.armlist['state'] = 'disabled'
-                self.imgsave.config(state='normal', command=self.robot.save_img)
-                self.load_calibrate.config(state='normal', command=self.load_cali)
-                self.calibrate.config(state='normal', command=self.calibration)
-                self.zero.config(state='normal')
-                self.connection.config(state='disable')
-                self.disconnection.config(state='normal')
-                self.continuous_meter.config(state='normal')
-                self.check_pipette_resistance.config(state='normal')
+            self.controllist['state'] = 'disabled'
+            self.armlist['state'] = 'disabled'
+            self.imgsave.config(state='normal', command=self.robot.save_img)
+            self.load_calibrate.config(state='normal', command=self.load_cali)
+            self.calibrate.config(state='normal', command=self.calibration)
+            self.zero.config(state='normal')
+            self.connection.config(state='disable')
+            self.disconnection.config(state='normal')
+            self.continuous_meter.config(state='normal')
+            self.check_pipette_resistance.config(state='normal')
 
-                self.check_message()
+            self.check_message()
         pass
 
     def disconnect(self):
@@ -195,15 +229,8 @@ class Application(Frame):
 
     def init_patch_clamp(self):
         if self.robot:
-            err = self.robot.init_patch_clamp()
-            if err == 0:
-                showinfo('Tip resistance',
-                         'Tip resistance is good: {}'.format(self.robot.pipette_resistance))
+            if self.robot.init_patch_clamp():
                 self.enable_continuous_meter()
-            elif err == 1:
-                showinfo('Tip resistance', 'Tip resistance is too low. Should be higher than 5 MOhm.')
-            else:
-                showinfo('Tip resistance', 'Tip resistance is too high. Should be lower than 10 MOhm.')
 
     def enable_continuous_meter(self):
         if self.robot:
