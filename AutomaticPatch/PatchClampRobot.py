@@ -110,15 +110,15 @@ class PatchClampRobot(Thread):
 
                 self.arm.relative_move(move, 0)
                 self.arm.wait_motor_stop([0])
-                theorical_tip_pos = tip_pos + np.array([[move], [0], [0]])
+                theorical_tip_pos = tip_pos + self.mat*np.array([[move], [0], [0]])
 
-                intermediate_x_pos = self.withdraw_sign*(theorical_tip_pos[2, 0]-mic_pos[2, 0])/abs(self.mat[2, 0])
+                intermediate_x_pos = -self.withdraw_sign*(theorical_tip_pos[2, 0]-mic_pos[2, 0])/abs(self.mat[2, 0])
                 intermediate_pos = mic_pos
                 intermediate_pos += self.mat*np.array([[intermediate_x_pos], [0], [0]])
 
                 self.linear_move(theorical_tip_pos, intermediate_pos)
                 self.arm.wait_motor_stop([0, 1, 2])
-                self.linear_move(intermediate_pos, mic_pos+self.mat*np.array([[self.withdraw_sign*10], [0], [0]]))
+                self.linear_move(intermediate_pos, mic_pos+self.mat*np.array([[-self.withdraw_sign*10], [0], [0]]))
 
                 if abs(self.pipette_resistance-self.get_resistance()) < 3e5:
                     self.amplifier.auto_pipette_offset()
@@ -277,9 +277,9 @@ class PatchClampRobot(Thread):
         else:
             i = 1
         if (self.template_loc[i] != 0) ^ (self.mat[i, 0] > 0):
-            self.withdraw_sign = 1
-        else:
             self.withdraw_sign = -1
+        else:
+            self.withdraw_sign = 1
         pass
 
     def calibrate(self):
