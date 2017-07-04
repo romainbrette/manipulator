@@ -54,7 +54,7 @@ class PressureController(object):
         self.release()
 
     def record(self):
-        self.isrecording = not self.isrecording
+        self.isrecording ^= 1
         if self.isrecording:
             # Here we start clocked recording using a timer - could be different depending on the interface
             self.sample()  # 20 Hz recording
