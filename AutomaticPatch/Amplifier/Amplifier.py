@@ -18,7 +18,6 @@ class Amplifier(object):
             else:
                 raise AttributeError
         except (AttributeError, RuntimeError):
-            print 'No multiclamp detected, switching to fake amplifier.'
             self.amp = FakeAmplifier()
         pass
 
