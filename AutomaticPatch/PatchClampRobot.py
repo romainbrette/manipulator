@@ -169,10 +169,6 @@ class PatchClampRobot(Thread):
         self.arm.set_to_zero([0, 1, 2])
         self.microscope.set_to_zero([0, 1, 2])
 
-        # Testing if difference exits between first and second counter
-        self.arm.set_to_zero_second_counter([0, 1, 2])
-        self.microscope.set_to_zero_second_counter([0, 1, 2])
-
         # Get a series of template images for auto focus
         self.get_template_series(5)
 
