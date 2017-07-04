@@ -109,7 +109,7 @@ class PatchClampRobot(Thread):
                 self.arm.wait_motor_stop([0])
                 theorical_tip_pos = tip_pos + self.mat*np.array([[self.withdraw_sign*move], [0], [0]])
 
-                intermediate_x_pos = self.withdraw_sign*(theorical_tip_pos[2, 0]-mic_pos[2, 0])/abs(self.mat[2, 0])
+                intermediate_x_pos = self.withdraw_sign*abs(theorical_tip_pos[2, 0]-mic_pos[2, 0])/abs(self.mat[2, 0])
                 intermediate_pos = mic_pos
                 intermediate_pos += self.mat*np.array([[intermediate_x_pos], [0], [0]])
 
