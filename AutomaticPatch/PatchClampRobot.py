@@ -126,7 +126,8 @@ class PatchClampRobot(Thread):
                         if self.enable_clamp:
                             time.sleep(120)
                             self.clamp()
-                self.message = 'ERROR: pipette is obstructed.'
+                else:
+                    self.message = 'ERROR: pipette is obstructed.'
                 self.event['event'] = None
 
             key = cv2.waitKey(1)
@@ -684,16 +685,19 @@ class PatchClampRobot(Thread):
         time.sleep(3)
         self.pipette_resistance = self.get_one_res_metering(res_type='float')
         if 4.5e6 > self.pipette_resistance:
+            self.message = 'ERROR: Tip resistance is too low. Should be higher than 5 MOhm.'
             self.amplifier.meter_resist_enable(False)
-            return 2
+            return 0
         if 10.2e6 < self.pipette_resistance:
+            self.message = 'ERROR: Tip resistance is too high. Should be lower than 10 MOhm.'
             self.amplifier.meter_resist_enable(False)
-            return 1
+            return 0
         else:
+            self.message = 'Tip resistance is good: {}'.format(self.get_one_res_metering(res_type='text'))
             self.pipette_resistance_checked = True
             self.pressure.nearing()
             self.set_continuous_res_meter(True)
-            return 0
+            return 1
 
     def patch(self, position):
         tip_position = self.mat * position

@@ -195,15 +195,8 @@ class Application(Frame):
 
     def init_patch_clamp(self):
         if self.robot:
-            err = self.robot.init_patch_clamp()
-            if err == 0:
-                showinfo('Tip resistance',
-                         'Tip resistance is good: {}'.format(self.robot.pipette_resistance))
+            if self.robot.init_patch_clamp():
                 self.enable_continuous_meter()
-            elif err == 1:
-                showinfo('Tip resistance', 'Tip resistance is too low. Should be higher than 5 MOhm.')
-            else:
-                showinfo('Tip resistance', 'Tip resistance is too high. Should be lower than 10 MOhm.')
 
     def enable_continuous_meter(self):
         if self.robot:
