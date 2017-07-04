@@ -1,14 +1,18 @@
+from PumpClass import *
+
 __all__ = ['FakePump']
 
 
-class FakePump(object):
+class FakePump(PumpClass):
 
     def __init__(self):
+        PumpClass.__init__(self)
         self.val = 0.
         pass
 
-    def measure(self, port=0):
+    def measure(self):
         return self.val
 
-    def set_pressure(self, port=0):
+    def set_pressure(self, pressure):
+        self.val = pressure
         pass

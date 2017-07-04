@@ -41,7 +41,7 @@ class ResistanceMeter(Thread, Amplifier):
                         res = []
 
                         for _ in range(3):
-                            res += [self.get_meter_value().value]
+                            res += [self.get_meter_value()]
                         self.res = np.mean(res)
 
                     self.freq_pulse_enable(False)
@@ -53,7 +53,7 @@ class ResistanceMeter(Thread, Amplifier):
 
                     for _ in range(3):
 
-                        res += [self.get_meter_value().value]
+                        res += [self.get_meter_value()]
 
                     self.res = np.mean(res)
 

@@ -1,35 +1,21 @@
 from os.path import expanduser
 from time import sleep
 from numpy import savetxt, array
-from pump_devices import *
+from Pump import *
 
 home = expanduser("~")
 filename = home+'/pressure.txt'
 
 
-class PressureController(object):
+class PressureController(Pump):
 
     def __init__(self, pressure_controller=None):
-        try:
-            if pressure_controller == 'OB1':
-                self.controller = OB1()
-            elif pressure_controler == 'FakePump':
-                self.controller = FakePump()
-            else:
-                raise AttributeError
-        except (AttributeError, RuntimeError):
-            self.controller = FakePump()
+        Pump.__init__(self, pressure_controller)
 
         self.isrecording = False
         self.measurement = list()
         self.release()
         pass
-
-    def set_pressure(self, value):
-        self.controller.set_pressure(value)
-
-    def measure(self):
-        return self.controller.measure()
 
     def high_pressure(self):
         self.set_pressure(800)
