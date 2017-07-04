@@ -18,7 +18,6 @@ def camera_init(devtype):
     Initializing the camera/microscope
     :return: mmc: microscope device, can be controlled using micro manager methods (see HAMAMATSU_CAMERA_METHODS.txt)
     """
-    print "Setting up camera and microscope...",
     mmc = MMCorePy.CMMCore()
 
     if devtype == 'SM5':
@@ -31,7 +30,6 @@ def camera_init(devtype):
         raise SystemError('Unkown camera.')
 
     mmc.initializeDevice('Camera')
-    print "done"
 
     # To get the properties you can set on the camera:
     # print mmc.getDevicePropertyNames('Camera')

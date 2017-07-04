@@ -11,13 +11,9 @@ class ResistanceMeter(Thread, Amplifier):
     def __init__(self, amplifier):
 
         Thread.__init__(self)
-        print('Connecting to the MultiClamp amplifier')
         Amplifier.__init__(self, amplifier)
-        print('Switching to voltage clamp')
         self.voltage_clamp()
-        print('Running automatic slow compensation')
         self.auto_slow_compensation()
-        print('Running automatic fast compensation')
         self.auto_fast_compensation()
 
         self.meter_resist_enable(False)
