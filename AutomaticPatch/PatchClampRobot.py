@@ -63,7 +63,7 @@ class PatchClampRobot(Thread):
         # Camera
         self.amplifier = ResistanceMeter('Multiclamp')
         self.pressure = PressureController('OB1')
-        self.cam = CameraThread(controller, self.clic_position)
+        self.cam = CameraThread(controller, self.clic_event)
 
         # Patch Clamp variables
         self.enable_clamp = False
@@ -71,13 +71,79 @@ class PatchClampRobot(Thread):
         # Messages
         self.verbose = verbose
         self.message = ''
+
+        # Event on camera window
+        self.event = {'event': None, 'x': self.cam.width/2., 'y': self.cam.height/2.}
+        self.following = False
         pass
 
     def run(self):
+        """
+        Thread run. Used to handle manipulator commands after a mouse callback on the camera's window while refreshing
+         the dispayed image.
+        """
         while 1:
-            # TODO: check if position of pipette should be changed (after a mouse callback),
-            #  Change clic_position and put it here
-            pass
+            if self.event['event'] == 'Positioning':
+                pos = np.transpose(self.microscope.position())
+                tip_pos = self.mat * np.transpose(self.arm.position())
+
+                offset = self.rot_inv*np.array([[(self.x_init - (self.event['x'] - self.template_loc[0])) * self.um_px],
+                                                [(self.y_init - (self.event['y'] - self.template_loc[1])) * self.um_px],
+                                                [0]])
+                pos += offset
+                self.linear_move(tip_pos, pos)
+                self.event['event'] = None
+
+            elif (self.event['event'] == 'PatchClamp') & self.pipette_resistance_checked:
+                mic_pos = np.transpose(self.microscope.position())
+
+                offset = self.rot_inv*np.array([[(self.x_init - (self.event['x'] - self.template_loc[0])) * self.um_px],
+                                                [(self.y_init - (self.event['y'] - self.template_loc[1])) * self.um_px],
+                                                [0]])
+                mic_pos += offset
+                tip_pos = self.mat*np.transpose(self.arm.position())
+
+                if tip_pos[2, 0] < mic_pos[2, 0]:
+                    move = self.withdraw_sign*(mic_pos[2, 0]-tip_pos[2, 0]+15)/abs(self.mat[2, 0])
+                else:
+                    move = self.withdraw_sign*15/abs(self.mat[2, 0])
+
+                self.arm.relative_move(move, 0)
+                self.arm.wait_motor_stop([0])
+                theorical_tip_pos = tip_pos + np.array([[move], [0], [0]])
+
+                intermediate_x_pos = self.withdraw_sign*(theorical_tip_pos[2, 0]-mic_pos[2, 0])/abs(self.mat[2, 0])
+                intermediate_pos = mic_pos
+                intermediate_pos += self.mat*np.array([[intermediate_x_pos], [0], [0]])
+
+                self.linear_move(theorical_tip_pos, intermediate_pos)
+                self.arm.wait_motor_stop([0, 1, 2])
+                self.linear_move(intermediate_pos, mic_pos+self.mat*np.array([[self.withdraw_sign*10], [0], [0]]))
+
+                if abs(self.pipette_resistance-self.get_resistance()) < 3e5:
+                    self.amplifier.auto_pipette_offset()
+                    if self.patch(mic_pos):
+                        if self.enable_clamp:
+                            time.sleep(120)
+                            self.clamp()
+                self.message = 'ERROR: pipette is obstructed.'
+                self.event['event'] = None
+
+            key = cv2.waitKey(1)
+            if key & 0xFF == ord('f'):
+                self.following ^= 1
+
+            if self.following & (not self.event['event']):
+                # The tip follow the camera
+                pos = np.transpose(self.microscope.position())
+                tip_pos = self.mat * np.transpose(self.arm.position())
+
+                offset = self.rot_inv*np.array([[(self.x_init - (self.event['x'] - self.template_loc[0])) * self.um_px],
+                                                [(self.y_init - (self.event['y'] - self.template_loc[1])) * self.um_px],
+                                                [0]])
+                pos = pos + offset
+                self.linear_move(tip_pos, pos)
+        pass
 
     def go_to_zero(self):
         """
@@ -334,7 +400,7 @@ class PatchClampRobot(Thread):
             self.update_message('{i} has not been calibrated.'.format(i=self.controller))
             return 0
 
-    def clic_position(self, event, x, y, flags, param):
+    def clic_event(self, event, x, y, flags, param):
         """
         Position the tip where the user has clic on the window image.
         Shall be used along cv2.setMouseCallback
@@ -348,57 +414,15 @@ class PatchClampRobot(Thread):
         if self.calibrated:
             if event == cv2.EVENT_LBUTTONUP:
 
-                pos = np.transpose(self.microscope.position())
-                tip_pos = self.mat*np.transpose(self.arm.position())
-
-                offset = self.rot_inv * np.array([[(self.x_init - (x - self.template_loc[0])) * self.um_px],
-                                                  [(self.y_init - (y - self.template_loc[1])) * self.um_px],
-                                                  [0]])
-                pos = pos + offset
-                self.linear_move(tip_pos, pos)
+                self.event = {'event': 'Positioning', 'x': x, 'y': y}
 
             elif event == cv2.EVENT_RBUTTONUP:
 
-                if self.pipette_resistance_checked:
-
-                    mic_pos = np.transpose(self.microscope.position())
-
-                    offset = self.rot_inv * np.array([[(self.x_init - (x - self.template_loc[0])) * self.um_px],
-                                                      [(self.y_init - (y - self.template_loc[1])) * self.um_px],
-                                                      [0]])
-                    mic_pos += offset
-                    tip_pos = self.mat*np.transpose(self.arm.position())
-
-                    if tip_pos[2, 0] < mic_pos[2, 0]:
-                        move = self.withdraw_sign*(mic_pos[2, 0]-tip_pos[2, 0]+15)/abs(self.mat[2, 0])
-                    else:
-                        move = self.withdraw_sign*15/abs(self.mat[2, 0])
-
-                    self.arm.relative_move(move, 0)
-                    self.arm.wait_motor_stop([0])
-                    theorical_tip_pos = tip_pos + np.array([[move], [0], [0]])
-
-                    intermediate_x_pos = self.withdraw_sign*(theorical_tip_pos[2, 0]-mic_pos[2, 0])/abs(self.mat[2, 0])
-                    intermediate_pos = mic_pos
-                    intermediate_pos += self.mat*np.array([[intermediate_x_pos], [0], [0]])
-
-                    self.linear_move(theorical_tip_pos, intermediate_pos)
-                    self.arm.wait_motor_stop([0, 1, 2])
-                    self.linear_move(intermediate_pos, mic_pos+self.mat*np.array([[self.withdraw_sign*10], [0], [0]]))
-
-                    if abs(self.pipette_resistance-self.get_resistance()) > 3e5:
-                        return None
-                    else:
-                        self.amplifier.auto_pipette_offset()
-                        if not self.patch(mic_pos):
-                            return None
-                        if self.enable_clamp:
-                            time.sleep(120)
-                            self.clamp()
+                self.event = {'event': 'PatchClamp', 'x': x, 'y': y}
         pass
 
     def enable_clic_position(self):
-        cv2.setMouseCallback(self.cam.winname, self.clic_position)
+        cv2.setMouseCallback(self.cam.winname, self.clic_event)
         pass
 
     def linear_move(self, initial_position, final_position):
