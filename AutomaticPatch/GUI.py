@@ -20,6 +20,8 @@ class Application(Frame):
         self.robot = None
         self.controller = None
         self.arm = None
+        self.amplifier = None
+        self.pump = None
         self.continuous = False
 
         # GUI
@@ -45,17 +47,35 @@ class Application(Frame):
                                     values='dev1 dev2')
         self.armlist.grid(row=1, column=1, columnspan=2, padx=2, pady=2)
 
+        self.ask_amp = Label(self.robot_box,
+                             text='Amplifier: ')
+        self.ask_amp.grid(row=2, column=0, padx=2, pady=2)
+
+        self.amplist = ttk.Combobox(self.robot_box,
+                                    state='readonly',
+                                    values='FakeAmplifier Multiclamp')
+        self.amplist.grid(row=2, column=1, columnspan=2, padx=2, pady=2)
+
+        self.ask_pump = Label(self.robot_box,
+                              text='Pump: ')
+        self.ask_pump.grid(row=3, column=0, padx=2, pady=2)
+
+        self.pumplist = ttk.Combobox(self.robot_box,
+                                     state='readonly',
+                                     values='FakePump OB1')
+        self.pumplist.grid(row=3, column=1, columnspan=2, padx=2, pady=2)
+
         self.connection = Button(self.robot_box,
                                  text='Connect',
                                  command=self.connect,
                                  bg='green', fg='white')
-        self.connection.grid(row=2, column=0, padx=2, pady=2)
+        self.connection.grid(row=4, column=0, padx=2, pady=2)
 
         self.disconnection = Button(self.robot_box,
                                     text='Disconnect',
                                     command=self.disconnect,
                                     state='disable')
-        self.disconnection.grid(row=2, column=1, padx=2, pady=2)
+        self.disconnection.grid(row=4, column=1, padx=2, pady=2)
 
         self.calibrate_box = LabelFrame(self,
                                         text='Calibration')
@@ -123,13 +143,15 @@ class Application(Frame):
     def connect(self):
         self.controller = self.controllist.get()
         self.arm = self.armlist.get()
+        self.amplifier = self.amplist.get()
+        self.pump = self.pumplist.get()
         if not self.controller:
             print 'Please specify a controller.'
         else:
             if not self.arm:
                 print 'Please specify a device for the arm.'
             else:
-                self.robot = PatchClampRobot(self.controller, self.arm)
+                self.robot = PatchClampRobot(self.controller, self.arm, self.amplifier, self.pump, verbose=False)
                 self.message = self.robot.message
 
                 self.controllist['state'] = 'disabled'

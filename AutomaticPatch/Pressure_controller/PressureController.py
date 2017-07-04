@@ -13,6 +13,8 @@ class PressureController(object):
         try:
             if pressure_controller == 'OB1':
                 self.controller = OB1()
+            elif pressure_controler == 'FakePump':
+                self.controller = FakePump()
             else:
                 raise AttributeError
         except (AttributeError, RuntimeError):
@@ -21,7 +23,7 @@ class PressureController(object):
         self.isrecording = False
         self.measurement = list()
         self.release()
-    pass
+        pass
 
     def set_pressure(self, value):
         self.controller.set_pressure(value)

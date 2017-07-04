@@ -15,6 +15,8 @@ class Amplifier(object):
         try:
             if amplifier == 'Multiclamp':
                 self.amp = MultiClamp(channel=1)
+            elif amplifier == 'FakeAmplifier':
+                self.amp = FakeAmplifier()
             else:
                 raise AttributeError
         except (AttributeError, RuntimeError):

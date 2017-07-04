@@ -15,7 +15,7 @@ __all__ = ['PatchClampRobot']
 
 class PatchClampRobot(Thread):
 
-    def __init__(self, controller, arm, verbose=True):
+    def __init__(self, controller, arm, camera, amplifier=None, pump=None, verbose=True):
 
         Thread.__init__(self)
 
@@ -60,10 +60,10 @@ class PatchClampRobot(Thread):
         self.pipette_resistance = 0.
         self.pipette_resistance_checked = False
 
-        # Camera
-        self.amplifier = ResistanceMeter('Multiclamp')
-        self.pressure = PressureController('OB1')
-        self.cam = CameraThread(controller, self.clic_event)
+        # Connected devices
+        self.amplifier = ResistanceMeter(amplifier)
+        self.pressure = PressureController(pump)
+        self.cam = CameraThread(camera, self.clic_event)
 
         # Patch Clamp variables
         self.enable_clamp = False
