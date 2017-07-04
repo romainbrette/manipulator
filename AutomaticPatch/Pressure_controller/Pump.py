@@ -12,7 +12,8 @@ class Pump(object):
             else:
                 raise AttributeError
         except (AttributeError, RuntimeError):
-            self.pump = FakePump()
+            print 1
+            self.controller = FakePump()
 
     def set_pressure(self, value):
         self.controller.set_pressure(value)

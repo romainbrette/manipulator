@@ -163,7 +163,7 @@ class Application(Frame):
         elif not self.camera:
             showerror('Connection error', 'Please specify a camera.')
         else:
-            self.robot = PatchClampRobot(self.controller, self.arm, self.amplifier, self.pump, verbose=False)
+            self.robot = PatchClampRobot(self.controller, self.arm, self.camera, self.amplifier, self.pump, verbose=False)
             self.message = self.robot.message
 
             self.controllist['state'] = 'disabled'

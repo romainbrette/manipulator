@@ -32,7 +32,7 @@ class ResistanceMeter(Thread, Amplifier):
 
     def run(self):
         while self.acquisition:
-            if self.get_meter_resist_enable().value:
+            if self.get_meter_resist_enable():
                 if self.continuous:
 
                     self.freq_pulse_enable(True)

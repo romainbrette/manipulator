@@ -73,7 +73,7 @@ class PatchClampRobot(Thread):
         self.message = ''
 
         # Event on camera window
-        self.event = {'event': None, 'x': self.cam.width/2., 'y': self.cam.height/2.}
+        self.event = {'event': None, 'x': 0., 'y': 0.}
         self.following = False
         pass
 
@@ -82,7 +82,7 @@ class PatchClampRobot(Thread):
         Thread run. Used to handle manipulator commands after a mouse callback on the camera's window while refreshing
          the dispayed image.
         """
-        while 1:
+        while self.calibrated:
             if self.event['event'] == 'Positioning':
                 pos = np.transpose(self.microscope.position())
                 tip_pos = self.mat * np.transpose(self.arm.position())
@@ -328,7 +328,7 @@ class PatchClampRobot(Thread):
         self.get_withdraw_sign()
         self.inv_mat = np.linalg.inv(self.mat)
         self.calibrated = 1
-        self.cam.clic_on_window = True
+        self.cam.click_on_window = True
         self.start()
         self.save_calibration()
         return 1
@@ -390,7 +390,8 @@ class PatchClampRobot(Thread):
             self.arm.set_to_zero([0, 1, 2])
             self.microscope.set_to_zero([0, 1, 2])
             self.calibrated = 1
-            self.cam.clic_on_window = True
+            self.start()
+            self.cam.click_on_window = True
             return 1
 
         except IOError:
@@ -742,6 +743,7 @@ class PatchClampRobot(Thread):
             print self.message
 
     def stop(self):
+        self.calibrated = 0
         self.cam.stop()
         self.amplifier.stop()
         cv2.destroyAllWindows()

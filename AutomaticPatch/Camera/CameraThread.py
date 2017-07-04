@@ -20,7 +20,7 @@ class CameraThread(Thread):
         self.width, self.height = None, None
         self.winname = winname
         self.show = True
-        self.clic_on_window = False
+        self.click_on_window = False
         self.mouse_callback = mouse_fun
         self.start()
 
@@ -42,7 +42,7 @@ class CameraThread(Thread):
                 img_to_display = disp_centered_cross(img)
                 cv2.imshow(self.winname, img_to_display)
                 cv2.waitKey(1)
-                if self.clic_on_window:
+                if self.click_on_window:
                     cv2.setMouseCallback(self.winname, self.mouse_callback)
 
         self.cam.stopSequenceAcquisition()

@@ -27,7 +27,7 @@ def camera_init(camera_name):
         mmc.loadDevice('Camera', 'Lumenera', 'LuCam')
         flip = [True, 1]
     else:
-        raise SystemError('Unkown camera.')
+        raise SystemError('Unknown camera.')
 
     mmc.initializeDevice('Camera')
 

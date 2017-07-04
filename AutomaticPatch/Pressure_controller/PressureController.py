@@ -30,14 +30,14 @@ class PressureController(Pump):
 
     def release(self):
         # Release the pressure
-        self.controller.set_pressure(0)
+        self.set_pressure(0)
         # -15 to -20 in Kodandaramaiah paper?
 
     def break_in(self):
         # Breaks in with a ramp
         # Holst thesis: 0 to -345 mBar in 1.5 second
         # Desai: -150 mBar for 1 second; repeated attempts
-        self.controller.set_pressure(-150)
+        self.set_pressure(-150)
         sleep(1)
         self.release()
 
