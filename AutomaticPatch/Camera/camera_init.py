@@ -13,17 +13,17 @@ import MMCorePy
 __all__ = ['camera_init', 'camera_unload']
 
 
-def camera_init(devtype):
+def camera_init(camera_name):
     """
     Initializing the camera/microscope
     :return: mmc: microscope device, can be controlled using micro manager methods (see HAMAMATSU_CAMERA_METHODS.txt)
     """
     mmc = MMCorePy.CMMCore()
 
-    if devtype == 'SM5':
+    if camera_name == 'Hamamatsu':
         mmc.loadDevice('Camera', 'HamamatsuHam', 'HamamatsuHam_DCAM')
         flip = [True, 2]
-    elif devtype == 'SM10':
+    elif camera_name == 'Leica':
         mmc.loadDevice('Camera', 'Lumenera', 'LuCam')
         flip = [True, 1]
     else:

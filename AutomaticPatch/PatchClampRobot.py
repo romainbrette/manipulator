@@ -748,7 +748,7 @@ class PatchClampRobot(Thread):
         pass
 
 if __name__ == '__main__':
-    robot = PatchClampRobot('SM5', 'dev1')
+    robot = PatchClampRobot('SM5', 'dev1', 'Leica')
     calibrated = 0
     while 1:
 
