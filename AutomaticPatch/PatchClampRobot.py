@@ -63,7 +63,7 @@ class PatchClampRobot(Thread):
         # Connected devices
         self.amplifier = ResistanceMeter(amplifier)
         self.pressure = PressureController(pump)
-        self.cam = CameraThread(camera, self.clic_event)
+        self.cam = CameraThread(camera, self.click_event)
 
         # Patch Clamp variables
         self.enable_clamp = False
@@ -103,14 +103,11 @@ class PatchClampRobot(Thread):
                 mic_pos += offset
                 tip_pos = self.mat*np.transpose(self.arm.position())
 
-                if tip_pos[2, 0] < mic_pos[2, 0]:
-                    move = self.withdraw_sign*(mic_pos[2, 0]-tip_pos[2, 0]+15)/abs(self.mat[2, 0])
-                else:
-                    move = self.withdraw_sign*15/abs(self.mat[2, 0])
+                move = (abs(mic_pos[2, 0]-tip_pos[2, 0])*(tip_pos[2, 0] < mic_pos[2, 0])+15)/abs(self.mat[2, 0])
 
-                self.arm.relative_move(move, 0)
+                self.arm.relative_move(self.withdraw_sign*move, 0)
                 self.arm.wait_motor_stop([0])
-                theorical_tip_pos = tip_pos + self.mat*np.array([[move], [0], [0]])
+                theorical_tip_pos = tip_pos + self.mat*np.array([[self.withdraw_sign*move], [0], [0]])
 
                 intermediate_x_pos = self.withdraw_sign*(theorical_tip_pos[2, 0]-mic_pos[2, 0])/abs(self.mat[2, 0])
                 intermediate_pos = mic_pos
@@ -276,7 +273,7 @@ class PatchClampRobot(Thread):
             i = 0
         else:
             i = 1
-        if (self.template_loc[i] != 0) ^ (self.mat[i, 0] > 0):
+        if (self.template_loc[i] != 0) ^ ((self.mat[i, 0] > 0) ^ (self.rot[i, 0] > 0)):
             self.withdraw_sign = 1
         else:
             self.withdraw_sign = -1
@@ -398,7 +395,7 @@ class PatchClampRobot(Thread):
             self.update_message('{i} has not been calibrated.'.format(i=self.controller))
             return 0
 
-    def clic_event(self, event, x, y, flags, param):
+    def click_event(self, event, x, y, flags, param):
         """
         Position the tip where the user has clic on the window image.
         Shall be used along cv2.setMouseCallback
@@ -419,8 +416,8 @@ class PatchClampRobot(Thread):
                 self.event = {'event': 'PatchClamp', 'x': x, 'y': y}
         pass
 
-    def enable_clic_position(self):
-        cv2.setMouseCallback(self.cam.winname, self.clic_event)
+    def enable_click_position(self):
+        cv2.setMouseCallback(self.cam.winname, self.click_event)
         pass
 
     def linear_move(self, initial_position, final_position):
@@ -772,6 +769,6 @@ if __name__ == '__main__':
             if not calibrated:
                 print 'Calibration canceled.'
         if calibrated:
-            robot.enable_clic_position()
+            robot.enable_click_position()
 
     del robot
