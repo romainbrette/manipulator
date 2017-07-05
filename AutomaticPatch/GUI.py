@@ -140,7 +140,7 @@ class Application(Frame):
                               state='disable')
         self.imgsave.grid(row=0, column=1, padx=2, pady=2)
 
-        self.text_zone = ScrolledText(master=self, width=20, height=10, state='disabled')
+        self.text_zone = ScrolledText(master=self, width=50, height=5, state='disabled')
         self.text_zone.grid(row=2, column=0, columnspan=3)
 
         self.QUIT = Button(self,
