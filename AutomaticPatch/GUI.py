@@ -257,7 +257,7 @@ class Application(Frame):
                 if self.message[:5] == 'ERROR':
                     showerror('ERROR', self.message)
                 self.text_zone.config(state='normal')
-                self.text_zone.insert(INSERT, self.message)
+                self.text_zone.insert(INSERT, self.message+'\n')
                 self.text_zone.config(state='disabled')
                 self.message = ''
                 self.robot.message = ''
