@@ -185,7 +185,7 @@ class Application(Frame):
             self.armlist['state'] = 'disabled'
             self.amplist['state'] = 'disabled'
             self.camlist['state'] = 'disabled'
-            self.pumplist['state'] = 'disable'
+            self.pumplist['state'] = 'disabled'
             self.imgsave.config(state='normal', command=self.robot.save_img)
             self.load_calibrate.config(state='normal')
             self.calibrate.config(state='normal')
