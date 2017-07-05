@@ -387,8 +387,11 @@ class PatchClampRobot(Thread):
             self.arm.set_to_zero([0, 1, 2])
             self.microscope.set_to_zero([0, 1, 2])
             self.calibrated = 1
-            self.start()
             self.cam.click_on_window = True
+            try:
+                self.start()
+            except RuntimeError:
+                pass
             return 1
 
         except IOError:
@@ -428,15 +431,15 @@ class PatchClampRobot(Thread):
         :param final_position: absolute position to go. (ndarray)
         :return: none
         """
-        
-        dir_vector = final_position - initial_position
-        step_vector = 10 * dir_vector/np.linalg.norm(dir_vector)
-        nb_step = np.linalg.norm(dir_vector) / 10.
-        for step in range(1, int(nb_step)+1):
-            intermediate_position = step * self.inv_mat * step_vector
-            self.arm.absolute_move_group(self.inv_mat*initial_position + intermediate_position, [0, 1, 2])
-            time.sleep(0.1)
-        self.arm.absolute_move_group(self.inv_mat*final_position, [0, 1, 2])
+        if any(initial_position - final_position):
+            dir_vector = final_position - initial_position
+            step_vector = 10 * dir_vector/np.linalg.norm(dir_vector)
+            nb_step = np.linalg.norm(dir_vector) / 10.
+            for step in range(1, int(nb_step)+1):
+                intermediate_position = step * self.inv_mat * step_vector
+                self.arm.absolute_move_group(self.inv_mat*initial_position + intermediate_position, [0, 1, 2])
+                time.sleep(0.1)
+            self.arm.absolute_move_group(self.inv_mat*final_position, [0, 1, 2])
 
     def pipettechange(self):
 
@@ -695,16 +698,16 @@ class PatchClampRobot(Thread):
     def patch(self, position):
         tip_position = self.mat * position
         self.update_message('Approaching cell...')
-        while self.arm.position(0) - tip_position[0, 0] - self.withdraw_sign * 5 > 0:
+        while self.arm.position(0) - tip_position[0, 0] + self.withdraw_sign * 5 > 0:
             self.arm.step_move(-self.withdraw_sign, 0)
             self.arm.wait_motor_stop([0])
             if self.pipette_resistance * 1.25 < self.get_resistance():
+                time.sleep(10)
                 break
-        time.sleep(10)
-        if self.arm.position(0) - position[0, 0] - self.withdraw_sign * 5 < 0:
+        if self.arm.position(0) - tip_position[0, 0] + self.withdraw_sign * 5 <= 0:
             self.update_message('ERROR: Could not find the cell.')
             return 0
-        elif self.pipette_resistance * 1.25 >= self.get_resistance():
+        elif self.pipette_resistance * 1.25 > self.get_resistance():
             return self.patch(position)
         else:
             self.update_message('Cell found. Sealing...')
