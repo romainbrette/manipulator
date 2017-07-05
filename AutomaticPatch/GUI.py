@@ -94,11 +94,13 @@ class Application(Frame):
 
         self.calibrate = Button(self.calibrate_box,
                                 text='Calibrate',
+                                command=self.calibration,
                                 state='disable')
         self.calibrate.grid(row=0, column=0, padx=2, pady=2)
 
         self.load_calibrate = Button(self.calibrate_box,
                                      text='Load calibration',
+                                     command=self.load_cali,
                                      state='disable')
         self.load_calibrate.grid(row=0, column=1, padx=2, pady=2)
 
@@ -140,6 +142,15 @@ class Application(Frame):
                               state='disable')
         self.imgsave.grid(row=0, column=1, padx=2, pady=2)
 
+        self.clamp = Button(self.misc, text='Clamp', state='disable')
+        self.clamp.grid(row=1, column=0, padx=2, pady=2)
+
+        self.clamp_switch = Checkbutton(self.misc,
+                                        text='clamp when clicking',
+                                        command=self.enable_clamp,
+                                        state='disable')
+        self.clamp_switch.grid(row=1, column=1, padx=2, pady=2)
+
         self.text_zone = ScrolledText(master=self, width=50, height=5, state='disabled')
         self.text_zone.grid(row=2, column=0, columnspan=3)
 
@@ -172,14 +183,19 @@ class Application(Frame):
 
             self.controllist['state'] = 'disabled'
             self.armlist['state'] = 'disabled'
+            self.amplist['state'] = 'disabled'
+            self.camlist['state'] = 'disabled'
+            self.pumplist['state'] = 'disable'
             self.imgsave.config(state='normal', command=self.robot.save_img)
-            self.load_calibrate.config(state='normal', command=self.load_cali)
-            self.calibrate.config(state='normal', command=self.calibration)
+            self.load_calibrate.config(state='normal')
+            self.calibrate.config(state='normal')
             self.zero.config(state='normal')
             self.connection.config(state='disable')
             self.disconnection.config(state='normal')
             self.continuous_meter.config(state='normal')
             self.check_pipette_resistance.config(state='normal')
+            self.clamp.config(state='normal', command=self.robot.clamp())
+            self.clamp_switch.config(state='normal')
 
             self.check_message()
         pass
@@ -188,38 +204,44 @@ class Application(Frame):
         self.robot.stop()
         del self.robot
         self.robot = None
-        self.calibrate.config(command=None, state='disable')
+        self.calibrate.config(state='disable')
         self.imgsave.config(state='disable', command=None)
-        self.load_calibrate.config(state='disable', command=None)
+        self.load_calibrate.config(state='disable')
         self.zero.config(state='disable')
-        self.controllist['state'] = "readonly"
+        self.controllist['state'] = 'readonly'
         self.armlist['state'] = 'readonly'
+        self.amplist['state'] = 'readonly'
+        self.camlist['state'] = 'readonly'
+        self.pumplist['state'] = 'readonly'
         self.connection.config(state='normal')
         self.disconnection.config(state='disable')
         self.check_pipette_resistance.config(state='disable')
+        self.clamp.config(state='disable', command=None)
+        self.clamp_switch.config(state='disable')
         pass
 
     def calibration(self):
-        if askokcancel('Calibrating',
-                       'Please put the tip of the pipette in focus and at the center of the image.',
-                       icon=INFO):
+        if self.robot:
+            if askokcancel('Calibrating',
+                           'Please put the tip of the pipette in focus and at the center of the image.',
+                           icon=INFO):
 
-            if self.robot.calibrate():
-                showinfo('Calibrating', 'Calibration succesfull.')
-            else:
-                showerror('Calibrating', 'Calibration canceled.')
-        pass
+                if self.robot.calibrate():
+                    showinfo('Calibrating', 'Calibration succesfull.')
+                else:
+                    showerror('Calibrating', 'Calibration canceled.')
+            pass
 
     def load_cali(self):
-
-        if askokcancel('Loading calibration',
-                       'Please put the tip of the pipette in focus and at the center of the image.',
-                       icon=INFO):
-            if self.robot.load_calibration():
-                showinfo('Loading calibration', 'Calibration loaded.')
-            else:
-                showerror('Loading calibration', 'The device has never been calibrated.')
-        pass
+        if self.robot:
+            if askokcancel('Loading calibration',
+                           'Please put the tip of the pipette in focus and at the center of the image.',
+                           icon=INFO):
+                if self.robot.load_calibration():
+                    showinfo('Loading calibration', 'Calibration loaded.')
+                else:
+                    showerror('Loading calibration', 'The device has never been calibrated.')
+            pass
 
     def reset_pos(self):
         if self.robot:
@@ -237,6 +259,10 @@ class Application(Frame):
         if self.robot:
             if self.robot.init_patch_clamp():
                 self.enable_continuous_meter()
+
+    def enable_clamp(self):
+        if self.robot:
+            self.robot.enable_clamp ^= 1
 
     def enable_continuous_meter(self):
         if self.robot:
