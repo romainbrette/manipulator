@@ -3,6 +3,7 @@ Simple GUI for the patch clamp robot
 """
 from Tkinter import *
 from tkMessageBox import *
+from ScrolledText import *
 import ttk
 from PatchClampRobot import *
 
@@ -139,12 +140,15 @@ class Application(Frame):
                               state='disable')
         self.imgsave.grid(row=0, column=1, padx=2, pady=2)
 
+        self.text_zone = ScrolledText(master=self, width=20, height=10, state='disabled')
+        self.text_zone.grid(row=2, column=0, columnspan=3)
+
         self.QUIT = Button(self,
                            text='QUIT',
                            bg='orange',
                            fg='white',
                            command=self.exit)
-        self.QUIT.grid(row=2, column=0, padx=2, pady=2)
+        self.QUIT.grid(row=3, column=0, padx=2, pady=2)
 
         self.message = ''
 
@@ -252,8 +256,11 @@ class Application(Frame):
                 self.message = self.robot.message
                 if self.message[:5] == 'ERROR':
                     showerror('ERROR', self.message)
-                else:
-                    pass
+                self.text_zone.config(state='normal')
+                self.text_zone.insert(INSERT, self.message)
+                self.text_zone.config(state='disabled')
+                self.message = ''
+                self.robot.message = ''
             self.after(10, self.check_message)
 
     def exit(self):
