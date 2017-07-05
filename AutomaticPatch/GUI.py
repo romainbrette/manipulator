@@ -54,7 +54,7 @@ class Application(Frame):
 
         self.camlist = ttk.Combobox(self.robot_box,
                                     state='readonly',
-                                    values='Hamamatsu Leica')
+                                    values='Hamamatsu Lumenera')
         self.camlist.grid(row=2, column=1, columnspan=2, padx=2, pady=2)
 
         self.ask_amp = Label(self.robot_box,

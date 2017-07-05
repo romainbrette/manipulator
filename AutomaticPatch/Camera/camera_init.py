@@ -23,7 +23,7 @@ def camera_init(camera_name):
     if camera_name == 'Hamamatsu':
         mmc.loadDevice('Camera', 'HamamatsuHam', 'HamamatsuHam_DCAM')
         flip = [True, 2]
-    elif camera_name == 'Leica':
+    elif camera_name == 'Lumenera':
         mmc.loadDevice('Camera', 'Lumenera', 'LuCam')
         flip = [True, 1]
     else:
