@@ -84,6 +84,7 @@ class PatchClampRobot(Thread):
         """
         while self.calibrated:
             if self.event['event'] == 'Positioning':
+                self.message = 'Moving...'
                 pos = np.transpose(self.microscope.position())
                 tip_pos = self.mat * np.transpose(self.arm.position())
 
@@ -93,8 +94,10 @@ class PatchClampRobot(Thread):
                 pos += offset
                 self.linear_move(tip_pos, pos)
                 self.event['event'] = None
+                self.message = 'done.'
 
             elif (self.event['event'] == 'PatchClamp') & self.pipette_resistance_checked:
+                self.message = 'Moving...'
                 mic_pos = np.transpose(self.microscope.position())
 
                 offset = self.rot_inv*np.array([[(self.x_init - (self.event['x'] - self.template_loc[0])) * self.um_px],
@@ -133,6 +136,7 @@ class PatchClampRobot(Thread):
             key = cv2.waitKey(1)
             if key & 0xFF == ord('f'):
                 self.following ^= 1
+                self.message = 'Following '+['disabled.', 'enabled.'][self.following]
 
             if self.following & (not self.event['event']):
                 # The tip follow the camera
@@ -322,7 +326,9 @@ class PatchClampRobot(Thread):
             self.update_message('ERROR: Could not calibrate z axis.')
             return 0
         else:
-            self.update_message('z axis calibrated.')
+            self.update_message('z axis calibrated.\n'
+                                'Autocalibration done.\n'
+                                'Accuracy: {}'.format(self.matrix_accuracy()))
 
         # Getting the direction to withdraw pipette along x axis
         self.get_withdraw_sign()
@@ -391,6 +397,7 @@ class PatchClampRobot(Thread):
             self.microscope.set_to_zero([0, 1, 2])
             self.calibrated = 1
             self.cam.click_on_window = True
+            self.message = 'Calibration loaded.'
             try:
                 self.start()
             except RuntimeError:
@@ -637,6 +644,7 @@ class PatchClampRobot(Thread):
 
     def save_img(self):
         self.cam.save_img()
+        self.message = 'Screenshot saved.'
         pass
 
     def set_continuous_res_meter(self, enable):
@@ -684,11 +692,13 @@ class PatchClampRobot(Thread):
         time.sleep(3)
         self.pipette_resistance = self.get_one_res_metering(res_type='float')
         if 4.5e6 > self.pipette_resistance:
-            self.message = 'ERROR: Tip resistance is too low. Should be higher than 5 MOhm.'
+            self.message = 'ERROR: Tip resistance is too low ({}).' \
+                           ' Should be higher than 5 MOhm.'.format(self.get_one_res_metering(res_type='text'))
             self.amplifier.meter_resist_enable(False)
             return 0
         if 10.2e6 < self.pipette_resistance:
-            self.message = 'ERROR: Tip resistance is too high. Should be lower than 10 MOhm.'
+            self.message = 'ERROR: Tip resistance is too high ({}).' \
+                           ' Should be lower than 10 MOhm.'.format(self.get_one_res_metering(res_type='text'))
             self.amplifier.meter_resist_enable(False)
             return 0
         else:

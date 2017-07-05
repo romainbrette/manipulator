@@ -215,7 +215,9 @@ class Application(Frame):
         if askokcancel('Loading calibration',
                        'Please put the tip of the pipette in focus and at the center of the image.',
                        icon=INFO):
-            if not self.robot.load_calibration():
+            if self.robot.load_calibration():
+                showinfo('Loading calibration', 'Calibration loaded.')
+            else:
                 showerror('Loading calibration', 'The device has never been calibrated.')
         pass
 
