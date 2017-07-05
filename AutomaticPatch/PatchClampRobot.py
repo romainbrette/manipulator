@@ -103,9 +103,12 @@ class PatchClampRobot(Thread):
                 mic_pos += offset
                 tip_pos = self.mat*np.transpose(self.arm.position())
 
-                move = (abs(mic_pos[2, 0]-tip_pos[2, 0])*(tip_pos[2, 0] < mic_pos[2, 0])+15)/abs(self.mat[2, 0])
+                if tip_pos[2, 0] < mic_pos[2, 0]:
+                    move = self.withdraw_sign*(abs(mic_pos[2, 0]-tip_pos[2, 0])+15)/abs(self.mat[2, 0])
+                else:
+                    move = self.withdraw_sign * 15 / abs(self.mat[2, 0])
 
-                self.arm.relative_move(self.withdraw_sign*move, 0)
+                self.arm.relative_move(move, 0)
                 self.arm.wait_motor_stop([0])
                 theorical_tip_pos = tip_pos + self.mat*np.array([[self.withdraw_sign*move], [0], [0]])
 
