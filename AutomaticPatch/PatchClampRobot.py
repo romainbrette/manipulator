@@ -105,7 +105,7 @@ class PatchClampRobot(Thread):
                 self.event['event'] = None
                 self.message = 'done.'
 
-            elif (self.event['event'] == 'PatchClamp'):# & self.pipette_resistance_checked:
+            elif (self.event['event'] == 'PatchClamp') & self.pipette_resistance_checked:
                 # Patch (and Clamp) at the clicked position
                 self.message = 'Moving...'
 
