@@ -84,20 +84,31 @@ class PatchClampRobot(Thread):
         """
         while self.calibrated:
             if self.event['event'] == 'Positioning':
+                # Move the tip of the pipette to the clicked position
                 self.message = 'Moving...'
+
+                # Getting the position of the tip and the micriscope
                 pos = np.transpose(self.microscope.position())
                 tip_pos = self.mat * np.transpose(self.arm.position())
 
+                # Computing the desired position
                 offset = self.rot_inv*np.array([[(self.x_init - (self.event['x'] - self.template_loc[0])) * self.um_px],
                                                 [(self.y_init - (self.event['y'] - self.template_loc[1])) * self.um_px],
                                                 [0]])
                 pos += offset
+
+                # Moving the tip using a linear move for security
                 self.linear_move(tip_pos, pos)
+
+                # Event is finished
                 self.event['event'] = None
                 self.message = 'done.'
 
             elif (self.event['event'] == 'PatchClamp') & self.pipette_resistance_checked:
+                # Patch (and Clamp) at the clicked position
                 self.message = 'Moving...'
+
+                # Getting desired position
                 mic_pos = np.transpose(self.microscope.position())
 
                 offset = self.rot_inv*np.array([[(self.x_init - (self.event['x'] - self.template_loc[0])) * self.um_px],
@@ -106,33 +117,52 @@ class PatchClampRobot(Thread):
                 mic_pos += offset
                 tip_pos = self.mat*np.transpose(self.arm.position())
 
+                # Withdraw the pipette for security
                 if self.withdraw_sign*np.sign(self.mat[2, 0])*abs(mic_pos[2, 0] - tip_pos[2, 0]) < 0:
+                    # tip is lower than the desired position, withdraw to the desired heigth
                     move = self.withdraw_sign*(abs(mic_pos[2, 0]-tip_pos[2, 0])+15)/abs(self.mat[2, 0])
                 else:
+                    # tip is higher than, or at, desired height
                     move = self.withdraw_sign * 15 / abs(self.mat[2, 0])
 
+                # Applying withdraw
                 self.arm.relative_move(move, 0)
                 self.arm.wait_motor_stop([0])
+
+                # From now, use theoretical position rather than true position to compensate for unreachable position
+                # Computing supposed position of the tip.
                 theorical_tip_pos = tip_pos + self.mat*np.array([[self.withdraw_sign*move], [0], [0]])
 
+                # Computing intermediate position in the same horizontal plan as the supposed tip position
+                # Only x axis should have an offset compared to the desired position
                 intermediate_x_pos = self.withdraw_sign*abs(theorical_tip_pos[2, 0]-mic_pos[2, 0])/abs(self.mat[2, 0])
                 intermediate_pos = mic_pos + self.mat*np.array([[intermediate_x_pos], [0], [0]])
 
+                # Applying moves to intermediate position
                 self.linear_move(theorical_tip_pos, intermediate_pos)
                 self.arm.wait_motor_stop([0, 1, 2])
+
+                # Getting close to the desired postion (offset 10um on x axis)
                 self.linear_move(intermediate_pos, mic_pos+self.mat*np.array([[self.withdraw_sign*10.], [0.], [0.]]))
                 self.arm.wait_motor_stop([0, 1, 2])
 
                 if abs(self.pipette_resistance-self.get_resistance()) < 3e5:
+                    # Pipette has not been obstructed during previous moves, updating pipette offset
                     self.amplifier.auto_pipette_offset()
                     if self.patch(mic_pos):
+                        # Patch successful
                         if self.enable_clamp:
+                            # Clamp is enabled, clamping
                             time.sleep(120)
                             self.clamp()
                 else:
+                    # Pipette has been obstructed
                     self.message = 'ERROR: pipette is obstructed.'
+
+                # Envent is finished
                 self.event['event'] = None
 
+            # Keyboard commands
             key = cv2.waitKey(1)
             if key & 0xFF == ord('f'):
                 self.following ^= 1
@@ -276,6 +306,9 @@ class PatchClampRobot(Thread):
         pass
 
     def get_withdraw_sign(self):
+        """
+        Compute the sign for withdraw moves
+        """
         if fabs(self.mat[0, 0] / self.mat[1, 0]) > 1:
             i = 0
         else:
@@ -340,8 +373,12 @@ class PatchClampRobot(Thread):
         return 1
 
     def save_calibration(self):
+        """
+        Save calibration in text files
+        """
 
         path = './{}/'.format(self.controller)
+        # Check if path exist, if not, creates it.
         if not os.path.exists(os.path.dirname(path)):
             try:
                 os.makedirs(os.path.dirname(path))
@@ -350,14 +387,17 @@ class PatchClampRobot(Thread):
                 if exc.errno != errno.EEXIST:
                     raise
 
+        # Save Jacobian matrix (self.mat)
         with open("./{i}/mat.txt".format(i=self.controller), 'wt') as f:
             for i in range(3):
                 f.write('{a},{b},{c}\n'.format(a=self.mat[i, 0], b=self.mat[i, 1], c=self.mat[i, 2]))
 
+        # Save rotational matrix
         with open("./{i}/rotmat.txt".format(i=self.controller), 'wt') as f:
-            for i in range(2):
+            for i in range(3):
                 f.write('{a},{b},{c}\n'.format(a=self.rot[i, 0], b=self.rot[i, 1], c=self.rot[i, 2]))
 
+        # Save other data
         with open('./{i}/data.txt'.format(i=self.controller), 'wt') as f:
             f.write('{d}\n'.format(d=self.um_px))
             f.write('{d}\n'.format(d=self.x_init))
@@ -366,6 +406,10 @@ class PatchClampRobot(Thread):
             f.write('{d}\n'.format(d=self.template_loc[1]))
 
     def load_calibration(self):
+        """
+        Load a calibration
+        :return: 
+        """
         try:
             with open("./{i}/mat.txt".format(i=self.controller), 'rt') as f:
                 i = 0
@@ -405,12 +449,13 @@ class PatchClampRobot(Thread):
             return 1
 
         except IOError:
+            # Files do not exist
             self.update_message('{i} has not been calibrated.'.format(i=self.controller))
             return 0
 
     def click_event(self, event, x, y, flags, param):
         """
-        Position the tip where the user has clic on the window image.
+        Update the event variable after a click on the window.
         Shall be used along cv2.setMouseCallback
         :param event: Type of mouse interaction with the window (auto) 
         :param x: position x of the event (auto)
