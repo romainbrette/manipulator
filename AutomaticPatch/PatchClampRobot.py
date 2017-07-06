@@ -89,6 +89,7 @@ class PatchClampRobot(Thread):
 
                 # Getting the position of the tip and the micriscope
                 pos = np.transpose(self.microscope.position())
+                print self.microscope.position()
                 tip_pos = self.mat * np.transpose(self.arm.position())
 
                 # Computing the desired position
@@ -104,7 +105,7 @@ class PatchClampRobot(Thread):
                 self.event['event'] = None
                 self.message = 'done.'
 
-            elif (self.event['event'] == 'PatchClamp') & self.pipette_resistance_checked:
+            elif (self.event['event'] == 'PatchClamp'):# & self.pipette_resistance_checked:
                 # Patch (and Clamp) at the clicked position
                 self.message = 'Moving...'
 
@@ -570,8 +571,11 @@ class PatchClampRobot(Thread):
                     temp = template[i * height / 4:height / 2 + i * height / 4, j * width / 4:width / 2 + j * width / 4]
                     bin_edge, _ = np.histogram(temp.flatten())
                     weight += [bin_edge.min()]
+                else:
+                    weight += [999999999]
 
         index = weight.index(max(weight))
+        index = 5
         j = index % 3
         i = index // 3
         self.template_loc = [temp.shape[1] * (1 - j / 2.), temp.shape[0] * (1 - i / 2.)]
@@ -803,7 +807,6 @@ class PatchClampRobot(Thread):
         self.calibrated = 0
         self.cam.stop()
         self.amplifier.stop()
-        cv2.destroyAllWindows()
         pass
 
 if __name__ == '__main__':

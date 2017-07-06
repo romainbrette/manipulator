@@ -48,6 +48,7 @@ class CameraThread(Thread):
         self.cam.stopSequenceAcquisition()
         camera_unload(self.cam)
         self.cam.reset()
+        cv2.destroyAllWindows()
 
     def save_img(self):
         path = './{i}/screenshots/'.format(i=self.camera_name)

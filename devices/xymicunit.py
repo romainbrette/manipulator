@@ -36,7 +36,7 @@ class XYMicUnit(Device):
         The current position of the device axis in um.
         '''
         if axis is None: # all positions in a vector
-            return array([self.position(i) for i in range(len(self.axes))])
+            return array([[self.position(i) for i in range(len(self.axes) + 1)]])
         else:
             if axis == 2: # Z
                 return self.dev_mic.position()
@@ -67,7 +67,7 @@ class XYMicUnit(Device):
                 self.dev_mic.absolute_move(x)
             else:
                 self.dev.absolute_move(x, self.axes[axis])
-        sleep(.02)
+        sleep(.05)
 
     def absolute_move_group(self, x, axes):
         if isinstance(x, ndarray):
@@ -105,7 +105,7 @@ class XYMicUnit(Device):
                 self.dev_mic.relative_move(x)
             else:
                 self.dev.relative_move(x, self.axes[axis])
-        sleep(.02)
+        sleep(.05)
 
     def save(self, name):
         self.memory[name] = self.position()
@@ -142,7 +142,7 @@ class XYMicUnit(Device):
                 self.dev_mic.set_to_zero()
             else:
                 self.dev.set_to_zero([self.axes[axis]])
-        sleep(.02)
+        sleep(.05)
 
     def set_to_zero_second_counter(self, axis):
         """
@@ -158,7 +158,7 @@ class XYMicUnit(Device):
                 self.dev_mic.set_to_zero()
             else:
                 self.dev.set_to_zero_second_counter([self.axes[axis]])
-        sleep(.02)
+        sleep(.05)
 
     def go_to_zero(self, axis):
         """
@@ -173,7 +173,7 @@ class XYMicUnit(Device):
                 self.dev_mic.go_to_zero()
             else:
                 self.dev.go_to_zero([self.axes[axis]])
-        sleep(.02)
+        sleep(.05)
 
     def single_step(self, axis, step):
         if isinstance(axis, list):
@@ -184,7 +184,7 @@ class XYMicUnit(Device):
                 self.dev_mic.relative_move(step*self.dev_mic.step_distance)
             else:
                 self.dev.single_step(self.axes[axis], step)
-        sleep(.02)
+        sleep(.05)
 
     def set_single_step_distance(self, axis, distance):
         if isinstance(axis, list):
@@ -195,20 +195,32 @@ class XYMicUnit(Device):
                 self.dev_mic.step_distance = distance
             else:
                 self.dev.set_single_step_distance(self.axes[axis], distance)
-        sleep(.02)
+        sleep(.05)
 
-    def step_move(self, axis, distance):
-        if axis == 2:
-            self.relative_move(distance, axis)
+    def step_move(self, distance, axis):
+        if isinstance(distance, ndarray):
+            move = []
+            for j in range(len(distance)):
+                for i in range(len(distance[j])):
+                    move += [distance[j, i]]
+            self.step_move(move, axis)
+        elif isinstance(distance, list):
+            if len(distance) != len(axis):
+                raise ValueError('Length of arguments do not match')
+            for i in range(len(distance)):
+                self.step_move(distance[i], axis[i])
         else:
-            number_step = abs(distance) // 255
-            last_step = abs(distance) % 255
-            if number_step:
-                self.set_single_step_distance(axis, 255)
-                self.single_step(axis, number_step*sign(distance))
-            if last_step:
-                self.set_single_step_distance(axis, last_step)
-                self.single_step(axis, sign(distance))
+            if axis == 2:
+                self.relative_move(distance, axis)
+            else:
+                number_step = abs(distance) // 255
+                last_step = abs(distance) % 255
+                if number_step:
+                    self.set_single_step_distance(axis, 255)
+                    self.single_step(axis, number_step*sign(distance))
+                if last_step:
+                    self.set_single_step_distance(axis, last_step)
+                    self.single_step(axis, sign(distance))
 
     def set_ramp_length(self, axis, length):
         if isinstance(axis, list):
@@ -217,7 +229,7 @@ class XYMicUnit(Device):
         else:
             if axis != 2:
                 self.dev.set_ramp_length(self.axes[axis], length)
-        sleep(.02)
+        sleep(.05)
 
     def wait_motor_stop(self, axis):
         """
@@ -233,7 +245,7 @@ class XYMicUnit(Device):
                 self.dev_mic.wait_motor_stop()
             else:
                 self.dev.wait_motor_stop([self.axes[axis]])
-        sleep(.02)
+        sleep(.05)
 
 if __name__ == '__main__':
     from luigsneumann_SM5 import *

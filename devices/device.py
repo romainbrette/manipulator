@@ -62,7 +62,7 @@ class Device(object):
         -------
         The current position of the device axis in um (vector).
         '''
-        return array([self.position(axis) for axis in axes])
+        return array([[self.position(axis) for axis in axes]])
 
     def absolute_move_group(self, x, axes):
         '''

@@ -194,7 +194,7 @@ class Application(Frame):
             self.disconnection.config(state='normal')
             self.continuous_meter.config(state='normal')
             self.check_pipette_resistance.config(state='normal')
-            self.clamp.config(state='normal', command=self.robot.clamp())
+            self.clamp.config(state='normal', command=self.robot.clamp)
             self.clamp_switch.config(state='normal')
 
             self.check_message()
