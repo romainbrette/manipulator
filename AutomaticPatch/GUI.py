@@ -24,7 +24,7 @@ class Application(Frame):
         self.camera = None
         self.amplifier = None
         self.pump = None
-        self.continuous = False
+        self.continuous = IntVar()
 
         # GUI
         self.robot_box = LabelFrame(self,
@@ -108,8 +108,10 @@ class Application(Frame):
                                     text='Resistance metering')
         self.meter_box.grid(row=1, column=1, padx=2, pady=2)
 
-        self.continuous_meter = Checkbutton(self.meter_box, text='Continiuous metering',
-                                            command=self.enable_continuous_meter,
+        self.continuous_meter = Checkbutton(self.meter_box,
+                                            text='Continiuous metering',
+                                            variable=self.continuous,
+                                            command=self.switch_continuous_meter,
                                             state='disable')
         self.continuous_meter.grid(row=0, column=0, padx=2, pady=2)
 
@@ -250,7 +252,7 @@ class Application(Frame):
 
     def get_res(self):
         if self.robot:
-            if self.continuous:
+            if self.continuous.get():
                 self.res_value['text'] = self.robot.get_resistance(res_type='text')
                 self.after(10, self.get_res)
         pass
@@ -258,25 +260,20 @@ class Application(Frame):
     def init_patch_clamp(self):
         if self.robot:
             if self.robot.init_patch_clamp():
-                self.enable_continuous_meter()
+                self.continuous_meter.select()
 
     def enable_clamp(self):
         if self.robot:
             self.robot.enable_clamp ^= 1
 
-    def enable_continuous_meter(self):
+    def switch_continuous_meter(self):
         if self.robot:
-            self.robot.set_continuous_res_meter(True)
-            self.continuous = True
-            self.continuous_meter.config(command=self.disable_continuous_meter)
-            self.get_res()
+            if self.continuous.get():
+                self.robot.set_continuous_res_meter(True)
+                self.get_res()
+            else:
+                self.robot.set_continuous_res_meter(False)
         pass
-
-    def disable_continuous_meter(self):
-        if self.robot:
-            self.robot.set_continuous_res_meter(False)
-            self.continuous = False
-            self.continuous_meter.config(command=self.enable_continuous_meter)
 
     def check_message(self):
         if self.robot:
