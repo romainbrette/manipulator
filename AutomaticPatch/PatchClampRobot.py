@@ -793,6 +793,7 @@ class PatchClampRobot(Thread):
             if nb_try == 4:
                 self.update_message('ERROR: Clamp unsuccessful.')
                 return 0
+        self.amplifier.null_current()
         self.update_message('Clamp done.')
         return 1
 
