@@ -206,6 +206,12 @@ class MultiClamp(AmplifierClass):
             self.check_error()
 
     @needs_select
+    def null_current(self):
+        if not self.dll.MCCMSG_SetMode(self.msg_handler, ctypes.c_uint(2),
+                                       ctypes.byref(self.last_error)):
+            self.check_error()
+
+    @needs_select
     def get_fast_compensation_capacitance(self):
         capacitance = ctypes.c_double(0.)
         if not self.dll.MCCMSG_GetFastCompCap(self.msg_handler,

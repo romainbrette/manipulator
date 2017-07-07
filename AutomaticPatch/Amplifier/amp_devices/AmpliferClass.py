@@ -27,6 +27,9 @@ class AmplifierClass(object):
     def current_clamp(self):
         pass
 
+    def null_current(self):
+        pass
+
     def get_fast_compensation_capacitance(self):
         return self.fast_comp
 
