@@ -215,7 +215,7 @@ class LuigsNeumann_SM5(SerialDevice):
         :param length: 0<length<=16 
         :return: 
         """
-        # self.send_command('003A', [axis, length], 1)
+        self.send_command('003a', [axis, list(bytearray(struct.pack('i', length)))], 0)
         pass
 
     def wait_motor_stop(self, axis):
