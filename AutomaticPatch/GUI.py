@@ -153,6 +153,14 @@ class Application(Frame):
                                         state='disable')
         self.clamp_switch.grid(row=1, column=1, padx=2, pady=2)
 
+        self.follow = IntVar()
+        self.switch_follow = Checkbutton(self.misc,
+                                         text='Following',
+                                         command=self.following,
+                                         variable=self.follow,
+                                         state='disable')
+        self.switch_follow.grid(row=2, column=0, padx=2, pady=2)
+
         self.text_zone = ScrolledText(master=self, width=50, height=5, state='disabled')
         self.text_zone.grid(row=2, column=0, columnspan=3)
 
@@ -268,6 +276,10 @@ class Application(Frame):
             else:
                 self.robot.set_continuous_res_meter(False)
         pass
+
+    def following(self):
+        if self.robot:
+            self.robot.following = self.follow.get()
 
     def check_message(self):
         if self.robot:

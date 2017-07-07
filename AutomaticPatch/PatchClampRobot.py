@@ -168,12 +168,6 @@ class PatchClampRobot(Thread):
                 _ = self.calibrate()
                 self.event['event'] = None
 
-            # Keyboard commands
-            key = cv2.waitKey(1)
-            if key & 0xFF == ord('f'):
-                self.following ^= 1
-                self.message = 'Following '+['disabled.', 'enabled.'][self.following]
-
             if self.following & (not self.event['event']):
                 # The tip follow the camera
                 pos = np.transpose(self.microscope.position())
