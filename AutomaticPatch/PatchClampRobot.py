@@ -75,6 +75,8 @@ class PatchClampRobot(Thread):
         # Event on camera window
         self.event = {'event': None, 'x': 0., 'y': 0.}
         self.following = False
+
+        self.start()
         pass
 
     def run(self):
@@ -160,6 +162,10 @@ class PatchClampRobot(Thread):
                     self.message = 'ERROR: pipette is obstructed.'
 
                 # Envent is finished
+                self.event['event'] = None
+
+            elif self.event['event'] == 'Calibration':
+                _ = self.calibrate()
                 self.event['event'] = None
 
             # Keyboard commands
@@ -368,7 +374,6 @@ class PatchClampRobot(Thread):
         self.inv_mat = np.linalg.inv(self.mat)
         self.calibrated = 1
         self.cam.click_on_window = True
-        self.start()
         self.save_calibration()
         return 1
 
@@ -442,15 +447,11 @@ class PatchClampRobot(Thread):
             self.calibrated = 1
             self.cam.click_on_window = True
             self.message = 'Calibration loaded.'
-            try:
-                self.start()
-            except RuntimeError:
-                pass
             return 1
 
         except IOError:
             # Files do not exist
-            self.update_message('{i} has not been calibrated.'.format(i=self.controller))
+            self.update_message('ERROR: {i} has not been calibrated.'.format(i=self.controller))
             return 0
 
     def click_event(self, event, x, y, flags, param):
