@@ -89,7 +89,6 @@ class PatchClampRobot(Thread):
 
                 # Getting the position of the tip and the micriscope
                 pos = np.transpose(self.microscope.position())
-                print self.microscope.position()
                 tip_pos = self.mat * np.transpose(self.arm.position())
 
                 # Computing the desired position
