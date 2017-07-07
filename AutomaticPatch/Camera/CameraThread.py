@@ -31,7 +31,7 @@ class CameraThread(Thread):
             if self.cam.getRemainingImageCount() > 0:
                 temp_frame = self.cam.getLastImage()
                 img = np.float32(temp_frame / (1. * temp_frame.max()))
-                img **= 2
+                img **= 3
                 img = cv2.bilateralFilter(img, 1, 10, 10)
 
                 if self.flip[0]:

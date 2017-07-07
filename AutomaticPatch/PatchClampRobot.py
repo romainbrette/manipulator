@@ -572,10 +572,9 @@ class PatchClampRobot(Thread):
                     bin_edge, _ = np.histogram(temp.flatten())
                     weight += [bin_edge.min()]
                 else:
-                    weight += [999999999]
+                    weight += [-1]
 
         index = weight.index(max(weight))
-        index = 5
         j = index % 3
         i = index // 3
         self.template_loc = [temp.shape[1] * (1 - j / 2.), temp.shape[0] * (1 - i / 2.)]
