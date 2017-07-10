@@ -1,6 +1,3 @@
-'''
-Initialization of controllers and camera
-'''
 from devices import *
 from serial import SerialException
 
@@ -8,6 +5,12 @@ __all__ = ['init_device']
 
 
 def init_device(devtype, armdev):
+    """
+    Initialization of microscope and arm
+    :param devtype: controller
+    :param armdev: devices controlling the arm
+    :return: 
+    """
 
     if devtype == 'SM5':
         try:
@@ -32,6 +35,7 @@ def init_device(devtype, armdev):
     else:
         raise NameError('Unknown device for arm control.')
 
+    # Adjust ramp length for accuracy
     microscope.set_ramp_length([0, 1, 2], 4)
     arm.set_ramp_length([0, 1, 2], 4)
 

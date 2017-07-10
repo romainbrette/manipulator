@@ -15,7 +15,7 @@ __all__ = ['camera_init', 'camera_unload']
 
 def camera_init(camera_name):
     """
-    Initializing the camera/microscope
+    Initializing the camera
     :return: mmc: microscope device, can be controlled using micro manager methods (see HAMAMATSU_CAMERA_METHODS.txt)
     """
     mmc = MMCorePy.CMMCore()

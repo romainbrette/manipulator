@@ -26,6 +26,11 @@ def disp_template_zone(img):
 
 
 def disp_centered_cross(img):
+    """
+    Plot a red cross at the center of the image
+    :param img: 
+    :return: 
+    """
 
     img = img.copy()
     height, width = img.shape[:2]
