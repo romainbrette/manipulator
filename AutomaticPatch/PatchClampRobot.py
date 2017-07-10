@@ -14,12 +14,16 @@ __all__ = ['PatchClampRobot']
 
 
 class PatchClampRobot(Thread):
+    """
+    Class to control devices for patch clamp.
+    """
 
     def __init__(self, controller, arm, camera, amplifier=None, pump=None, verbose=True):
 
+        # Thread init
         Thread.__init__(self)
 
-        # devices
+        # Devices
         self.dev, self.microscope, self.arm = init_device(controller, arm)
         self.controller = controller
 
@@ -29,18 +33,18 @@ class PatchClampRobot(Thread):
         # Boolean for calibrated state
         self.calibrated = 0
 
-        # Maximum distance from initial position allowed
+        # Maximum distance from initial position allowed during calibration
         self.maxdist = 2000
 
-        # Initial displacement of the arm to do during autocalibration, in um
+        # Initial displacement of the arm during autocalibration, in um
         self.first_step = 2.
         self.step = 0
 
-        # Rotation matrix of the platform compared to the camera
+        # Rotational matrix of the platform compared to the camera - to be calibrated
         self.rot = np.matrix([[0., 0., 0.], [0., 0., 0.], [0., 0., 1.]])
         self.rot_inv = np.matrix([[0., 0., 0.], [0., 0., 0.], [0., 0., 1.]])
 
-        # Initializing transformation matrix (Jacobian) between the camera and the tip
+        # Initializing transformation matrix (Jacobian) between the platform and the tip
         self.mat = np.matrix([[0., 0., 0.], [0., 0., 0.], [0., 0., 0.]])
         self.inv_mat = np.matrix([[0., 0., 0.], [0., 0., 0.], [0., 0., 0.]])
 
@@ -54,9 +58,9 @@ class PatchClampRobot(Thread):
         self.template_loc = [0., 0.]
 
         # Withdraw direction - changed at end of calibration
-        self.withdraw_sign = 1
+        self.withdraw_sign = 0
 
-        # Resistance data
+        # Resistance of pipette
         self.pipette_resistance = 0.
         self.pipette_resistance_checked = False
 
@@ -76,15 +80,25 @@ class PatchClampRobot(Thread):
         self.event = {'event': None, 'x': 0., 'y': 0.}
         self.following = False
 
+        # Start the thread run
         self.start()
+        self.running = True
         pass
 
     def run(self):
         """
-        Thread run. Used to handle manipulator commands after a mouse callback on the camera's window while refreshing
-         the dispayed image.
+        Thread run. Used to handle manipulator commands after a mouse callback on the camera's window and
+         autocalibration process while refreshing the dispayed image.
         """
-        while self.calibrated:
+        while not self.calibrated & self.running:
+            # Robot has not been calibrated, wait for calibration
+            if self.event['event'] == 'Calibration':
+                # Auto calibration
+                _ = self.calibrate()
+                self.event['event'] = None
+
+        while self.calibrated & self.running:
+            # Robot has been calibrated, positionning is possible
             if self.event['event'] == 'Positioning':
                 # Move the tip of the pipette to the clicked position
                 self.message = 'Moving...'
@@ -164,12 +178,9 @@ class PatchClampRobot(Thread):
                 # Envent is finished
                 self.event['event'] = None
 
-            elif self.event['event'] == 'Calibration':
-                _ = self.calibrate()
-                self.event['event'] = None
-
             if self.following & (not self.event['event']):
                 # The tip follow the camera
+                # Same as poistionning, but without updating events at the end
                 pos = np.transpose(self.microscope.position())
                 tip_pos = self.mat * np.transpose(self.arm.position())
 
@@ -195,8 +206,8 @@ class PatchClampRobot(Thread):
     def calibrate_platform(self):
         """
         Calibrate the platform:
-        Reset zero position to current position
-        Compute rotation matrix between the platform and camera 
+        Set zero position as current position
+        Compute rotational matrix between the platform and camera 
         """
 
         # Make current position the zero position
@@ -227,7 +238,7 @@ class PatchClampRobot(Thread):
             dist = (dx ** 2 + dy ** 2) ** 0.5
             self.um_px = self.microscope.position(i) / dist
 
-            # Compute the rotation matrix
+            # Compute the rotational matrix
             self.rot[0, i] = dx / dist
             self.rot[1, i] = dy / dist
 
@@ -240,7 +251,7 @@ class PatchClampRobot(Thread):
 
     def calibrate_arm(self, axis):
         """
-        Calibrate the arm along axis.
+        Calibrate the arm along given axis.
         :param axis: axis to calibrate
         :return: 0 if calibration failed, 1 otherwise
         """
@@ -249,7 +260,6 @@ class PatchClampRobot(Thread):
 
             # calibrate arm axis using exponential moves:
             # moves the arm, recenter the tip and refocus.
-            # displacements are saved
             try:
                 self.exp_focus_track(axis)
             except EnvironmentError:
@@ -266,11 +276,14 @@ class PatchClampRobot(Thread):
 
     def exp_focus_track(self, axis):
         """
-        Focus after a move of the arm along axis
+        Focus after an arm move along given axis
         """
 
+        # Update step distance
         if self.arm.position(axis) == 0:
             self.step = self.first_step
+        elif self.arm.position(axis)+self.step*2 > self.maxdist:
+            self.step = self.maxdist-self.arm.position(axis)
         else:
             self.step *= 2.
 
@@ -299,7 +312,7 @@ class PatchClampRobot(Thread):
 
         self.microscope.wait_motor_stop([0, 1])
 
-        # Update the estimated move to do for a move of 1 um of the arm
+        # Update the transform matrix
         for i in range(3):
             self.mat[i, axis] = self.microscope.position(i) / self.arm.position(axis)
 
@@ -461,11 +474,11 @@ class PatchClampRobot(Thread):
         """
         if self.calibrated:
             if event == cv2.EVENT_LBUTTONUP:
-
+                # Left click
                 self.event = {'event': 'Positioning', 'x': x, 'y': y}
 
             elif event == cv2.EVENT_RBUTTONUP:
-
+                # Right click
                 self.event = {'event': 'PatchClamp', 'x': x, 'y': y}
         pass
 
@@ -482,14 +495,26 @@ class PatchClampRobot(Thread):
         :return: none
         """
         if any(initial_position - final_position):
+            # The desired position is not the actual position (would make a 'divide by zero' error otherwise)
+
+            # Compute directional vector
             dir_vector = final_position - initial_position
+
+            # Divide directional vector as a series of vector of norm 10um
             step_vector = 10 * dir_vector/np.linalg.norm(dir_vector)
+
+            # Number of sub-directional vector to make
             nb_step = np.linalg.norm(dir_vector) / 10.
+
+            # Moving the arm
             for step in range(1, int(nb_step)+1):
                 intermediate_position = step * self.inv_mat * step_vector
                 self.arm.absolute_move_group(self.inv_mat*initial_position + intermediate_position, [0, 1, 2])
                 time.sleep(0.1)
+
+            # make final move to desired position
             self.arm.absolute_move_group(self.inv_mat*final_position, [0, 1, 2])
+        pass
 
     def pipettechange(self):
 
@@ -550,29 +575,46 @@ class PatchClampRobot(Thread):
 
     def get_template_series(self, nb_images):
         """
-        Get a series of template images of the tip around the center of an image for any angle of the tip.
+        Get a series of template images of the tip, at different height, around the center of an image.
         :param nb_images: number of template images to take, must be odd
         """
+
+        # Tab for the series of images
         self.template = []
+
+        # Tab
         temp = []
 
+        # Take imges only in the template zone
         template = self.template_zone()
         height, width = template.shape[:2]
+
+        # Tab of weight to detect where the pipette is
         weight = []
+
+        # Detecting the tip
         for i in range(3):
             for j in range(3):
                 if (i != 1) & (j != 1):
+                    # divide template zone into 9 images
                     temp = template[i * height / 4:height / 2 + i * height / 4, j * width / 4:width / 2 + j * width / 4]
+
+                    # Search the tip using the number of darkest pixel in the image
                     bin_edge, _ = np.histogram(temp.flatten())
                     weight += [bin_edge.min()]
                 else:
+                    # image is the center of template zone, do not consider to have functional get_withdraw_sign method
                     weight += [-1]
 
+        # pipette is in the image with the most darkest pixels
         index = weight.index(max(weight))
         j = index % 3
         i = index // 3
+
+        # Update the position of the tip in image
         self.template_loc = [temp.shape[1] * (1 - j / 2.), temp.shape[0] * (1 - i / 2.)]
 
+        # Get the series of template images at different height
         for k in range(nb_images):
             self.microscope.absolute_move(k - (nb_images - 1) / 2, 2)
             self.microscope.wait_motor_stop(2)
@@ -581,6 +623,8 @@ class PatchClampRobot(Thread):
             height, width = img.shape[:2]
             img = img[i * height / 4:height / 2 + i * height / 4, j * width / 4:width / 2 + j * width / 4]
             self.template += [img]
+
+        # reset position at the end
         self.go_to_zero()
         pass
 
@@ -592,10 +636,10 @@ class PatchClampRobot(Thread):
         :return loc: tab location of the detected template image
         """
 
-        # Getting the microscope height according to the used controller
+        # Getting the microscope height
         current_z = self.microscope.position(2)
 
-        # Tabs of maxval and their location during the process
+        # Tabs of maximum match value and their location during the process
         vals = []
         locs = []
 
@@ -667,7 +711,7 @@ class PatchClampRobot(Thread):
 
     def matrix_accuracy(self):
         """
-        Compute the accuracy of the transformation matrix
+        Compute the accuracy of the transform matrix
         """
         acc = [0, 0, 0]
         for i in range(3):
@@ -678,6 +722,10 @@ class PatchClampRobot(Thread):
         return acc
 
     def template_zone(self):
+        """
+        Gives the image at the center of the camera frame
+        :return: 
+        """
         ratio = 32
         shape = [self.cam.height, self.cam.width]
         img = self.cam.frame[shape[0] / 2 - 3 * shape[0] / ratio:shape[0] / 2 + 3 * shape[0] / ratio,
@@ -685,25 +733,48 @@ class PatchClampRobot(Thread):
         return img
 
     def save_img(self):
+        """
+        Save a screenshot
+        :return: 
+        """
         self.cam.save_img()
         self.message = 'Screenshot saved.'
         pass
 
     def set_continuous_res_meter(self, enable):
+        """
+        Enable/disable continuous resistance metering
+        :param enable: Bool for (de)activation
+        :return: 
+        """
         if enable:
             self.amplifier.start_continuous_acquisition()
         else:
             self.amplifier.stop_continuous_acquisition()
 
     def get_one_res_metering(self, res_type='float'):
+        """
+        Get a single resistance meter
+        :param res_type: type of return. Either float or text
+        :return: 
+        """
         self.amplifier.get_discrete_acquisition()
         return self.get_resistance(res_type=res_type)
 
     def get_resistance(self, res_type='float'):
+        """
+        Get the resistance metered by the amplifier
+        :param res_type: type of return. Either text or float
+        :return: 
+        """
         if res_type == 'text':
-            val = str(self.amplifier.res).split('.')
-            unit = (len(val[0]) - 1) // 3
-            length = len(val[0]) - unit * 3
+            # Output to be a string
+            # Transform value (in Ohm) as a int string
+            val = str(int(self.amplifier.res))
+
+            # Compute displayable unit of the value
+            unit = (len(val) - 1) // 3
+            length = len(val) - unit * 3
             if unit <= 0:
                 unit = ' Ohm'
             elif unit == 1:
@@ -717,23 +788,37 @@ class PatchClampRobot(Thread):
             else:
                 unit = ' 1E{} Ohm'.format(unit * 3)
 
-            if len(val[0]) < length + 3:
-                text_value = val[0][:length] + '.' + val[0][length:] + unit
+            # Change the unit of the value
+            if len(val) < length + 3:
+                text_value = val[:length] + '.' + val[length:] + unit
             else:
-                text_value = val[0][:length] + '.' + val[0][length:length + 2] + unit
+                text_value = val[:length] + '.' + val[length:length + 2] + unit
+
             return text_value
+
         elif res_type == 'float':
+            # Output to be a float
             return self.amplifier.res
 
     def init_patch_clamp(self):
+        """
+        Check conditions for patch (pipette resistance)
+        :return: 
+        """
+
+        # Auto pipette offset and holding at 0 V
         self.amplifier.meter_resist_enable(False)
         self.amplifier.auto_pipette_offset()
         self.amplifier.set_holding(0.)
         self.amplifier.set_holding_enable(True)
+
+        # Begin metering
         self.amplifier.meter_resist_enable(True)
+        # wait for stable measure
         time.sleep(3)
+        # Get pipette resistance
         self.pipette_resistance = self.get_one_res_metering(res_type='float')
-        if 4.5e6 > self.pipette_resistance:
+        if 5e6 > self.pipette_resistance:
             self.message = 'ERROR: Tip resistance is too low ({}).' \
                            ' Should be higher than 5 MOhm.'.format(self.get_one_res_metering(res_type='text'))
             self.amplifier.meter_resist_enable(False)
@@ -751,54 +836,89 @@ class PatchClampRobot(Thread):
             return 1
 
     def patch(self, position):
-        tip_position = self.mat * position
+        """
+        Make a patch at given position
+        :param position: absolute position (microscope referential) to make the patch
+        :return: 
+        """
+        # Get the corresponding position in the pipette referential
+        tip_position = self.inv_mat * position
+
+        # Approaching cell 1um by 1um
         self.update_message('Approaching cell...')
         while self.arm.position(0) - tip_position[0, 0] + self.withdraw_sign * 5 > 0:
+            # Arm is not beyond the desired position, moving
             self.arm.step_move(-self.withdraw_sign, 0)
             self.arm.wait_motor_stop([0])
             if self.pipette_resistance * 1.25 < self.get_resistance():
+                # pipette resistance has increased: probably close to cell, wait for stablilization
                 time.sleep(10)
                 break
+
         if self.arm.position(0) - tip_position[0, 0] + self.withdraw_sign * 5 <= 0:
+            # Broke the loop because arm went too far without finding the cell
             self.update_message('ERROR: Could not find the cell.')
             return 0
         elif self.pipette_resistance * 1.25 > self.get_resistance():
+            # Broke the loop because pipette resistance has increased but then decreased, continue moves
             return self.patch(position)
         else:
+            # Close to the cell, sealing
             self.update_message('Cell found. Sealing...')
             self.pressure.seal()
             init_time = time.time()
             while time.time() - init_time < 10:
+                # decrease holding to -70mV in 10 seconds
                 self.amplifier.set_holding(-7 * (time.time() - init_time))
             init_time = time.time()
             while self.amplifier.get_meter_value() < 1e9:
+                # Waiting for measure to increased to 1GOhm
                 if time.time() - init_time >= 90:
+                    # Resistance did not increased enough in 90sec: failure
                     self.update_message('ERROR: Seal unsuccessful.')
                     return 0
+            # Seal succesfull
             self.pressure.release()
             self.update_message('Patch done.')
             return 1
 
     def clamp(self):
+        """
+        Clamping in actual position
+        :return: 
+        """
         nb_try = 0
         self.update_message('Clamping...')
         while self.amplifier.get_meter_value() > 300e6:
+            # Breaking in while resistance does not correspond to interior of cell
             self.pressure.break_in()
+            time.sleep(1.3)
             nb_try += 1
             if nb_try == 4:
+                # Tried too much time, failure
                 self.update_message('ERROR: Clamp unsuccessful.')
                 return 0
+        # Broke in the cell
         self.amplifier.null_current()
         self.update_message('Clamp done.')
         return 1
 
     def update_message(self, text):
+        """
+        Update messages
+        :param text: text's message 
+        :return: 
+        """
         self.message = text
         if self.verbose:
             print self.message
 
     def stop(self):
-        self.calibrated = 0
+        """
+        Stop all threads linked to the robot
+        :return: 
+        """
+        self.running = False
         self.cam.stop()
         self.amplifier.stop()
         pass
