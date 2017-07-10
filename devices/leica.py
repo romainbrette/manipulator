@@ -96,7 +96,7 @@ class Leica(Device):
 
     def wait_motor_stop(self):
         self.mmc.waitForSystem()
-        time.sleep(.5)
+        time.sleep(.7)
 
     def set_to_zero(self):
         self.zero_position = self.mmc.getPosition()

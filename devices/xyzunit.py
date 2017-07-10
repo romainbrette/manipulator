@@ -60,14 +60,14 @@ class XYZUnit(Device):
             self.dev.absolute_move_group(x, self.axes)
         else:
             self.dev.absolute_move(x, self.axes[axis])
-        sleep(.02)
+        sleep(.05)
 
     def absolute_move_group(self, x, axes):
         if isinstance(x, ndarray):
             pos = []
             for j in range(len(x)):
-                for i in x[j]:
-                    pos += [i]
+                for i in range(len(x[j])):
+                    pos += [x[j, i]]
         else:
             pos = x
 
@@ -75,6 +75,7 @@ class XYZUnit(Device):
             raise ValueError('Length of arrays do not match.')
 
         self.dev.absolute_move_group(pos, [self.axes[i] for i in axes])
+        sleep(.05)
 
     def relative_move(self, x, axis = None):
         '''
@@ -92,7 +93,7 @@ class XYZUnit(Device):
             self.dev.relative_move_group(x, self.axes)
         else:
             self.dev.relative_move(x, self.axes[axis])
-        sleep(.02)
+        sleep(.05)
 
     def save(self, name):
         self.memory[name] = self.position()
@@ -122,7 +123,7 @@ class XYZUnit(Device):
                 self.set_to_zero(i)
         else:
             self.dev.set_to_zero([self.axes[axis]])
-        sleep(.02)
+        sleep(.05)
 
     def set_to_zero_second_counter(self, axis):
         """
@@ -135,7 +136,7 @@ class XYZUnit(Device):
                 self.set_to_zero_second_counter(i)
         else:
             self.dev.set_to_zero_second_counter([self.axes[axis]])
-        sleep(.02)
+        sleep(.05)
 
     def go_to_zero(self, axis):
         """
@@ -147,7 +148,7 @@ class XYZUnit(Device):
                 self.go_to_zero(i)
         else:
             self.dev.go_to_zero([self.axes[axis]])
-        sleep(.02)
+        sleep(.05)
 
     def single_step(self, axis, step):
         if isinstance(axis, list):
@@ -155,7 +156,7 @@ class XYZUnit(Device):
                 self.single_step(i, step)
         else:
             self.dev.single_step(self.axes[axis], step)
-        sleep(.02)
+        sleep(.05)
 
     def set_single_step_distance(self, axis, distance):
         if isinstance(axis, list):
@@ -163,17 +164,30 @@ class XYZUnit(Device):
                 self.set_single_step_distance(i, distance)
         else:
             self.dev.set_single_step_distance(self.axes[axis], distance)
-        sleep(.02)
+        sleep(.05)
 
-    def step_move(self, axis, distance):
-        number_step = abs(distance) // 255
-        last_step = abs(distance) % 255
-        if number_step:
-            self.set_single_step_distance(axis, 255)
-            self.single_step(axis, number_step*sign(distance))
-        if last_step:
-            self.set_single_step_distance(axis, last_step)
-            self.single_step(axis, sign(distance))
+    def step_move(self, distance, axis):
+        if isinstance(distance, ndarray):
+            move = []
+            for j in range(len(distance)):
+                for i in range(len(distance[j])):
+                    move += [distance[j, i]]
+            self.step_move(move, axis)
+        elif isinstance(distance, list):
+            if len(distance) != len(axis):
+                raise ValueError('Length of arguments do not match')
+            for i in range(len(distance)):
+                self.step_move(distance[i], axis[i])
+        else:
+            number_step = abs(distance) // 255
+            last_step = abs(distance) % 255
+            if number_step:
+                self.set_single_step_distance(axis, 255)
+                self.single_step(axis, number_step*sign(distance))
+            if last_step:
+                self.set_single_step_distance(axis, last_step)
+                self.single_step(axis, sign(distance))
+
 
     def set_ramp_length(self, axis, length):
         if isinstance(axis, list):
@@ -181,7 +195,7 @@ class XYZUnit(Device):
                 self.set_ramp_length(i, length)
         else:
             self.dev.set_ramp_length(self.axes[axis], length)
-        sleep(.02)
+        sleep(.05)
 
     def wait_motor_stop(self, axis):
         """
@@ -194,4 +208,4 @@ class XYZUnit(Device):
                 self.wait_motor_stop(i)
         else:
             self.dev.wait_motor_stop([self.axes[axis]])
-        sleep(.02)
+        sleep(.05)

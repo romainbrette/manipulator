@@ -3,6 +3,7 @@ Basic Interface to the MultiClamp 700A and 700B amplifiers.
 
 Note that the MultiClamp Commander has to be running in order to use the device.
 """
+from AmpliferClass import *
 import ctypes
 import functools
 import os
@@ -50,7 +51,7 @@ def _identify_amplifier(model, serial, port, device, channel):
         raise AssertionError('Unknown model')
 
 
-class MultiClamp(object):
+class MultiClamp(AmplifierClass):
     """
     Device representing a MultiClamp amplifer channel (i.e., one amplifier with
     two channels is represented by two devices).
@@ -72,6 +73,7 @@ class MultiClamp(object):
     selected_device = None
 
     def __init__(self, **kwds):
+        AmplifierClass.__init__(self)
         self.dll = ctypes.WinDLL(os.path.join(MultiClamp.dll_path,
                                               'AxMultiClampMsg.dll'))
         self.last_error = ctypes.c_int(NO_ERROR)
@@ -204,13 +206,19 @@ class MultiClamp(object):
             self.check_error()
 
     @needs_select
+    def null_current(self):
+        if not self.dll.MCCMSG_SetMode(self.msg_handler, ctypes.c_uint(2),
+                                       ctypes.byref(self.last_error)):
+            self.check_error()
+
+    @needs_select
     def get_fast_compensation_capacitance(self):
         capacitance = ctypes.c_double(0.)
         if not self.dll.MCCMSG_GetFastCompCap(self.msg_handler,
                                               ctypes.byref(capacitance),
                                               ctypes.byref(self.last_error)):
             self.check_error()
-        return capacitance
+        return capacitance.value
 
     @needs_select
     def set_fast_compensation_capacitance(self, capacitance):
@@ -232,7 +240,7 @@ class MultiClamp(object):
                                               ctypes.byref(capacitance),
                                               ctypes.byref(self.last_error)):
             self.check_error()
-        return capacitance
+        return capacitance.value
 
     @needs_select
     def set_slow_compensation_capacitance(self, capacitance):
@@ -267,7 +275,7 @@ class MultiClamp(object):
                                                  ctypes.byref(amplitude),
                                                  ctypes.byref(self.last_error)):
             self.check_error()
-        return amplitude
+        return amplitude.value
 
     @needs_select
     def set_pulse_duration(self, duration):
@@ -283,7 +291,7 @@ class MultiClamp(object):
                                                 ctypes.byref(duration),
                                                 ctypes.byref(self.last_error)):
             self.check_error()
-        return duration
+        return duration.value
 
     @needs_select
     def freq_pulse_enable(self, enable):
@@ -306,7 +314,7 @@ class MultiClamp(object):
                                                       ctypes.byref(amplitude),
                                                       ctypes.byref(self.last_error)):
             self.check_error()
-        return amplitude
+        return amplitude.value
 
     @needs_select
     def set_freq_pulse_frequency(self, frequency):
@@ -322,7 +330,7 @@ class MultiClamp(object):
                                                       ctypes.byref(frequency),
                                                       ctypes.byref(self.last_error)):
             self.check_error()
-        return frequency
+        return frequency.value
 
     @needs_select
     def meter_resist_enable(self, enable):
@@ -338,7 +346,7 @@ class MultiClamp(object):
                                                     ctypes.byref(enable),
                                                     ctypes.byref(self.last_error)):
             self.check_error()
-        return enable
+        return enable.value
 
     @needs_select
     def set_leak_comp_enable(self, enable):
@@ -354,7 +362,7 @@ class MultiClamp(object):
                                                 ctypes.byref(res),
                                                 ctypes.byref(self.last_error)):
             self.check_error()
-        return res
+        return res.value
 
     @needs_select
     def auto_leak_res(self):
@@ -376,7 +384,7 @@ class MultiClamp(object):
                                                 ctypes.byref(res),
                                                 ctypes.byref(self.last_error)):
             self.check_error()
-        return res
+        return res.value
 
     @needs_select
     def set_primary_signal_gain(self, gain):
@@ -413,7 +421,7 @@ class MultiClamp(object):
                                                   ctypes.byref(res),
                                                   ctypes.byref(self.last_error)):
             self.check_error()
-        return res
+        return res.value
 
     @needs_select
     def set_secondary_signal_lpf(self, lpf):
@@ -443,7 +451,7 @@ class MultiClamp(object):
                                              ctypes.c_uint(0),
                                              ctypes.byref(self.last_error)):
             self.check_error()
-        return value
+        return value.value
 
     @needs_select
     def set_holding_enable(self, enable):

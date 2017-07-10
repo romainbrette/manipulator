@@ -4,9 +4,8 @@ A simple patch-clamp GUI
 Pressures
 """
 from Tkinter import *
-from ob1 import *
-# from FakeOB import *
-from numpy import *
+from pump_devices import *
+
 filename = 'pressure.txt'
 
 verbose = True

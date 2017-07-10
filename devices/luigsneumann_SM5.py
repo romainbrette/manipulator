@@ -195,7 +195,7 @@ class LuigsNeumann_SM5(SerialDevice):
             ID = '0141'
         for _ in range(int(abs(steps))):
             self.send_command(ID, [axis], 0)
-            time.sleep(0.02)
+            self.wait_motor_stop([axis])
 
     def set_single_step_distance(self, axis, distance):
         '''
@@ -215,7 +215,8 @@ class LuigsNeumann_SM5(SerialDevice):
         :param length: 0<length<=16 
         :return: 
         """
-        self.send_command('003A', [axis, length], 0)
+        self.send_command('003a', [axis, length], 0)
+        pass
 
     def wait_motor_stop(self, axis):
         """

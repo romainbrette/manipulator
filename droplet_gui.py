@@ -3,13 +3,14 @@ Puts droplets on a grid on the coverslip
 '''
 
 from Tkinter import *
-from devices import *
-from geometry import *
-import pickle
-from serial import SerialException
-from numpy import array, pi, sin, cos
 from time import sleep
-from AutomaticPatch.Pump.ob1 import *
+
+from numpy import pi, sin, cos
+from serial import SerialException
+
+from AutomaticPatch.Pressure_controller.pump_devices.OB1 import *
+from devices import *
+
 
 class ManipulatorApplication(Frame):
     '''

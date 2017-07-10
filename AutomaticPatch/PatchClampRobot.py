@@ -1,26 +1,27 @@
+from threading import Thread
 from Autofocus import *
 from Camera import *
 from Amplifier import *
-from Pump import *
+from Pressure_controller import *
 import numpy as np
 import cv2
 from math import fabs
-from time import sleep, time
+import time
 import os
 import errno
-import time
 
 __all__ = ['PatchClampRobot']
 
 
-class PatchClampRobot(PressureController):
+class PatchClampRobot(Thread):
 
-    def __init__(self, controller, arm):
+    def __init__(self, controller, arm, camera, amplifier=None, pump=None, verbose=True):
+
+        Thread.__init__(self)
 
         # devices
         self.dev, self.microscope, self.arm = init_device(controller, arm)
         self.controller = controller
-        PressureController.__init__(self)
 
         # Tab for template images
         self.template = []
@@ -36,8 +37,8 @@ class PatchClampRobot(PressureController):
         self.step = 0
 
         # Rotation matrix of the platform compared to the camera
-        self.rot = np.matrix([[0., 0.], [0., 0.]])
-        self.rot_inv = np.matrix([[0., 0.], [0., 0.]])
+        self.rot = np.matrix([[0., 0., 0.], [0., 0., 0.], [0., 0., 1.]])
+        self.rot_inv = np.matrix([[0., 0., 0.], [0., 0., 0.], [0., 0., 1.]])
 
         # Initializing transformation matrix (Jacobian) between the camera and the tip
         self.mat = np.matrix([[0., 0., 0.], [0., 0., 0.], [0., 0., 0.]])
@@ -59,10 +60,124 @@ class PatchClampRobot(PressureController):
         self.pipette_resistance = 0.
         self.pipette_resistance_checked = False
 
-        # Camera
-        self.amplifier = ResistanceMeter()
-        self.amplifier.start()
-        self.cam = CameraThread(controller, self.clic_position)
+        # Connected devices
+        self.amplifier = ResistanceMeter(amplifier)
+        self.pressure = PressureController(pump)
+        self.cam = CameraThread(camera, self.click_event)
+
+        # Patch Clamp variables
+        self.enable_clamp = False
+
+        # Messages
+        self.verbose = verbose
+        self.message = ''
+
+        # Event on camera window
+        self.event = {'event': None, 'x': 0., 'y': 0.}
+        self.following = False
+
+        self.start()
+        pass
+
+    def run(self):
+        """
+        Thread run. Used to handle manipulator commands after a mouse callback on the camera's window while refreshing
+         the dispayed image.
+        """
+        while self.calibrated:
+            if self.event['event'] == 'Positioning':
+                # Move the tip of the pipette to the clicked position
+                self.message = 'Moving...'
+
+                # Getting the position of the tip and the micriscope
+                pos = np.transpose(self.microscope.position())
+                tip_pos = self.mat * np.transpose(self.arm.position())
+
+                # Computing the desired position
+                offset = self.rot_inv*np.array([[(self.x_init - (self.event['x'] - self.template_loc[0])) * self.um_px],
+                                                [(self.y_init - (self.event['y'] - self.template_loc[1])) * self.um_px],
+                                                [0]])
+                pos += offset
+
+                # Moving the tip using a linear move for security
+                self.linear_move(tip_pos, pos)
+
+                # Event is finished
+                self.event['event'] = None
+                self.message = 'done.'
+
+            elif (self.event['event'] == 'PatchClamp') & self.pipette_resistance_checked:
+                # Patch (and Clamp) at the clicked position
+                self.message = 'Moving...'
+
+                # Getting desired position
+                mic_pos = np.transpose(self.microscope.position())
+
+                offset = self.rot_inv*np.array([[(self.x_init - (self.event['x'] - self.template_loc[0])) * self.um_px],
+                                                [(self.y_init - (self.event['y'] - self.template_loc[1])) * self.um_px],
+                                                [0]])
+                mic_pos += offset
+                tip_pos = self.mat*np.transpose(self.arm.position())
+
+                # Withdraw the pipette for security
+                if self.withdraw_sign*np.sign(self.mat[2, 0])*abs(mic_pos[2, 0] - tip_pos[2, 0]) < 0:
+                    # tip is lower than the desired position, withdraw to the desired heigth
+                    move = self.withdraw_sign*(abs(mic_pos[2, 0]-tip_pos[2, 0])+15)/abs(self.mat[2, 0])
+                else:
+                    # tip is higher than, or at, desired height
+                    move = self.withdraw_sign * 15 / abs(self.mat[2, 0])
+
+                # Applying withdraw
+                self.arm.relative_move(move, 0)
+                self.arm.wait_motor_stop([0])
+
+                # From now, use theoretical position rather than true position to compensate for unreachable position
+                # Computing supposed position of the tip.
+                theorical_tip_pos = tip_pos + self.mat*np.array([[self.withdraw_sign*move], [0], [0]])
+
+                # Computing intermediate position in the same horizontal plan as the supposed tip position
+                # Only x axis should have an offset compared to the desired position
+                intermediate_x_pos = self.withdraw_sign*abs(theorical_tip_pos[2, 0]-mic_pos[2, 0])/abs(self.mat[2, 0])
+                intermediate_pos = mic_pos + self.mat*np.array([[intermediate_x_pos], [0], [0]])
+
+                # Applying moves to intermediate position
+                self.linear_move(theorical_tip_pos, intermediate_pos)
+                self.arm.wait_motor_stop([0, 1, 2])
+
+                # Getting close to the desired postion (offset 10um on x axis)
+                self.linear_move(intermediate_pos, mic_pos+self.mat*np.array([[self.withdraw_sign*10.], [0.], [0.]]))
+                self.arm.wait_motor_stop([0, 1, 2])
+
+                if abs(self.pipette_resistance-self.get_resistance()) < 3e5:
+                    # Pipette has not been obstructed during previous moves, updating pipette offset
+                    self.amplifier.auto_pipette_offset()
+                    if self.patch(mic_pos):
+                        # Patch successful
+                        if self.enable_clamp:
+                            # Clamp is enabled, clamping
+                            time.sleep(120)
+                            self.clamp()
+                else:
+                    # Pipette has been obstructed
+                    self.message = 'ERROR: pipette is obstructed.'
+
+                # Envent is finished
+                self.event['event'] = None
+
+            elif self.event['event'] == 'Calibration':
+                _ = self.calibrate()
+                self.event['event'] = None
+
+            if self.following & (not self.event['event']):
+                # The tip follow the camera
+                pos = np.transpose(self.microscope.position())
+                tip_pos = self.mat * np.transpose(self.arm.position())
+
+                offset = self.rot_inv*np.array([[(self.x_init - (self.event['x'] - self.template_loc[0])) * self.um_px],
+                                                [(self.y_init - (self.event['y'] - self.template_loc[1])) * self.um_px],
+                                                [0]])
+                pos = pos + offset
+                self.linear_move(tip_pos, pos)
         pass
 
     def go_to_zero(self):
@@ -74,7 +189,7 @@ class PatchClampRobot(PressureController):
         self.microscope.go_to_zero([0, 1, 2])
         self.arm.wait_motor_stop([0, 1, 2])
         self.microscope.wait_motor_stop([0, 1, 2])
-        sleep(.2)
+        time.sleep(.2)
         pass
 
     def calibrate_platform(self):
@@ -87,10 +202,6 @@ class PatchClampRobot(PressureController):
         # Make current position the zero position
         self.arm.set_to_zero([0, 1, 2])
         self.microscope.set_to_zero([0, 1, 2])
-
-        # Testing if difference exits between first and second counter
-        self.arm.set_to_zero_second_counter([0, 1, 2])
-        self.microscope.set_to_zero_second_counter([0, 1, 2])
 
         # Get a series of template images for auto focus
         self.get_template_series(5)
@@ -105,7 +216,7 @@ class PatchClampRobot(PressureController):
             # Moving the microscope
             self.microscope.relative_move(120, i)
             self.microscope.wait_motor_stop(i)
-            sleep(.5)
+            time.sleep(.5)
 
             # Getting the displacement, in pixels, of the tip on the screen
             _, _, loc = templatematching(self.cam.frame, self.template[len(self.template) // 2])
@@ -142,23 +253,67 @@ class PatchClampRobot(PressureController):
             try:
                 self.exp_focus_track(axis)
             except EnvironmentError:
-                print 'Could not track the tip.'
+                self.update_message('Could not track the tip.')
                 return 0
 
         # When calibration is finished:
 
         # Resetting position of arm and microscope so no error gets to the next axis calibration
         self.go_to_zero()
-        sleep(2)
+        time.sleep(2)
 
         return 1
 
+    def exp_focus_track(self, axis):
+        """
+        Focus after a move of the arm along axis
+        """
+
+        if self.arm.position(axis) == 0:
+            self.step = self.first_step
+        else:
+            self.step *= 2.
+
+        # Move the arm
+        self.arm.step_move(self.step, axis)
+
+        # Move the platform to center the tip
+        for i in range(3):
+            self.microscope.step_move(self.mat[i, axis] * self.step, i)
+
+        # Waiting for motors to stop
+        self.arm.wait_motor_stop(axis)
+        self.microscope.wait_motor_stop([0, 1, 2])
+
+        # Focus around the estimated focus height
+        try:
+            _, _, loc = self.focus()
+        except ValueError:
+            raise EnvironmentError('Could not focus on the tip')
+
+        # Move the platform for compensation
+        delta = np.array([[(self.x_init - loc[0]) * self.um_px], [(self.y_init - loc[1]) * self.um_px], [0]])
+        move = self.rot_inv * delta
+        for i in range(2):
+            self.microscope.step_move(move[i, 0], i)
+
+        self.microscope.wait_motor_stop([0, 1])
+
+        # Update the estimated move to do for a move of 1 um of the arm
+        for i in range(3):
+            self.mat[i, axis] = self.microscope.position(i) / self.arm.position(axis)
+
+        pass
+
     def get_withdraw_sign(self):
+        """
+        Compute the sign for withdraw moves
+        """
         if fabs(self.mat[0, 0] / self.mat[1, 0]) > 1:
             i = 0
         else:
             i = 1
-        if (self.template_loc[i] != 0) ^ (self.mat[i, 0] > 0):
+        if (self.template_loc[i] != 0) ^ ((self.mat[i, 0] > 0) ^ (self.rot[i, 0] > 0)):
             self.withdraw_sign = 1
         else:
             self.withdraw_sign = -1
@@ -170,50 +325,59 @@ class PatchClampRobot(PressureController):
         :return: 0 if calibration failed, 1 otherwise
         """
 
-        print 'Calibrating platform'
+        self.update_message('Calibrating platform...')
 
         self.calibrate_platform()
 
-        print 'Platform Calibrated'
+        self.update_message('Platform Calibrated.')
 
         # calibrate arm x axis
-        print 'Calibrating x axis'
+        self.update_message('Calibrating x axis...')
         calibrated = self.calibrate_arm(0)
 
         if not calibrated:
+            self.update_message('ERROR: Could not calibrate x axis.')
             return 0
         else:
-            print 'x axis calibrated'
+            self.update_message('x axis calibrated.')
 
         # calibrate arm y axis
-        print 'Calibrating y axis'
+        self.update_message('Calibrating y axis...')
         calibrated = self.calibrate_arm(1)
 
         if not calibrated:
+            self.update_message('ERROR: Could not calibrate y axis.')
             return 0
         else:
-            print 'y axis calibrated'
+            self.update_message('y axis calibrated.')
 
         # calibrate arm z axis
-        print 'Calibrating z axis'
+        self.update_message('Calibrating z axis...')
         calibrated = self.calibrate_arm(2)
 
         if not calibrated:
+            self.update_message('ERROR: Could not calibrate z axis.')
             return 0
         else:
-            print 'z axis calibrated'
+            self.update_message('z axis calibrated.\n'
+                                'Autocalibration done.\n'
+                                'Accuracy: {}'.format(self.matrix_accuracy()))
 
         # Getting the direction to withdraw pipette along x axis
         self.get_withdraw_sign()
         self.inv_mat = np.linalg.inv(self.mat)
         self.calibrated = 1
-        self.cam.clic_on_window = True
+        self.cam.click_on_window = True
         self.save_calibration()
         return 1
 
     def save_calibration(self):
+        """
+        Save calibration in text files
+        """
 
         path = './{}/'.format(self.controller)
+        # Check if path exist, if not, creates it.
         if not os.path.exists(os.path.dirname(path)):
             try:
                 os.makedirs(os.path.dirname(path))
@@ -222,14 +386,17 @@ class PatchClampRobot(PressureController):
                 if exc.errno != errno.EEXIST:
                     raise
 
+        # Save Jacobian matrix (self.mat)
         with open("./{i}/mat.txt".format(i=self.controller), 'wt') as f:
             for i in range(3):
                 f.write('{a},{b},{c}\n'.format(a=self.mat[i, 0], b=self.mat[i, 1], c=self.mat[i, 2]))
 
+        # Save rotational matrix
         with open("./{i}/rotmat.txt".format(i=self.controller), 'wt') as f:
-            for i in range(2):
-                f.write('{a},{b}\n'.format(a=self.rot[i, 0], b=self.rot[i, 1]))
+            for i in range(3):
+                f.write('{a},{b},{c}\n'.format(a=self.rot[i, 0], b=self.rot[i, 1], c=self.rot[i, 2]))
 
+        # Save other data
         with open('./{i}/data.txt'.format(i=self.controller), 'wt') as f:
             f.write('{d}\n'.format(d=self.um_px))
             f.write('{d}\n'.format(d=self.x_init))
@@ -238,6 +405,10 @@ class PatchClampRobot(PressureController):
             f.write('{d}\n'.format(d=self.template_loc[1]))
 
     def load_calibration(self):
+        """
+        Load a calibration
+        :return: 
+        """
         try:
             with open("./{i}/mat.txt".format(i=self.controller), 'rt') as f:
                 i = 0
@@ -252,7 +423,7 @@ class PatchClampRobot(PressureController):
                 i = 0
                 for line in f:
                     line = line.split(',')
-                    for j in range(2):
+                    for j in range(3):
                         self.rot[i, j] = float(line[j])
                     i += 1
                 self.rot_inv = np.linalg.inv(self.rot)
@@ -268,16 +439,18 @@ class PatchClampRobot(PressureController):
             self.arm.set_to_zero([0, 1, 2])
             self.microscope.set_to_zero([0, 1, 2])
             self.calibrated = 1
-            self.cam.clic_on_window = True
+            self.cam.click_on_window = True
+            self.message = 'Calibration loaded.'
             return 1
 
         except IOError:
-            print '{i} has not been calibrated.'.format(i=self.controller)
+            # Files do not exist
+            self.update_message('ERROR: {i} has not been calibrated.'.format(i=self.controller))
             return 0
 
-    def clic_position(self, event, x, y, flags, param):
+    def click_event(self, event, x, y, flags, param):
         """
-        Position the tip where the user has clic on the window image.
+        Update the event variable after a click on the window.
         Shall be used along cv2.setMouseCallback
         :param event: Type of mouse interaction with the window (auto) 
         :param x: position x of the event (auto)
@@ -288,69 +461,16 @@ class PatchClampRobot(PressureController):
         """
         if self.calibrated:
             if event == cv2.EVENT_LBUTTONUP:
-                #pos = np.array([[0], [0], [0]])
-                #for i in range(3):
-                #    pos[i, 0] = self.microscope.position(i)
 
-                pos = np.transpose(self.microscope.position())
-
-                temp = self.rot_inv * np.array([[(self.x_init - (x - self.template_loc[0])) * self.um_px],
-                                                [(self.y_init - (y - self.template_loc[1])) * self.um_px]])
-                pos[0, 0] += temp[0, 0]
-                pos[1, 0] += temp[1, 0]
-
-                self.linear_move(self.mat*np.transpose(self.arm.position()), pos)
-                #move = self.inv_mat * pos
-
-                #self.arm.absolute_move_group(move, [0, 1, 2])
+                self.event = {'event': 'Positioning', 'x': x, 'y': y}
 
             elif event == cv2.EVENT_RBUTTONUP:
 
-                if self.pipette_resistance_checked | (not self.pipette_resistance_checked):
-
-                    mic_pos = np.transpose(self.microscope.position())
-
-                    temp = self.rot_inv * np.array([[(self.x_init - (x - self.template_loc[0])) * self.um_px],
-                                                    [(self.y_init - (y - self.template_loc[1])) * self.um_px]])
-                    mic_pos[0, 0] += temp[0, 0]
-                    mic_pos[1, 0] += temp[1, 0]
-
-                    final_tip_pos = self.inv_mat*mic_pos
-                    tip_pos = self.mat*np.transpose(self.arm.position())
-
-                    if tip_pos[2, 0] < mic_pos[2, 0]:
-                        move = self.withdraw_sign*(mic_pos[2, 0]-tip_pos[2, 0]+15)/abs(self.mat[2, 0])
-                        self.arm.relative_move(0, move)
-                        theorical_tip_pos = tip_pos + np.array([[move], [0], [0]])
-                    else:
-                        self.arm.relative_move(self.withdraw_sign*15/abs(self.mat[2, 0]), 0)
-                        theorical_tip_pos = tip_pos + np.array([[self.withdraw_sign*15/abs(self.mat[2, 0])], [0], [0]])
-
-                    self.arm.wait_motor_stop([0])
-                    intermediate_x_tip_pos = self.withdraw_sign*(theorical_tip_pos[2, 0]-mic_pos[2, 0])/abs(self.mat[2, 0])
-                    intermediate_pos = mic_pos
-                    intermediate_pos += self.mat*np.array([[intermediate_x_tip_pos], [0], [0]])
-                    self.linear_move(theorical_tip_pos, intermediate_pos)
-                    self.arm.wait_motor_stop([0, 1, 2])
-                    self.linear_move(intermediate_pos, mic_pos)
-                    #self.linear_move(intermediate_pos, mic_pos+self.mat*np.array([[self.withdraw_sign*10], [0], [0]]))
-
-                    if abs(self.pipette_resistance-self.get_resistance()) > 3e5:
-                        raise ValueError
-                    else:
-                        self.amplifier.auto_pipette_offset()
-                        while self.arm.position(0)-final_tip_pos[0, 0]-self.withdraw_sign*5 > 0:
-                            self.arm.relative_move(-self.withdraw_sign)
-                            if self.pipette_resistance*1.25 < self.get_resistance():
-                                break
-                        sleep(10)
-                        if self.pipette_resistance*1.25 < self.get_resistance():
-                            self.seal()
-
+                self.event = {'event': 'PatchClamp', 'x': x, 'y': y}
         pass
 
-    def enable_clic_position(self):
-        cv2.setMouseCallback(self.cam.winname, self.clic_position)
+    def enable_click_position(self):
+        cv2.setMouseCallback(self.cam.winname, self.click_event)
         pass
 
     def linear_move(self, initial_position, final_position):
@@ -361,14 +481,15 @@ class PatchClampRobot(PressureController):
         :param final_position: absolute position to go. (ndarray)
         :return: none
         """
-        
-        dir_vector = final_position - initial_position
-        step_vector = 10. * dir_vector/np.linalg.norm(dir_vector)
-        nb_step = np.linalg.norm(dir_vector) / 10.
-        for step in range(1, int(nb_step)+1):
-            intermediate_position = step * self.inv_mat * np.transpose(step_vector)
-            self.arm.absolute_move_group(initial_position + intermediate_position, [0, 1, 2])
-        self.arm.absolute_move_group(self.inv_mat*np.transpose(final_position), [0, 1, 2])
+        if any(initial_position - final_position):
+            dir_vector = final_position - initial_position
+            step_vector = 10 * dir_vector/np.linalg.norm(dir_vector)
+            nb_step = np.linalg.norm(dir_vector) / 10.
+            for step in range(1, int(nb_step)+1):
+                intermediate_position = step * self.inv_mat * step_vector
+                self.arm.absolute_move_group(self.inv_mat*initial_position + intermediate_position, [0, 1, 2])
+                time.sleep(0.1)
+            self.arm.absolute_move_group(self.inv_mat*final_position, [0, 1, 2])
 
     def pipettechange(self):
 
@@ -444,6 +565,8 @@ class PatchClampRobot(PressureController):
                     temp = template[i * height / 4:height / 2 + i * height / 4, j * width / 4:width / 2 + j * width / 4]
                     bin_edge, _ = np.histogram(temp.flatten())
                     weight += [bin_edge.min()]
+                else:
+                    weight += [-1]
 
         index = weight.index(max(weight))
         j = index % 3
@@ -506,47 +629,6 @@ class PatchClampRobot(PressureController):
 
         return maxval, dep, loc
 
-    def exp_focus_track(self, axis):
-        """
-        Focus after a move of the arm along axis
-        """
-
-        if self.arm.position(axis) == 0:
-            self.step = self.first_step
-        else:
-            self.step *= 2.
-
-        # Move the arm
-        self.arm.step_move(axis, self.step)
-
-        # Move the platform to center the tip
-        for i in range(3):
-            self.microscope.step_move(i, self.mat[i, axis] * self.step)
-
-        # Waiting for motors to stop
-        self.arm.wait_motor_stop(axis)
-        self.microscope.wait_motor_stop([0, 1, 2])
-
-        # Focus around the estimated focus height
-        try:
-            _, _, loc = self.focus()
-        except ValueError:
-            raise EnvironmentError('Could not focus on the tip')
-
-        # Move the platform for compensation
-        delta = np.array([[(self.x_init - loc[0]) * self.um_px], [(self.y_init - loc[1]) * self.um_px]])
-        move = self.rot_inv * delta
-        for i in range(2):
-            self.microscope.step_move(i, move[i, 0])
-
-        self.microscope.wait_motor_stop([0, 1])
-
-        # Update the estimated move to do for a move of 1 um of the arm
-        for i in range(3):
-            self.mat[i, axis] = self.microscope.position(i)/self.arm.position(axis)
-
-        pass
-
     def focus_track(self, step, axis):
         """
         Focus after a move of the arm
@@ -570,7 +652,7 @@ class PatchClampRobot(PressureController):
             raise EnvironmentError('Could not focus on the tip')
 
         # Move the platform for compensation
-        delta = np.array([[(self.x_init - loc[0]) * self.um_px], [(self.y_init - loc[1]) * self.um_px]])
+        delta = np.array([[(self.x_init - loc[0]) * self.um_px], [(self.y_init - loc[1]) * self.um_px], [0]])
         move = self.rot_inv * delta
         for i in range(2):
             self.microscope.relative_move(move[i, 0], i)
@@ -604,6 +686,7 @@ class PatchClampRobot(PressureController):
 
     def save_img(self):
         self.cam.save_img()
+        self.message = 'Screenshot saved.'
         pass
 
     def set_continuous_res_meter(self, enable):
@@ -648,28 +731,80 @@ class PatchClampRobot(PressureController):
         self.amplifier.set_holding(0.)
         self.amplifier.set_holding_enable(True)
         self.amplifier.meter_resist_enable(True)
-        sleep(3)
+        time.sleep(3)
         self.pipette_resistance = self.get_one_res_metering(res_type='float')
         if 4.5e6 > self.pipette_resistance:
+            self.message = 'ERROR: Tip resistance is too low ({}).' \
+                           ' Should be higher than 5 MOhm.'.format(self.get_one_res_metering(res_type='text'))
             self.amplifier.meter_resist_enable(False)
-            return 2
-        if 10.2e6 < self.pipette_resistance:
-            self.amplifier.meter_resist_enable(False)
-            return 1
-        else:
-            self.pipette_resistance_checked = True
-            self.nearing()
-            self.set_continuous_res_meter(True)
             return 0
+        if 10.2e6 < self.pipette_resistance:
+            self.message = 'ERROR: Tip resistance is too high ({}).' \
+                           ' Should be lower than 10 MOhm.'.format(self.get_one_res_metering(res_type='text'))
+            self.amplifier.meter_resist_enable(False)
+            return 0
+        else:
+            self.message = 'Tip resistance is good: {}'.format(self.get_one_res_metering(res_type='text'))
+            self.pipette_resistance_checked = True
+            self.pressure.nearing()
+            self.set_continuous_res_meter(True)
+            return 1
+
+    def patch(self, position):
+        tip_position = self.mat * position
+        self.update_message('Approaching cell...')
+        while self.arm.position(0) - tip_position[0, 0] + self.withdraw_sign * 5 > 0:
+            self.arm.step_move(-self.withdraw_sign, 0)
+            self.arm.wait_motor_stop([0])
+            if self.pipette_resistance * 1.25 < self.get_resistance():
+                time.sleep(10)
+                break
+        if self.arm.position(0) - tip_position[0, 0] + self.withdraw_sign * 5 <= 0:
+            self.update_message('ERROR: Could not find the cell.')
+            return 0
+        elif self.pipette_resistance * 1.25 > self.get_resistance():
+            return self.patch(position)
+        else:
+            self.update_message('Cell found. Sealing...')
+            self.pressure.seal()
+            init_time = time.time()
+            while time.time() - init_time < 10:
+                self.amplifier.set_holding(-7 * (time.time() - init_time))
+            init_time = time.time()
+            while self.amplifier.get_meter_value() < 1e9:
+                if time.time() - init_time >= 90:
+                    self.update_message('ERROR: Seal unsuccessful.')
+                    return 0
+            self.pressure.release()
+            self.update_message('Patch done.')
+            return 1
+
+    def clamp(self):
+        nb_try = 0
+        self.update_message('Clamping...')
+        while self.amplifier.get_meter_value() > 300e6:
+            self.pressure.break_in()
+            nb_try += 1
+            if nb_try == 4:
+                self.update_message('ERROR: Clamp unsuccessful.')
+                return 0
+        self.amplifier.null_current()
+        self.update_message('Clamp done.')
+        return 1
+
+    def update_message(self, text):
+        self.message = text
+        if self.verbose:
+            print self.message
 
     def stop(self):
+        self.calibrated = 0
         self.cam.stop()
         self.amplifier.stop()
-        cv2.destroyAllWindows()
         pass
 
 if __name__ == '__main__':
-    robot = PatchClampRobot('SM5', 'dev1')
+    robot = PatchClampRobot('SM5', 'dev1', 'Hamamatsu')
     calibrated = 0
     while 1:
 
@@ -692,6 +827,6 @@ if __name__ == '__main__':
             if not calibrated:
                 print 'Calibration canceled.'
         if calibrated:
-            robot.enable_clic_position()
+            robot.enable_click_position()
 
     del robot

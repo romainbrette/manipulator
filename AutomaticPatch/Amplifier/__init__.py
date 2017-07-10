@@ -1,3 +1,2 @@
-from ResMeter import *
-from MultiClamp import *
-from FakeMulticlamp import *
+from amp_devices import *
+from ResistanceMeter import *
