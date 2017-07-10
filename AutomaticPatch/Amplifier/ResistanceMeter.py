@@ -7,81 +7,116 @@ __all__ = ['ResistanceMeter']
 
 
 class ResistanceMeter(Thread, Amplifier):
+    """
+    Amplifier to meter the resistance
+    """
 
     def __init__(self, amplifier):
 
+        # init thread and amplifier
         Thread.__init__(self)
         Amplifier.__init__(self, amplifier)
+
+        # Set in voltage clamp
         self.voltage_clamp()
+
+        # Disable resistance metering (because of pulses)
+        self.meter_resist_enable(False)
+
+        # Disable pulses
+        self.freq_pulse_enable(False)
+
+        # compensate pipette eletronical circuit
         self.auto_slow_compensation()
         self.auto_fast_compensation()
 
-        self.meter_resist_enable(False)
-
+        # Set pulse frequency and amplitude
         self.set_freq_pulse_amplitude(1e-2)
         self.set_freq_pulse_frequency(1e-2)
-        self.freq_pulse_enable(False)
 
+        # Boolean for type of metering
         self.acquisition = True
         self.continuous = False
         self.discrete = False
+
+        # resistance metered
         self.res = 0.
 
+        # start thread
         self.start()
         pass
 
     def run(self):
+        """
+        Thread runs for getting resistance
+        :return: 
+        """
         while self.acquisition:
+            # acquisition On
             if self.get_meter_resist_enable():
+                # Get the resistance if enabled
                 if self.continuous:
-
+                    # Continuous acquisition
                     self.freq_pulse_enable(True)
                     while self.continuous:
-
                         res = []
-
                         for _ in range(3):
+                            # get several values for accuracy
                             res += [self.get_meter_value()]
+                        # Resistance is mean of values
                         self.res = np.mean(res)
-
                     self.freq_pulse_enable(False)
 
                 elif self.discrete:
-
+                    # Single acquisition
                     self.freq_pulse_enable(True)
                     res = []
-
                     for _ in range(3):
-
                         res += [self.get_meter_value()]
-
                     self.res = np.mean(res)
-
                     self.freq_pulse_enable(False)
                     self.discrete = False
 
                 else:
                     pass
             else:
+                # Resistance meter is disable
                 self.res = 0.
+        # End of thread
         self.set_holding_enable(False)
 
     def stop(self):
+        """
+        Stop the thread
+        :return: 
+        """
         self.continuous = False
         self.acquisition = False
         sleep(.2)
 
     def start_continuous_acquisition(self):
+        """
+        Start metering continuously
+        :return: 
+        """
         self.continuous = True
         self.discrete = False
         sleep(.2)
 
     def stop_continuous_acquisition(self):
+        """
+        Stop metering continuously
+        :return: 
+        """
         self.continuous = False
         self.discrete = False
         sleep(.2)
 
     def get_discrete_acquisition(self):
+        """
+        Get a single resistance measure
+        :return: 
+        """
         self.continuous = False
         self.discrete = True
         sleep(.2)

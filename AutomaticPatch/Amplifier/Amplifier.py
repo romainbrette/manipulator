@@ -20,9 +20,11 @@ class Amplifier(object):
             else:
                 raise AttributeError
         except (AttributeError, RuntimeError):
+            # Unknown amplifier or failed to connect, connact to a fakeAmplifier
             self.amp = FakeAmplifier()
         pass
 
+    # Redefine methods for better call
     def voltage_clamp(self):
         self.amp.voltage_clamp()
         pass

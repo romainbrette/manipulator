@@ -378,7 +378,7 @@ class MultiClamp(AmplifierClass):
             self.check_error()
 
     @needs_select
-    def get_primary_signal_membcur(self):
+    def get_primary_signal(self):
         res = ctypes.c_uint(0)
         if not self.dll.MCCMSG_GetPrimarySignal(self.msg_handler,
                                                 ctypes.byref(res),
@@ -415,7 +415,7 @@ class MultiClamp(AmplifierClass):
             self.check_error()
 
     @needs_select
-    def get_secondary_signal_membpot(self):
+    def get_secondary_signal(self):
         res = ctypes.c_uint(0)
         if not self.dll.MCCMSG_GetSecondarySignal(self.msg_handler,
                                                   ctypes.byref(res),
