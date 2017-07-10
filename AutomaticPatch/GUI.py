@@ -1,6 +1,3 @@
-"""
-Simple GUI for the patch clamp robot
-"""
 from Tkinter import *
 from tkMessageBox import *
 from ScrolledText import *
@@ -9,6 +6,21 @@ from PatchClampRobot import *
 
 
 class PatchClampGUI(Frame):
+    """
+    Simple GUI for the patch clamp robot.
+    Controls:
+        conect/disconnect robot (controller, arm, camera, amplifier and pump to be specified)
+        Launch auto calibration
+        Load previous calibration
+        Set position to Zero
+        Positionning pipette when left clicking on camera window
+        Patch (and clamp if enable) at given position by right clicking on camera window
+        Enable/disable clamp when right clicking
+        Clamping
+        Enable/disable pipette following the camera
+        Enable/disable resistance metering
+        Check pipette resistance for patch
+    """
 
     def __init__(self, master=None):
         Frame.__init__(self, master)
