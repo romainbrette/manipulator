@@ -1,0 +1,8 @@
+Pump automation
+---------------
+We have a Gilson Minipuls 3
+
+Resources here:
+https://github.com/echo-oddly/gsioc_controller/blob/master/gsioc.py
+https://github.com/white-lab/fc-cycle/blob/master/fc_cycle/gsioc.py
+https://fr.mathworks.com/matlabcentral/fileexchange/38116-gsioc-serial-interface?requestedDomain=www.mathworks.com
