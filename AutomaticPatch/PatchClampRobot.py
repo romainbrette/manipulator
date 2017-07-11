@@ -115,7 +115,8 @@ class PatchClampRobot(Thread):
                 pos += offset
 
                 # Moving the tip using a linear move for security
-                self.linear_move(tip_pos, pos)
+                # self.linear_move(tip_pos, pos)
+                self.arm.absolute_move_group(self.inv_mat*pos, [0, 1, 2])
 
                 # Event is finished
                 self.event['event'] = None
