@@ -21,6 +21,7 @@ class Amplifier(object):
                 raise AttributeError
         except (AttributeError, RuntimeError):
             # Unknown amplifier or failed to connect, connact to a fakeAmplifier
+            print 'fake amp'
             self.amp = FakeAmplifier()
         pass
 

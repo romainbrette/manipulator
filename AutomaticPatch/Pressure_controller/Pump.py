@@ -16,6 +16,7 @@ class Pump(object):
                 raise AttributeError
         except (AttributeError, RuntimeError):
             # Unkown pump or failed to connect
+            print 'fake pump'
             self.controller = FakePump()
 
     def set_pressure(self, value):

@@ -81,8 +81,9 @@ class PatchClampRobot(Thread):
         self.following = False
 
         # Start the thread run
-        self.start()
         self.running = True
+        self.start()
+
         pass
 
     def run(self):
@@ -862,7 +863,7 @@ class PatchClampRobot(Thread):
                            ' Should be higher than 5 MOhm.'.format(self.get_one_res_metering(res_type='text'))
             self.amplifier.meter_resist_enable(False)
             return 0
-        if 10.2e6 < self.pipette_resistance:
+        if 11e6 < self.pipette_resistance:
             self.message = 'ERROR: Tip resistance is too high ({}).' \
                            ' Should be lower than 10 MOhm.'.format(self.get_one_res_metering(res_type='text'))
             self.amplifier.meter_resist_enable(False)

@@ -138,14 +138,14 @@ class PatchClampGUI(Frame):
         self.chosen_meter = IntVar()
         self.choose_resistance = Radiobutton(self.meter_box,
                                              text='Resistance metering',
-                                             value=1,
-                                             variable=self.chosen_meter)
-
+                                             variable=self.chosen_meter,
+                                             value=1)
         self.choose_resistance.grid(row=0, column=0, padx=2, pady=2)
+
         self.choose_potential = Radiobutton(self.meter_box,
                                             text='Potential metering',
-                                            value=2,
-                                            variable=self.chosen_meter)
+                                            variable=self.chosen_meter,
+                                            value=2)
         self.choose_potential.select()
         self.choose_potential.grid(row=0, column=1, padx=2, pady=2)
 
@@ -164,7 +164,7 @@ class PatchClampGUI(Frame):
 
         self.potential_value = Label(self.meter_box,
                                      text='0 V')
-        self.potential_window.grid(row=2, column=1, padx=2, pady=2)
+        self.potential_value.grid(row=2, column=1, padx=2, pady=2)
 
         # Check the resistance of the pipette for patching button
 
@@ -402,14 +402,14 @@ class PatchClampGUI(Frame):
         :return: 
         """
         if self.robot:
-            # Connection of robot established
             if self.continuous.get():
                 # Continuous metering button is checked, activate continuous metering
                 self.robot.set_continuous_res_meter(True)
-                if self.chosen_meter == 1:
-                    self.get_res()
-                elif self.chosen_meter == 2:
-                    self.get_pot()
+
+                #if self.chosen_meter == 1:
+                self.get_res()
+                #elif self.chosen_meter == 2:
+                 #   self.get_pot()
             else:
                 # Continuous metering button unchecked, deactivate continuous metering
                 self.robot.set_continuous_res_meter(False)
