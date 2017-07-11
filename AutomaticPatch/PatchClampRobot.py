@@ -800,6 +800,45 @@ class PatchClampRobot(Thread):
             # Output to be a float
             return self.amplifier.res
 
+    def get_potential(self, res_type='float'):
+        """
+        Get the potential measured by the amplifier
+        :param res_type: type of return. Either text or float
+        :return: 
+        """
+        if res_type == 'text':
+            # Output to be a string
+            # Transform value (in Ohm) as a int string
+            val = str(int(self.amplifier.pot*1e3))
+
+            # Compute displayable unit of the value
+            unit = (len(val) - 1) // 3
+            length = len(val) - unit * 3
+            if unit <= 0:
+                unit = ' mV'
+            elif unit == 1:
+                unit = ' V'
+            elif unit == 2:
+                unit = ' kV'
+            elif unit == 3:
+                unit = ' MV'
+            elif unit == 4:
+                unit = ' GV'
+            else:
+                unit = ' 1E{} V'.format((unit-1) * 3)
+
+            # Change the unit of the value
+            if len(val) < length + 3:
+                text_value = val[:length] + '.' + val[length:] + unit
+            else:
+                text_value = val[:length] + '.' + val[length:length + 2] + unit
+
+            return text_value
+
+        elif res_type == 'float':
+            # Output to be a float
+            return self.amplifier.pot
+
     def init_patch_clamp(self):
         """
         Check conditions for patch (pipette resistance)
@@ -900,6 +939,7 @@ class PatchClampRobot(Thread):
                 return 0
         # Broke in the cell
         self.amplifier.null_current()
+        self.amplifier.meter_resist_enable(False)
         self.update_message('Clamp done.')
         return 1
 

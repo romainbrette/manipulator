@@ -139,14 +139,13 @@ class PatchClampGUI(Frame):
         self.choose_resistance = Radiobutton(self.meter_box,
                                              text='Resistance metering',
                                              value=1,
-                                             variable=self.chosen_meter,
-                                             command=self.change_meter)
+                                             variable=self.chosen_meter)
+
         self.choose_resistance.grid(row=0, column=0, padx=2, pady=2)
         self.choose_potential = Radiobutton(self.meter_box,
                                             text='Potential metering',
-                                            value=1,
-                                            variable=self.chosen_meter,
-                                            command=self.change_meter)
+                                            value=2,
+                                            variable=self.chosen_meter)
         self.choose_potential.select()
         self.choose_potential.grid(row=0, column=1, padx=2, pady=2)
 
@@ -361,6 +360,19 @@ class PatchClampGUI(Frame):
                 self.after(10, self.get_res)
         pass
 
+    def get_pot(self):
+        """
+        Retrieve the resistance metered by robot.
+        :return: 
+        """
+        if self.robot:
+            # Connection of robot established
+            self.potential_value['text'] = self.robot.get_potential(res_type='text')
+            if self.continuous.get():
+                # Retrieving continuoulsy enabled
+                self.after(10, self.get_pot)
+        pass
+
     def init_patch_clamp(self):
         """
         Checks if conditions for patching are met (pipette resistance)
@@ -368,6 +380,7 @@ class PatchClampGUI(Frame):
         """
         if self.robot:
             # Connection of robot established
+            self.choose_resistance.select()
             if self.robot.init_patch_clamp():
                 # Conditions are met, enable continous resistance metering
                 self.continuous_meter.select()
@@ -393,7 +406,10 @@ class PatchClampGUI(Frame):
             if self.continuous.get():
                 # Continuous metering button is checked, activate continuous metering
                 self.robot.set_continuous_res_meter(True)
-                self.get_res()
+                if self.chosen_meter == 1:
+                    self.get_res()
+                elif self.chosen_meter == 2:
+                    self.get_pot()
             else:
                 # Continuous metering button unchecked, deactivate continuous metering
                 self.robot.set_continuous_res_meter(False)
