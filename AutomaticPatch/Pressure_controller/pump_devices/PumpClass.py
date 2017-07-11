@@ -11,7 +11,16 @@ class PumpClass(object):
         pass
 
     def measure(self):
+        """
+        Measure pressure once
+        :return: 
+        """
         pass
 
     def set_pressure(self, pressure):
+        """
+        Set pressure at desired value in mBar
+        :param pressure: Pressure in mBar
+        :return: 
+        """
         pass

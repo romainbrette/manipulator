@@ -4,6 +4,9 @@ __all__ = ['FakePump']
 
 
 class FakePump(PumpClass):
+    """
+    Fake pump in case pressure controls are not wanted or connection to desired pump failed
+    """
 
     def __init__(self):
         PumpClass.__init__(self)
