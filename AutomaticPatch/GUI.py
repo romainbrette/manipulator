@@ -134,13 +134,21 @@ class PatchClampGUI(Frame):
                                     text='Resistance metering')
         self.meter_box.grid(row=1, column=1, padx=2, pady=2)
 
-        # continuous resistance metering on/off
-        self.continuous_meter = Checkbutton(self.meter_box,
-                                            text='Continiuous metering',
-                                            variable=self.continuous,
-                                            command=self.switch_continuous_meter,
-                                            state='disable')
-        self.continuous_meter.grid(row=0, column=0, padx=2, pady=2)
+        # Selection of meter: potential or resistance
+        self.chosen_meter = IntVar()
+        self.choose_resistance = Radiobutton(self.meter_box,
+                                             text='Resistance metering',
+                                             value=1,
+                                             variable=self.chosen_meter,
+                                             command=self.change_meter)
+        self.choose_resistance.grid(row=0, column=0, padx=2, pady=2)
+        self.choose_potential = Radiobutton(self.meter_box,
+                                            text='Potential metering',
+                                            value=1,
+                                            variable=self.chosen_meter,
+                                            command=self.change_meter)
+        self.choose_potential.select()
+        self.choose_potential.grid(row=0, column=1, padx=2, pady=2)
 
         # display resistance
         self.res_window = Label(self.meter_box,
@@ -151,12 +159,29 @@ class PatchClampGUI(Frame):
                                text='0 Ohm')
         self.res_value.grid(row=1, column=1, padx=2, pady=2)
 
+        self.potential_window = Label(self.meter_box,
+                                      text='Potential')
+        self.potential_window.grid(row=2, column=0, padx=2, pady=2)
+
+        self.potential_value = Label(self.meter_box,
+                                     text='0 V')
+        self.potential_window.grid(row=2, column=1, padx=2, pady=2)
+
         # Check the resistance of the pipette for patching button
+
+        # continuous resistance metering on/off
+        self.continuous_meter = Checkbutton(self.meter_box,
+                                            text='Continiuous metering',
+                                            variable=self.continuous,
+                                            command=self.switch_continuous_meter,
+                                            state='disable')
+        self.continuous_meter.grid(row=3, column=0, padx=2, pady=2)
+
         self.check_pipette_resistance = Button(self.meter_box,
                                                text='Check pipette',
                                                command=self.init_patch_clamp,
                                                state='disable')
-        self.check_pipette_resistance.grid(row=2, column=0, padx=2, pady=2)
+        self.check_pipette_resistance.grid(row=3, column=1, padx=2, pady=2)
 
         # Other controls
         self.misc = LabelFrame(self,

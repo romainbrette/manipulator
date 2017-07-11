@@ -39,8 +39,11 @@ class ResistanceMeter(Thread, Amplifier):
         self.continuous = False
         self.discrete = False
 
-        # resistance metered
+        # resistance measured
         self.res = 0.
+
+        # Potential measured
+        self.pot = 0.
 
         # start thread
         self.start()
@@ -53,35 +56,27 @@ class ResistanceMeter(Thread, Amplifier):
         """
         while self.acquisition:
             # acquisition On
-            if self.get_meter_resist_enable():
-                # Get the resistance if enabled
-                if self.continuous:
-                    # Continuous acquisition
-                    self.freq_pulse_enable(True)
-                    while self.continuous:
-                        res = []
-                        for _ in range(3):
-                            # get several values for accuracy
-                            res += [self.get_meter_value()]
-                        # Resistance is mean of values
-                        self.res = np.mean(res)
-                    self.freq_pulse_enable(False)
-
-                elif self.discrete:
-                    # Single acquisition
-                    self.freq_pulse_enable(True)
-                    res = []
-                    for _ in range(3):
-                        res += [self.get_meter_value()]
-                    self.res = np.mean(res)
-                    self.freq_pulse_enable(False)
-                    self.discrete = False
-
+            if self.continuous:
+                # Continuous acquisition
+                while self.continuous:
+                    if self.get_meter_resist_enable():
+                        # Resistance
+                        self.res = self.get_meter_value()
+                    else:
+                        # Potential
+                        self.pot = self.get_meter_value()
+            elif self.discrete:
+                # Single acquisition
+                if self.get_meter_resist_enable():
+                    # Resistance
+                    self.res = self.get_meter_value()
                 else:
-                    pass
+                    # Potential
+                    self.pot = self.get_meter_value()
+                self.discrete = False
+
             else:
-                # Resistance meter is disable
-                self.res = 0.
+                pass
         # End of thread
         self.set_holding_enable(False)
 
