@@ -384,6 +384,8 @@ class PatchClampGUI(Frame):
             if self.robot.init_patch_clamp():
                 # Conditions are met, enable continous resistance metering
                 self.continuous_meter.select()
+                self.choose_resistance.select()
+                self.switch_continuous_meter()
         pass
 
     def enable_clamp(self):
@@ -406,10 +408,10 @@ class PatchClampGUI(Frame):
                 # Continuous metering button is checked, activate continuous metering
                 self.robot.set_continuous_res_meter(True)
 
-                #if self.chosen_meter == 1:
-                self.get_res()
-                #elif self.chosen_meter == 2:
-                 #   self.get_pot()
+                if self.chosen_meter.get() == 1:
+                    self.get_res()
+                elif self.chosen_meter.get() == 2:
+                    self.get_pot()
             else:
                 # Continuous metering button unchecked, deactivate continuous metering
                 self.robot.set_continuous_res_meter(False)

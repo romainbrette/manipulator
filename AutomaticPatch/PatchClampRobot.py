@@ -135,7 +135,7 @@ class PatchClampRobot(Thread):
                 tip_pos = self.mat*np.transpose(self.arm.position())
 
                 # Withdraw the pipette for security
-                if self.withdraw_sign*np.sign(self.mat[2, 0])*abs(mic_pos[2, 0] - tip_pos[2, 0]) < 0:
+                if self.withdraw_sign*np.sign(self.mat[2, 0])*(mic_pos[2, 0] - tip_pos[2, 0]) < 0:
                     # tip is lower than the desired position, withdraw to the desired heigth
                     move = self.withdraw_sign*(abs(mic_pos[2, 0]-tip_pos[2, 0])+15)/abs(self.mat[2, 0])
                 else:
@@ -855,7 +855,7 @@ class PatchClampRobot(Thread):
         # Begin metering
         self.amplifier.meter_resist_enable(True)
         # wait for stable measure
-        time.sleep(3)
+        time.sleep(3.2)
         # Get pipette resistance
         self.pipette_resistance = self.get_one_res_metering(res_type='float')
         if 5e6 > self.pipette_resistance:
