@@ -106,7 +106,7 @@ class PatchClampRobot(Thread):
 
                 # Getting the position of the tip and the micriscope
                 pos = np.transpose(self.microscope.position())
-                # tip_pos = self.mat * np.transpose(self.arm.position())
+                tip_pos = self.mat * np.transpose(self.arm.position())
 
                 # Computing the desired position
                 offset = self.rot_inv*np.array([[(self.x_init - (self.event['x'] - self.template_loc[0])) * self.um_px],
@@ -115,8 +115,7 @@ class PatchClampRobot(Thread):
                 pos += offset
 
                 # Moving the tip using a linear move for security
-                # self.linear_move(tip_pos, pos)
-                self.arm.absolute_move_group(self.inv_mat*pos, [0, 1, 2])
+                self.linear_move(tip_pos, pos)
 
                 # Event is finished
                 self.event['event'] = None
@@ -166,8 +165,8 @@ class PatchClampRobot(Thread):
 
                 if abs(self.pipette_resistance-self.get_resistance()) < 1e6:
                     # Pipette has not been obstructed during previous moves, updating pipette offset
-                    self.amplifier.auto_pipette_offset()
-                    time.sleep(2)
+                    #self.amplifier.auto_pipette_offset()
+                    #time.sleep(2)
                     if self.patch(mic_pos):
                         # Patch successful
                         if self.enable_clamp:
@@ -867,7 +866,7 @@ class PatchClampRobot(Thread):
                            ' Should be higher than 5 MOhm.'.format(self.get_one_res_metering(res_type='text'))
             self.amplifier.meter_resist_enable(False)
             return 0
-        if 11e6 < self.pipette_resistance:
+        if 13e6 < self.pipette_resistance:
             self.message = 'ERROR: Tip resistance is too high ({}).' \
                            ' Should be lower than 10 MOhm.'.format(self.get_one_res_metering(res_type='text'))
             self.amplifier.meter_resist_enable(False)
@@ -894,6 +893,7 @@ class PatchClampRobot(Thread):
             # Arm is not beyond the desired position, moving
             self.arm.step_move(-self.withdraw_sign, 0)
             self.arm.wait_motor_stop([0])
+            time.sleep(1)
             if self.pipette_resistance * 1.15 < self.get_resistance():
                 # pipette resistance has increased: probably close to cell, wait for stablilization
                 time.sleep(10)
@@ -913,7 +913,7 @@ class PatchClampRobot(Thread):
             init_time = time.time()
             while time.time() - init_time < 10:
                 # decrease holding to -70mV in 10 seconds
-                self.amplifier.set_holding(-7 * (time.time() - init_time))
+                self.amplifier.set_holding(-7*1e-3 * (time.time() - init_time))
             init_time = time.time()
             while self.amplifier.get_meter_value() < 1e9:
                 # Waiting for measure to increased to 1GOhm
