@@ -136,7 +136,7 @@ class PatchClampRobot(Thread):
                 tip_pos = self.mat*np.transpose(self.arm.position())
 
                 # Withdraw the pipette for security
-                if self.withdraw_sign*np.sign(self.mat[2, 0])*(mic_pos[2, 0] - tip_pos[2, 0]) < 0:
+                if self.withdraw_sign*np.sign(self.mat[2, 0])*(tip_pos[2, 0] - mic_pos[2, 0]) < 0:
                     # tip is lower than the desired position, withdraw to the desired heigth
                     move = self.withdraw_sign*(abs(mic_pos[2, 0]-tip_pos[2, 0])+15)/abs(self.mat[2, 0])
                 else:
@@ -164,9 +164,10 @@ class PatchClampRobot(Thread):
                 self.linear_move(intermediate_pos, mic_pos+self.mat*np.array([[self.withdraw_sign*10.], [0.], [0.]]))
                 self.arm.wait_motor_stop([0, 1, 2])
 
-                if abs(self.pipette_resistance-self.get_resistance()) < 3e5:
+                if abs(self.pipette_resistance-self.get_resistance()) < 1e6:
                     # Pipette has not been obstructed during previous moves, updating pipette offset
                     self.amplifier.auto_pipette_offset()
+                    time.sleep(2)
                     if self.patch(mic_pos):
                         # Patch successful
                         if self.enable_clamp:
@@ -811,7 +812,9 @@ class PatchClampRobot(Thread):
         if res_type == 'text':
             # Output to be a string
             # Transform value (in Ohm) as a int string
-            val = str(int(self.amplifier.pot*1e3))
+            val = self.amplifier.pot
+            sign = val/abs(val)
+            val = str(int(abs(val*1e3)))
 
             # Compute displayable unit of the value
             unit = (len(val) - 1) // 3
@@ -831,9 +834,9 @@ class PatchClampRobot(Thread):
 
             # Change the unit of the value
             if len(val) < length + 3:
-                text_value = val[:length] + '.' + val[length:] + unit
+                text_value = '-'*(sign < 0) + val[:length] + '.' + val[length:] + unit
             else:
-                text_value = val[:length] + '.' + val[length:length + 2] + unit
+                text_value = '-'*(sign < 0) + val[:length] + '.' + val[length:length + 2] + unit
 
             return text_value
 
@@ -887,20 +890,20 @@ class PatchClampRobot(Thread):
 
         # Approaching cell 1um by 1um
         self.update_message('Approaching cell...')
-        while self.arm.position(0) - tip_position[0, 0] + self.withdraw_sign * 5 > 0:
+        while self.arm.position(0) - tip_position[0, 0] + self.withdraw_sign * 2 > 0:
             # Arm is not beyond the desired position, moving
             self.arm.step_move(-self.withdraw_sign, 0)
             self.arm.wait_motor_stop([0])
-            if self.pipette_resistance * 1.25 < self.get_resistance():
+            if self.pipette_resistance * 1.15 < self.get_resistance():
                 # pipette resistance has increased: probably close to cell, wait for stablilization
                 time.sleep(10)
                 break
 
-        if self.arm.position(0) - tip_position[0, 0] + self.withdraw_sign * 5 <= 0:
+        if self.arm.position(0) - tip_position[0, 0] + self.withdraw_sign * 2 <= 0:
             # Broke the loop because arm went too far without finding the cell
             self.update_message('ERROR: Could not find the cell.')
             return 0
-        elif self.pipette_resistance * 1.25 > self.get_resistance():
+        elif self.pipette_resistance * 1.15 > self.get_resistance():
             # Broke the loop because pipette resistance has increased but then decreased, continue moves
             return self.patch(position)
         else:
