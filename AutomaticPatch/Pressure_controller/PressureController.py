@@ -41,7 +41,7 @@ class PressureController(Pump):
         Sealing with small negative pressure: -25mBar
         :return: 
         """
-        self.set_pressure(-25)   # (from Desai)
+        self.set_pressure(-30)   # (from Desai)
         # -15 to -20 in Kodandaramaiah paper?
 
     def release(self):
