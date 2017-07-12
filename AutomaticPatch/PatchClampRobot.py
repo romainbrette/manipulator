@@ -911,12 +911,11 @@ class PatchClampRobot(Thread):
             self.update_message('Cell found. Sealing...')
             self.pressure.seal()
             init_time = time.time()
-            while time.time() - init_time < 10:
-                # decrease holding to -70mV in 10 seconds
-                self.amplifier.set_holding(-7*1e-3 * (time.time() - init_time))
-            init_time = time.time()
-            while self.amplifier.get_meter_value() < 1e9:
+            while (self.amplifier.get_meter_value() < 1e9) | (time.time() - init_time < 10):
                 # Waiting for measure to increased to 1GOhm
+                if time.time() - init_time < 10:
+                    # decrease holding to -70mV in 10 seconds
+                    self.amplifier.set_holding(-5 * 1e-3 * (time.time() - init_time))
                 if time.time() - init_time >= 90:
                     # Resistance did not increased enough in 90sec: failure
                     self.update_message('ERROR: Seal unsuccessful.')
