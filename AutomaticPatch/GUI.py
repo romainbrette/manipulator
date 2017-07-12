@@ -231,6 +231,14 @@ class PatchClampGUI(Frame):
                            command=self.exit)
         self.QUIT.grid(row=3, column=0, padx=2, pady=2)
 
+        # Stop button
+        self.emergency_stop = Button(self,
+                                     text='STOP',
+                                     bg='red',
+                                     fg='white',
+                                     command=self.stop_moves)
+        self.emergency_stop.grid(row=3, column=1, padx=2, pady=2)
+
         self.message = ''
 
         self.pack()
@@ -453,6 +461,11 @@ class PatchClampGUI(Frame):
             # Check again in 10ms
             self.after(10, self.check_message)
         pass
+
+    def stop_moves(self):
+        if self.robot:
+            self.robot.arm.stop()
+            self.robot.microscope.stop()
 
     def exit(self):
         """

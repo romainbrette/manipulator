@@ -104,6 +104,9 @@ class Leica(Device):
     def go_to_zero(self):
         self.absolute_move(0)
 
+    def stop(self, axis):
+        self.mmc.stop()
+
 
 if __name__ == '__main__':
     import time
