@@ -255,7 +255,7 @@ class PatchClampGUI(Frame):
         self.switch_follow.grid(row=2, column=0, padx=2, pady=2)
 
         # Messages zone
-        self.text_zone = ScrolledText(master=self, width=80, height=15, state='disabled')
+        self.text_zone = ScrolledText(master=self, width=60, height=10, state='disabled')
         self.text_zone.grid(row=2, column=0, columnspan=3)
 
         # Quit button
