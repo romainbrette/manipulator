@@ -165,8 +165,8 @@ class PatchClampRobot(Thread):
 
                 if abs(self.pipette_resistance-self.get_resistance()) < 1e6:
                     # Pipette has not been obstructed during previous moves, updating pipette offset
-                    #self.amplifier.auto_pipette_offset()
-                    #time.sleep(2)
+                    self.amplifier.auto_pipette_offset()
+                    time.sleep(2)
                     if self.patch(mic_pos):
                         # Patch successful
                         if self.enable_clamp:
@@ -743,7 +743,7 @@ class PatchClampRobot(Thread):
         self.message = 'Screenshot saved.'
         pass
 
-    def set_continuous_res_meter(self, enable):
+    def set_continuous_meter(self, enable):
         """
         Enable/disable continuous resistance metering
         :param enable: Bool for (de)activation
@@ -894,28 +894,27 @@ class PatchClampRobot(Thread):
             self.arm.step_move(-self.withdraw_sign, 0)
             self.arm.wait_motor_stop([0])
             time.sleep(1)
-            if self.pipette_resistance * 1.15 < self.get_resistance():
+            if self.pipette_resistance * 1.2 < self.get_resistance():
                 # pipette resistance has increased: probably close to cell, wait for stablilization
                 time.sleep(10)
-                break
+                if self.pipette_resistance * 1.2 > self.get_resistance():
+                    # Resistance has decrease, continue moving
+                    break
 
         if self.arm.position(0) - tip_position[0, 0] + self.withdraw_sign * 2 <= 0:
             # Broke the loop because arm went too far without finding the cell
             self.update_message('ERROR: Could not find the cell.')
             return 0
-        elif self.pipette_resistance * 1.15 > self.get_resistance():
-            # Broke the loop because pipette resistance has increased but then decreased, continue moves
-            return self.patch(position)
         else:
             # Close to the cell, sealing
             self.update_message('Cell found. Sealing...')
             self.pressure.seal()
             init_time = time.time()
-            while (self.amplifier.get_meter_value() < 1e9) | (time.time() - init_time < 10):
+            while (self.amplifier.get_meter_value() < 1e9) | (time.time() - init_time < 20):
                 # Waiting for measure to increased to 1GOhm
-                if time.time() - init_time < 10:
-                    # decrease holding to -70mV in 10 seconds
-                    self.amplifier.set_holding(-5 * 1e-3 * (time.time() - init_time))
+                if time.time() - init_time < 20:
+                    # decrease holding to -50mV in 20 seconds
+                    self.amplifier.set_holding(-2.5 * 1e-3 * (time.time() - init_time))
                 if time.time() - init_time >= 90:
                     # Resistance did not increased enough in 90sec: failure
                     self.update_message('ERROR: Seal unsuccessful.')

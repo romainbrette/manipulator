@@ -7,8 +7,13 @@ Initialization of the cameras with micro manager
 
 import time
 import sys
+import warnings
 sys.path.append('C:\\Program Files\\Micro-Manager-1.4')
-import MMCorePy
+try:
+    import MMCorePy
+except ImportError:
+    # Micromanager not installed
+    warnings.warn('Micromanager is not installed.')
 
 __all__ = ['camera_init', 'camera_unload']
 

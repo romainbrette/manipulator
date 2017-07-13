@@ -5,10 +5,13 @@ import os
 import sys
 from ctypes import *
 from PumpClass import *
+import warnings
 
 sys.path.append(os.path.expanduser(r'~\Elveflow SDK V3_01_04\python_64').encode('utf-8'))
-
-from Elveflow64 import *
+try:
+    from Elveflow64 import *
+except ImportError:
+    warnings.warn('Can not use Elveflow OB1')
 
 __all__ = ['OB1']
 

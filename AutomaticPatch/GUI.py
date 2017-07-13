@@ -129,9 +129,15 @@ class PatchClampGUI(Frame):
                                      state='disable')
         self.load_calibrate.grid(row=0, column=1, padx=2, pady=2)
 
+        # Message to indicate if robot is calibrated or not
+        self.calibrate_msg = Label(self.calibrate_box,
+                                   text='Robot is NOT calibrated !',
+                                   fg='red')
+        self.calibrate_msg.grid(row=1, column=0, padx=2, pady=2, columnspan=3)
+
         # Control of amplifier
         self.meter_box = LabelFrame(self,
-                                    text='Resistance metering')
+                                    text='Metering')
         self.meter_box.grid(row=1, column=1, padx=2, pady=2)
 
         # Selection of meter: potential or resistance
@@ -220,7 +226,7 @@ class PatchClampGUI(Frame):
         self.switch_follow.grid(row=2, column=0, padx=2, pady=2)
 
         # Messages zone
-        self.text_zone = ScrolledText(master=self, width=50, height=5, state='disabled')
+        self.text_zone = ScrolledText(master=self, width=80, height=15, state='disabled')
         self.text_zone.grid(row=2, column=0, columnspan=3)
 
         # Quit button
@@ -286,6 +292,7 @@ class PatchClampGUI(Frame):
             self.check_pipette_resistance.config(state='normal')
             self.clamp.config(state='normal', command=self.robot.clamp)
             self.clamp_switch.config(state='normal')
+            self.switch_follow.config(state='normal')
 
             # Checking changes of robot messages and display them
             self.check_message()
@@ -316,6 +323,7 @@ class PatchClampGUI(Frame):
         self.check_pipette_resistance.config(state='disable')
         self.clamp.config(state='disable', command=None)
         self.clamp_switch.config(state='disable')
+        self.switch_follow.config(state='disable')
         pass
 
     def calibration(self):
@@ -330,6 +338,8 @@ class PatchClampGUI(Frame):
                            icon=INFO):
                 # Pipette in focus and centered: calibrating
                 self.robot.event['event'] = 'Calibration'
+                if self.robot.calibrated:
+                    self.calibrate_msg.config(text='Robot calibrated', fg='black')
             pass
 
     def load_cali(self):
@@ -344,6 +354,8 @@ class PatchClampGUI(Frame):
                            icon=INFO):
                 # Pipette in focus and centered: loading calibration
                 self.robot.load_calibration()
+                if self.robot.calibrated:
+                    self.calibrate_msg.config(text='Robot calibrated', fg='black')
             pass
 
     def reset_pos(self):
@@ -414,7 +426,7 @@ class PatchClampGUI(Frame):
         if self.robot:
             if self.continuous.get():
                 # Continuous metering button is checked, activate continuous metering
-                self.robot.set_continuous_res_meter(True)
+                self.robot.set_continuous_meter(True)
 
                 if self.chosen_meter.get() == 1:
                     self.get_res()
@@ -422,7 +434,7 @@ class PatchClampGUI(Frame):
                     self.get_pot()
             else:
                 # Continuous metering button unchecked, deactivate continuous metering
-                self.robot.set_continuous_res_meter(False)
+                self.robot.set_continuous_meter(False)
         pass
 
     def following(self):
@@ -453,6 +465,7 @@ class PatchClampGUI(Frame):
                 self.text_zone.config(state='normal')
                 self.text_zone.insert(INSERT, self.message+'\n')
                 self.text_zone.config(state='disabled')
+                self.text_zone.see(END)
 
                 # Update memory and actual message: if same messages follow each other, both are retrieve
                 self.message = ''
