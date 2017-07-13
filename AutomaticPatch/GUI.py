@@ -110,10 +110,14 @@ class PatchClampGUI(Frame):
                                     state='disable')
         self.disconnection.grid(row=5, column=1, padx=2, pady=2)
 
+        # Top right frame
+        self.tr = LabelFrame(self, bd=0)
+        self.tr.grid(row=0, column=1, padx=2, pady=2)
+
         # Auto calibration
-        self.calibrate_box = LabelFrame(self,
+        self.calibrate_box = LabelFrame(self.tr,
                                         text='Calibration')
-        self.calibrate_box.grid(row=0, column=1, padx=2, pady=2)
+        self.calibrate_box.grid(row=0, column=0, padx=2, pady=2)
 
         # Begin calibration button
         self.calibrate = Button(self.calibrate_box,
@@ -135,6 +139,40 @@ class PatchClampGUI(Frame):
                                    fg='red')
         self.calibrate_msg.grid(row=1, column=0, padx=2, pady=2, columnspan=3)
 
+        # PUMP
+        self.pump_box = LabelFrame(self.tr,
+                                   text='Pressure controller')
+        self.pump_box.grid(row=1, column=0, padx=2, pady=2)
+
+        # Patch button
+        self.patch = Button(self.pump_box,
+                            text='Patch',
+                            state='disable')
+        self.patch.grid(row=0, column=0, padx=2, pady=2)
+
+        # Clamp button
+        self.clamp = Button(self.pump_box, text='Clamp', state='disable')
+        self.clamp.grid(row=0, column=1, padx=2, pady=2)
+
+        # Nearing button
+        self.nearing = Button(self.pump_box, text='Nearing', state='disable')
+        self.nearing.grid(row=0, column=2, padx=2, pady=2)
+
+        # High pressure
+        self.push = Button(self.pump_box, text='Push', state='disable')
+        self.push.grid(row=0, column=3, padx=2, pady=2)
+
+        # Clamp when right click on/off
+        self.clamp_switch = Checkbutton(self.pump_box,
+                                        text='clamp when clicking',
+                                        command=self.enable_clamp,
+                                        state='disable')
+        self.clamp_switch.grid(row=1, column=0, padx=2, pady=2, columnspan=2)
+
+        # release button
+        self.release = Button(self.pump_box, text='Release', state='disable')
+        self.release.grid(row=1, column=2, padx=2, pady=2)
+
         # Control of amplifier
         self.meter_box = LabelFrame(self,
                                     text='Metering')
@@ -145,13 +183,15 @@ class PatchClampGUI(Frame):
         self.choose_resistance = Radiobutton(self.meter_box,
                                              text='Resistance metering',
                                              variable=self.chosen_meter,
-                                             value=1)
+                                             value=1,
+                                             command=self.switch_meter)
         self.choose_resistance.grid(row=0, column=0, padx=2, pady=2)
 
         self.choose_potential = Radiobutton(self.meter_box,
                                             text='Potential metering',
                                             variable=self.chosen_meter,
-                                            value=2)
+                                            value=2,
+                                            command=self.switch_meter)
         self.choose_potential.select()
         self.choose_potential.grid(row=0, column=1, padx=2, pady=2)
 
@@ -205,17 +245,6 @@ class PatchClampGUI(Frame):
                               text='Screenshot',
                               state='disable')
         self.imgsave.grid(row=0, column=1, padx=2, pady=2)
-
-        # Clamp button
-        self.clamp = Button(self.misc, text='Clamp', state='disable')
-        self.clamp.grid(row=1, column=0, padx=2, pady=2)
-
-        # Clamp when right click on/off
-        self.clamp_switch = Checkbutton(self.misc,
-                                        text='clamp when clicking',
-                                        command=self.enable_clamp,
-                                        state='disable')
-        self.clamp_switch.grid(row=1, column=1, padx=2, pady=2)
 
         # Pipette follow camera on/off
         self.switch_follow = Checkbutton(self.misc,
@@ -290,6 +319,10 @@ class PatchClampGUI(Frame):
             self.disconnection.config(state='normal')
             self.continuous_meter.config(state='normal')
             self.check_pipette_resistance.config(state='normal')
+            self.patch.config(state='normal', command=self.robot.pressure.seal)
+            self.release.config(state='normal', command=self.robot.pressure.release)
+            self.nearing.config(state='normal', command=self.robot.pressure.nearing)
+            self.push.config(state='normal', command=self.robot.pressure.high_pressure)
             self.clamp.config(state='normal', command=self.robot.clamp)
             self.clamp_switch.config(state='normal')
             self.switch_follow.config(state='normal')
@@ -377,7 +410,10 @@ class PatchClampGUI(Frame):
             self.res_value['text'] = self.robot.get_resistance(res_type='text')
             if self.continuous.get():
                 # Retrieving continuoulsy enabled
-                self.after(10, self.get_res)
+                if self.chosen_meter.get() == 1:
+                    self.after(10, self.get_res)
+                elif self.chosen_meter.get() == 2:
+                    self.after(10, self.get_pot)
         pass
 
     def get_pot(self):
@@ -390,7 +426,10 @@ class PatchClampGUI(Frame):
             self.potential_value['text'] = self.robot.get_potential(res_type='text')
             if self.continuous.get():
                 # Retrieving continuoulsy enabled
-                self.after(10, self.get_pot)
+                if self.chosen_meter.get() == 1:
+                    self.after(10, self.get_res)
+                elif self.chosen_meter.get() == 2:
+                    self.after(10, self.get_pot)
         pass
 
     def init_patch_clamp(self):
@@ -436,6 +475,13 @@ class PatchClampGUI(Frame):
                 # Continuous metering button unchecked, deactivate continuous metering
                 self.robot.set_continuous_meter(False)
         pass
+
+    def switch_meter(self):
+        if self.robot:
+            if self.chosen_meter.get() == 1:
+                self.robot.amplifier.meter_resist_enable(True)
+            elif self.chosen_meter.get() == 2:
+                self.robot.amplifier.meter_resist_enable(False)
 
     def following(self):
         """

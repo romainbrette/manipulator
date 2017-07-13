@@ -115,6 +115,6 @@ if __name__ == '__main__':
     root = Tk()
     root.title('Patcher')
 
-    controller = OB1()
+    controller = FakePump()
     app = PressureApplication(root, controller).pack(side="top", fill="both", expand=True)
     root.mainloop()

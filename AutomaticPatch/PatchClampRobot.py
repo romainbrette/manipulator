@@ -875,7 +875,7 @@ class PatchClampRobot(Thread):
             self.message = 'Tip resistance is good: {}'.format(self.get_one_res_metering(res_type='text'))
             self.pipette_resistance_checked = True
             self.pressure.nearing()
-            self.set_continuous_res_meter(True)
+            self.set_continuous_meter(True)
             return 1
 
     def patch(self, position):
