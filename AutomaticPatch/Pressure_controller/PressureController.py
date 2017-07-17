@@ -34,7 +34,7 @@ class PressureController(Pump):
         Small pressure (25mBar) so pipette does not get obstructed
         :return: 
         """
-        self.set_pressure(20)  # mBar (25-30)
+        self.set_pressure(30)  # mBar (25-30)
 
     def seal(self):
         """
