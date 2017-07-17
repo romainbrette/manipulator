@@ -891,7 +891,7 @@ class PatchClampRobot(Thread):
 
         # Approaching cell 1um by 1um
         self.update_message('Approaching cell...')
-        while abs(self.arm.position(0) - tip_position[0, 0]) + self.withdraw_sign * 3 > 0:
+        while self.withdraw_sign * (self.arm.position(0) - tip_position[0, 0]) + 3 > 0:
             # Arm is not beyond the desired position, moving
             self.arm.step_move(-self.withdraw_sign, 0)
             self.arm.wait_motor_stop([0])
@@ -903,7 +903,7 @@ class PatchClampRobot(Thread):
                     # Resistance has not decreased, stop moving
                     break
 
-        if abs(self.arm.position(0) - tip_position[0, 0]) + self.withdraw_sign * 3 <= 0:
+        if self.withdraw_sign * (self.arm.position(0) - tip_position[0, 0]) + 3 <= 0:
             # Broke the loop because arm went too far without finding the cell
             self.update_message('ERROR: Could not find the cell.')
             return 0
