@@ -36,7 +36,7 @@ def init_device(devtype, armdev):
         raise NameError('Unknown device for arm control.')
 
     # Adjust ramp length for accuracy
-    microscope.set_ramp_length([0, 1, 2], 4)
-    arm.set_ramp_length([0, 1, 2], 4)
+    microscope.set_ramp_length([0, 1, 2], 3)
+    arm.set_ramp_length([0, 1, 2], 3)
 
     return dev, microscope, arm

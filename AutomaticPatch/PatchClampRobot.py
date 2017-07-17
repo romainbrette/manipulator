@@ -858,7 +858,7 @@ class PatchClampRobot(Thread):
         # Begin metering
         self.amplifier.meter_resist_enable(True)
         # wait for stable measure
-        time.sleep(3.2)
+        time.sleep(4)
         # Get pipette resistance
         self.pipette_resistance = self.get_one_res_metering(res_type='float')
         if 5e6 > self.pipette_resistance:
@@ -866,7 +866,7 @@ class PatchClampRobot(Thread):
                            ' Should be higher than 5 MOhm.'.format(self.get_one_res_metering(res_type='text'))
             self.amplifier.meter_resist_enable(False)
             return 0
-        if 13e6 < self.pipette_resistance:
+        if 10e6 < self.pipette_resistance:
             self.message = 'ERROR: Tip resistance is too high ({}).' \
                            ' Should be lower than 10 MOhm.'.format(self.get_one_res_metering(res_type='text'))
             self.amplifier.meter_resist_enable(False)
@@ -889,7 +889,7 @@ class PatchClampRobot(Thread):
 
         # Approaching cell 1um by 1um
         self.update_message('Approaching cell...')
-        while self.arm.position(0) - tip_position[0, 0] + self.withdraw_sign * 2 > 0:
+        while abs(self.arm.position(0) - tip_position[0, 0]) + self.withdraw_sign * 3 > 0:
             # Arm is not beyond the desired position, moving
             self.arm.step_move(-self.withdraw_sign, 0)
             self.arm.wait_motor_stop([0])
@@ -897,11 +897,11 @@ class PatchClampRobot(Thread):
             if self.pipette_resistance * 1.2 < self.get_resistance():
                 # pipette resistance has increased: probably close to cell, wait for stablilization
                 time.sleep(10)
-                if self.pipette_resistance * 1.2 > self.get_resistance():
-                    # Resistance has decrease, continue moving
+                if self.pipette_resistance * 1.2 < self.get_resistance():
+                    # Resistance has not decreased, stop moving
                     break
 
-        if self.arm.position(0) - tip_position[0, 0] + self.withdraw_sign * 2 <= 0:
+        if abs(self.arm.position(0) - tip_position[0, 0]) + self.withdraw_sign * 3 <= 0:
             # Broke the loop because arm went too far without finding the cell
             self.update_message('ERROR: Could not find the cell.')
             return 0
@@ -931,6 +931,7 @@ class PatchClampRobot(Thread):
         """
         nb_try = 0
         self.update_message('Clamping...')
+        self.amplifier.meter_resist_enable(True)
         while self.amplifier.get_meter_value() > 300e6:
             # Breaking in while resistance does not correspond to interior of cell
             self.pressure.break_in()
