@@ -191,6 +191,8 @@ class PatchClampRobot(Thread):
                                                 [0]])
                 pos = pos + offset
                 self.linear_move(tip_pos, pos)
+
+        print 'robot ended'
         pass
 
     def go_to_zero(self):

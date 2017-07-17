@@ -78,6 +78,7 @@ class ResistanceMeter(Thread, Amplifier):
             else:
                 pass
         # End of thread
+        print 'amp ended'
         self.set_holding_enable(False)
 
     def stop(self):
