@@ -355,6 +355,10 @@ class PatchClampGUI(Frame):
         self.disconnection.config(state='disable')
         self.check_pipette_resistance.config(state='disable')
         self.clamp.config(state='disable', command=None)
+        self.patch.config(state='disable', command=None)
+        self.release.config(state='disable', command=None)
+        self.nearing.config(state='disable', command=None)
+        self.push.config(state='disable', command=None)
         self.clamp_switch.config(state='disable')
         self.switch_follow.config(state='disable')
         pass
