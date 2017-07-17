@@ -91,7 +91,7 @@ class PatchClampRobot(Thread):
         Thread run. Used to handle manipulator commands after a mouse callback on the camera's window and
          autocalibration process while refreshing the dispayed image.
         """
-        while not self.calibrated & self.running:
+        while (not self.calibrated) & self.running:
             # Robot has not been calibrated, wait for calibration
             if self.event['event'] == 'Calibration':
                 # Auto calibration
@@ -896,35 +896,32 @@ class PatchClampRobot(Thread):
             self.arm.step_move(-self.withdraw_sign, 0)
             self.arm.wait_motor_stop([0])
             time.sleep(1)
-            if self.pipette_resistance * 1.2 < self.get_resistance():
+            if self.pipette_resistance * 1.15 < self.get_resistance():
                 # pipette resistance has increased: probably close to cell, wait for stablilization
                 time.sleep(10)
-                if self.pipette_resistance * 1.2 < self.get_resistance():
+                if self.pipette_resistance * 1.15 < self.get_resistance():
                     # Resistance has not decreased, stop moving
-                    break
+                    # Close to the cell, sealing
+                    self.update_message('Cell found. Sealing...')
+                    self.pressure.seal()
+                    init_time = time.time()
+                    while (self.amplifier.get_meter_value() < 1e9) | (time.time() - init_time < 20):
+                        # Waiting for measure to increased to 1GOhm
+                        if time.time() - init_time < 30:
+                            # decrease holding to -50mV in 20 seconds
+                            self.amplifier.set_holding(-1.7 * 1e-3 * (time.time() - init_time))
+                        if time.time() - init_time >= 90:
+                            # Resistance did not increased enough in 90sec: failure
+                            self.update_message('ERROR: Seal unsuccessful.')
+                            return 0
+                    # Seal succesfull
+                    self.pressure.release()
+                    self.update_message('Patch done.')
+                    return 1
 
-        if self.withdraw_sign * (self.arm.position(0) - tip_position[0, 0]) + 3 <= 0:
-            # Broke the loop because arm went too far without finding the cell
-            self.update_message('ERROR: Could not find the cell.')
-            return 0
-        else:
-            # Close to the cell, sealing
-            self.update_message('Cell found. Sealing...')
-            self.pressure.seal()
-            init_time = time.time()
-            while (self.amplifier.get_meter_value() < 1e9) | (time.time() - init_time < 20):
-                # Waiting for measure to increased to 1GOhm
-                if time.time() - init_time < 20:
-                    # decrease holding to -50mV in 20 seconds
-                    self.amplifier.set_holding(-2.5 * 1e-3 * (time.time() - init_time))
-                if time.time() - init_time >= 90:
-                    # Resistance did not increased enough in 90sec: failure
-                    self.update_message('ERROR: Seal unsuccessful.')
-                    return 0
-            # Seal succesfull
-            self.pressure.release()
-            self.update_message('Patch done.')
-            return 1
+        # Broke the loop because arm went too far without finding the cell
+        self.update_message('ERROR: Could not find the cell.')
+        return 0
 
     def clamp(self):
         """

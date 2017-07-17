@@ -1,5 +1,5 @@
 from os.path import expanduser
-from time import sleep
+from time import sleep, time
 from numpy import savetxt, array
 from Pump import *
 
@@ -34,7 +34,7 @@ class PressureController(Pump):
         Small pressure (25mBar) so pipette does not get obstructed
         :return: 
         """
-        self.set_pressure(30)  # mBar (25-30)
+        self.set_pressure(25)  # mBar (25-30)
 
     def seal(self):
         """
@@ -59,9 +59,14 @@ class PressureController(Pump):
         """
         # Holst thesis: 0 to -345 mBar in 1.5 second
         # Desai: -150 mBar for 1 second; repeated attempts
-        self.set_pressure(-150)
-        sleep(1)
+        #self.set_pressure(-150)
+        #sleep(1)
+        #self.release()
+        init_time = time()*10
+        while time()*10-init_time < 15:
+            self.set_pressure(-23*(time()*10-init_time))
         self.release()
+
 
     def record(self):
         """
