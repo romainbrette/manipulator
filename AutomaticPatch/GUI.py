@@ -216,7 +216,7 @@ class PatchClampGUI(Frame):
 
         # continuous resistance metering on/off
         self.continuous_meter = Checkbutton(self.meter_box,
-                                            text='Continiuous metering',
+                                            text='Continuous metering',
                                             variable=self.continuous,
                                             command=self.switch_continuous_meter,
                                             state='disable')
