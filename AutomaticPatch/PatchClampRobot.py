@@ -121,7 +121,7 @@ class PatchClampRobot(Thread):
                 self.event['event'] = None
                 self.message = 'done.'
 
-            elif (self.event['event'] == 'PatchClamp') & self.pipette_resistance_checked:
+            elif (self.event['event'] == 'PatchClamp') & self.pipette_resistance_checked & (not self.following):
                 # Patch (and Clamp) at the clicked position
                 self.message = 'Moving...'
 
@@ -191,6 +191,9 @@ class PatchClampRobot(Thread):
                                                 [0]])
                 pos = pos + offset
                 self.linear_move(tip_pos, pos)
+            elif self.following & (self.event['event'] == 'PatchClamp'):
+                self.arm.relative_move(self.withdraw_sign*15/ abs(self.mat[2, 0]), 0)
+                pass
 
         pass
 
