@@ -185,6 +185,7 @@ class PatchClampGUI(Frame):
                                              variable=self.chosen_meter,
                                              value=1,
                                              command=self.switch_meter)
+        self.choose_resistance.select()
         self.choose_resistance.grid(row=0, column=0, padx=2, pady=2)
 
         self.choose_potential = Radiobutton(self.meter_box,
@@ -192,7 +193,6 @@ class PatchClampGUI(Frame):
                                             variable=self.chosen_meter,
                                             value=2,
                                             command=self.switch_meter)
-        self.choose_potential.select()
         self.choose_potential.grid(row=0, column=1, padx=2, pady=2)
 
         # display resistance
@@ -216,7 +216,7 @@ class PatchClampGUI(Frame):
 
         # continuous resistance metering on/off
         self.continuous_meter = Checkbutton(self.meter_box,
-                                            text='Continiuous metering',
+                                            text='Continuous metering',
                                             variable=self.continuous,
                                             command=self.switch_continuous_meter,
                                             state='disable')

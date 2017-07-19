@@ -192,7 +192,6 @@ class PatchClampRobot(Thread):
                 pos = pos + offset
                 self.linear_move(tip_pos, pos)
 
-        print 'robot ended'
         pass
 
     def go_to_zero(self):
@@ -851,6 +850,8 @@ class PatchClampRobot(Thread):
         :return: 
         """
 
+        self.pressure.nearing()
+
         # Auto pipette offset and holding at 0 V
         self.amplifier.meter_resist_enable(False)
         self.amplifier.auto_pipette_offset()
@@ -876,7 +877,6 @@ class PatchClampRobot(Thread):
         else:
             self.message = 'Tip resistance is good: {}'.format(self.get_one_res_metering(res_type='text'))
             self.pipette_resistance_checked = True
-            self.pressure.nearing()
             self.set_continuous_meter(True)
             return 1
 
@@ -905,11 +905,13 @@ class PatchClampRobot(Thread):
                     self.update_message('Cell found. Sealing...')
                     self.pressure.seal()
                     init_time = time.time()
-                    while (self.amplifier.get_meter_value() < 1e9) | (time.time() - init_time < 20):
+                    self.amplifier.set_holding_enable(True)
+                    while (self.amplifier.get_meter_value() < 1e9) | (time.time() - init_time < 30):
                         # Waiting for measure to increased to 1GOhm
                         if time.time() - init_time < 30:
-                            # decrease holding to -50mV in 20 seconds
+                            # decrease holding to -51mV in 30 seconds
                             self.amplifier.set_holding(-1.7 * 1e-3 * (time.time() - init_time))
+                            self.amplifier.set_holding_enable(True)
                         if time.time() - init_time >= 90:
                             # Resistance did not increased enough in 90sec: failure
                             self.update_message('ERROR: Seal unsuccessful.')

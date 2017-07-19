@@ -34,6 +34,9 @@ class ResistanceMeter(Thread, Amplifier):
         self.set_freq_pulse_amplitude(1e-2)
         self.set_freq_pulse_frequency(1e-2)
 
+        # At begining in resistance meter mode
+        self.meter_resist_enable(True)
+
         # Boolean for type of metering
         self.acquisition = True
         self.continuous = False
@@ -78,7 +81,6 @@ class ResistanceMeter(Thread, Amplifier):
             else:
                 pass
         # End of thread
-        print 'amp ended'
         self.set_holding_enable(False)
 
     def stop(self):
