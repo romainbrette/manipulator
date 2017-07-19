@@ -67,7 +67,6 @@ class PressureController(Pump):
             self.set_pressure(-23*(time()*10-init_time))
         self.release()
 
-
     def record(self):
         """
         Record pressure, save it in file when called again

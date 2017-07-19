@@ -935,11 +935,13 @@ class PatchClampRobot(Thread):
         self.amplifier.meter_resist_enable(True)
         while self.amplifier.get_meter_value() > 300e6:
             # Breaking in while resistance does not correspond to interior of cell
+            self.amplifier.freq_pulse_enable(True)
             self.pressure.break_in()
             time.sleep(1.3)
+            self.amplifier.freq_pulse_enable(False)
             nb_try += 1
             if nb_try == 4:
-                # Tried too much time, failure
+                # Too many tries: failure
                 self.update_message('ERROR: Clamp unsuccessful.')
                 return 0
         # Broke in the cell
