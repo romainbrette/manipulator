@@ -1,0 +1,20 @@
+This document present algorithms used by the PatchClampRobot instance
+for the autocalibration, automatic patch and clamp.
+By A. Chagnon 2017/07/21
+
+AUTOCALIBRATION
+---------------
+
+Goal: control the manipulator by giving a position in the microscope referential
+
+The manipulator and the microscope are controlled by 3 motors each, along 3 axis forming a base
+As the microscope is always controlled by the user, it is possible to control the manipulator using the following relation:
+
+Mic = J*Man
+
+Where Mic and Man are arrays of motors' position of the microscope and manipulator,
+and J is a 3*3 Jacobian matrix expressing the position of the manipulator in the microscope referential.
+
+For this relation to be usable for positionning, the origin of both the microscope and the manipulator should be such
+the tip of the pipette is in focus. Then, to move the tip to the desired microscope position i.e. find the Man array linked
+to the desired Mic array
