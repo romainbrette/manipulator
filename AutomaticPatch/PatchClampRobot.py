@@ -192,7 +192,7 @@ class PatchClampRobot(Thread):
                 pos = pos + offset
                 self.linear_move(tip_pos, pos)
             elif self.following & (self.event['event'] == 'PatchClamp'):
-                self.arm.relative_move(self.withdraw_sign*15/ abs(self.mat[2, 0]), 0)
+                self.arm.relative_move(self.withdraw_sign*15 / abs(self.mat[2, 0]), 0)
                 pass
 
         pass
@@ -516,7 +516,7 @@ class PatchClampRobot(Thread):
             for step in range(1, int(nb_step)+1):
                 intermediate_position = step * self.inv_mat * step_vector
                 self.arm.absolute_move_group(self.inv_mat*initial_position + intermediate_position, [0, 1, 2])
-                time.sleep(0.1)
+                #time.sleep(0.1)
 
             # make final move to desired position
             self.arm.absolute_move_group(self.inv_mat*final_position, [0, 1, 2])
