@@ -15,6 +15,7 @@ Mic = J*Man
 Where Mic and Man are arrays of motors' position of the microscope and manipulator,
 and J is a 3*3 Jacobian matrix expressing the position of the manipulator in the microscope referential.
 
-For this relation to be usable for positionning, the origin of both the microscope and the manipulator should be such
+For this relation to be usable for positionning, the origin of both the microscope and the manipulator should be such so
 the tip of the pipette is in focus. Then, to move the tip to the desired microscope position i.e. find the Man array linked
-to the desired Mic array
+to the desired Mic array, Man = J⁻¹*Mic should be computed.
+
