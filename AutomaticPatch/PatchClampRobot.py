@@ -77,7 +77,7 @@ class PatchClampRobot(Thread):
         self.message = ''
 
         # Event on camera window
-        self.event = {'event': None, 'x': 0., 'y': 0.}
+        self.event = {'event': None, 'x': self.cam.width/2, 'y': self.cam.height/2}
         self.following = False
         self.offset = 0.
 
@@ -102,6 +102,9 @@ class PatchClampRobot(Thread):
         while self.calibrated & self.running:
             # Robot has been calibrated, positionning is possible
             if self.event['event'] == 'Positioning':
+
+                self.following = False
+
                 # Move the tip of the pipette to the clicked position
                 self.message = 'Moving...'
 
@@ -123,6 +126,8 @@ class PatchClampRobot(Thread):
                 self.message = 'done.'
 
             elif (self.event['event'] == 'PatchClamp') & self.pipette_resistance_checked & (not self.following):
+
+                self.following = False
                 # Patch (and Clamp) at the clicked position
                 self.message = 'Moving...'
 
@@ -192,7 +197,32 @@ class PatchClampRobot(Thread):
                                                 [self.withdraw_sign*np.sign(self.mat[2, 0])*self.offset]])
                 pos = pos + offset
                 self.arm.absolute_move_group(self.inv_mat*pos)
+            elif self.following & (self.event['event'] == 'PatchClamp'):
+                # Patch (and Clamp) at the clicked position
+                self.message = 'Moving...'
 
+                # Getting desired position
+                mic_pos = np.transpose(self.microscope.position())
+
+                offset = self.rot_inv*np.array([[(self.x_init - (self.event['x'] - self.template_loc[0])) * self.um_px],
+                                                [(self.y_init - (self.event['y'] - self.template_loc[1])) * self.um_px],
+                                                [0]])
+                mic_pos += offset
+                tip_pos = self.mat*np.transpose(self.arm.position())
+
+                # Withdraw the pipette for security
+                if self.withdraw_sign*np.sign(self.mat[2, 0])*(tip_pos[2, 0] - mic_pos[2, 0]) < 0:
+                    # tip is lower than the desired position, withdraw to the desired heigth
+                    move = self.withdraw_sign*(abs(mic_pos[2, 0]-tip_pos[2, 0])+15)/abs(self.mat[2, 0])
+                else:
+                    # tip is higher than, or at, desired height
+                    move = self.withdraw_sign * 15 / abs(self.mat[2, 0])
+
+                # Applying withdraw
+                self.arm.relative_move(move, 0)
+                self.arm.wait_motor_stop([0])
+
+                pass
         pass
 
     def go_to_zero(self):

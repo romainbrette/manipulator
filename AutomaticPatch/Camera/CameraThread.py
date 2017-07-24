@@ -26,7 +26,7 @@ class CameraThread(Thread):
         # Initializing variables for display
         self.frame = None
         self.img_to_display = None
-        self.width, self.height = None, None
+        self.width, self.height = self.cam.getImageWidth(), self.cam.getImageHeight()
         self.winname = winname
         self.show = True
         self.click_on_window = False
@@ -65,7 +65,6 @@ class CameraThread(Thread):
 
                 # Update attributes
                 self.frame = img
-                self.height, self.width = img.shape[:2]
 
                 # Display the image with a cross at the center
                 img_to_display = disp_centered_cross(img)

@@ -254,7 +254,7 @@ class PatchClampGUI(Frame):
                                          state='disable')
         self.switch_follow.grid(row=2, column=0, padx=2, pady=2)
 
-        self.offset_slide = Scale(self.misc, from_=0, to=10, orient=HORIZONTAL)
+        self.offset_slide = Scale(self.misc, from_=0, to=20, orient=HORIZONTAL)
         self.offset_slide.set(2)
         self.offset_slide.grid(row=2, column=1, padx=2, pady=2)
 
