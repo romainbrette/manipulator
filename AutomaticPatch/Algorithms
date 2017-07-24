@@ -7,6 +7,8 @@ AUTOCALIBRATION
 
 Goal: control the manipulator by giving a position in the microscope referential
 
+Theory:
+
 The manipulator and the microscope are controlled by 3 motors each, along 3 axis forming a base
 As the microscope is always controlled by the user, it is possible to control the manipulator using the following relation:
 
@@ -19,3 +21,4 @@ For this relation to be usable for positionning, the origin of both the microsco
 the tip of the pipette is in focus. Then, to move the tip to the desired microscope position i.e. find the Man array linked
 to the desired Mic array, Man = J⁻¹*Mic should be computed.
 
+Algorithm:

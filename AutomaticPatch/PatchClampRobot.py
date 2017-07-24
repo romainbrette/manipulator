@@ -79,6 +79,7 @@ class PatchClampRobot(Thread):
         # Event on camera window
         self.event = {'event': None, 'x': 0., 'y': 0.}
         self.following = False
+        self.offset = 0.
 
         # Start the thread run
         self.running = True
@@ -184,13 +185,13 @@ class PatchClampRobot(Thread):
                 # The tip follow the camera
                 # Same as poistionning, but without updating events at the end
                 pos = np.transpose(self.microscope.position())
-                tip_pos = self.mat * np.transpose(self.arm.position())
+                # tip_pos = self.mat * np.transpose(self.arm.position())
 
                 offset = self.rot_inv*np.array([[(self.x_init - (self.event['x'] - self.template_loc[0])) * self.um_px],
                                                 [(self.y_init - (self.event['y'] - self.template_loc[1])) * self.um_px],
-                                                [0]])
+                                                [self.withdraw_sign*np.sign(self.mat[2, 0])*self.offset]])
                 pos = pos + offset
-                self.linear_move(tip_pos, pos)
+                self.arm.absolute_move_group(self.inv_mat*pos)
             elif self.following & (self.event['event'] == 'PatchClamp'):
                 self.arm.relative_move(self.withdraw_sign*15 / abs(self.mat[2, 0]), 0)
                 pass

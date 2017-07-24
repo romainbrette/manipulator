@@ -128,6 +128,7 @@ class LuigsNeumann_SM5(SerialDevice):
     def absolute_move_group(self, x, axes):
         for i in range(len(x)):
             self.absolute_move(x[i], axes[i])
+            time.sleep(0.05)
 
     def relative_move(self, x, axis):
         '''
