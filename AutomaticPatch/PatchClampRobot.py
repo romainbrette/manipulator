@@ -192,9 +192,6 @@ class PatchClampRobot(Thread):
                                                 [self.withdraw_sign*np.sign(self.mat[2, 0])*self.offset]])
                 pos = pos + offset
                 self.arm.absolute_move_group(self.inv_mat*pos)
-            elif self.following & (self.event['event'] == 'PatchClamp'):
-                self.arm.relative_move(self.withdraw_sign*15 / abs(self.mat[2, 0]), 0)
-                pass
 
         pass
 
