@@ -21,7 +21,7 @@ class CameraThread(Thread):
 
         # init camera device
         self.camera_name = camera_name
-        self.cam, self.flip = camera_init(camera_name)
+        self.cam, self.fps, self.flip = camera_init(camera_name)
 
         # Initializing variables for display
         self.frame = None
@@ -56,9 +56,10 @@ class CameraThread(Thread):
                 if exc.errno != errno.EEXIST:
                     raise
 
-        video = cv2.VideoWriter('./video/Capture.avi',
+        nb_video = len(os.listdir(path)) + 1
+        video = cv2.VideoWriter('./video/Capture{}.avi'.format(nb_video),
                                 -1,
-                                9.,
+                                self.fps,
                                 (self.width, self.height),
                                 False)
 

@@ -28,9 +28,11 @@ def camera_init(camera_name):
     if camera_name == 'Hamamatsu':
         mmc.loadDevice('Camera', 'HamamatsuHam', 'HamamatsuHam_DCAM')
         flip = [True, 2]
+        fps = 9.
     elif camera_name == 'Lumenera':
         mmc.loadDevice('Camera', 'Lumenera', 'LuCam')
         flip = [True, 1]
+        fps = 9.
     else:
         raise SystemError('Unknown camera.')
 
@@ -44,7 +46,7 @@ def camera_init(camera_name):
 
     time.sleep(1)  # the microscope gives a wrong position in the very beginning, so wait a bit
 
-    return mmc, flip
+    return mmc, fps, flip
 
 
 def camera_unload(mmc):
