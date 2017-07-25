@@ -32,7 +32,7 @@ def camera_init(camera_name):
     elif camera_name == 'Lumenera':
         mmc.loadDevice('Camera', 'Lumenera', 'LuCam')
         flip = [True, 1]
-        fps = 9.
+        fps = 20.
     else:
         raise SystemError('Unknown camera.')
 
