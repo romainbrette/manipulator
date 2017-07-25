@@ -990,6 +990,13 @@ class PatchClampRobot(Thread):
         if self.verbose:
             print self.message
 
+    def record(self):
+        self.cam.recording ^= 1
+        pass
+
+    def save_position(self):
+        pass
+
     def stop(self):
         """
         Stop all threads linked to the robot

@@ -240,11 +240,23 @@ class PatchClampGUI(Frame):
                            state='disable')
         self.zero.grid(row=0, column=0, padx=2, pady=2)
 
+        # Save position
+        self.save_pos = Button(self.misc,
+                               text='Save position',
+                               state='disable')
+        self.save_pos.grid(row=0, column=1, padx=2, pady=2)
+
         # Screenshot
         self.imgsave = Button(self.misc,
                               text='Screenshot',
                               state='disable')
-        self.imgsave.grid(row=0, column=1, padx=2, pady=2)
+        self.imgsave.grid(row=1, column=0, padx=2, pady=2)
+
+        # Video recording
+        self.video = Button(self.misc,
+                            text='Record video',
+                            state='disable')
+        self.video.grid(row=1, column=1, padx=2, pady=2)
 
         # Pipette follow camera on/off
         self.switch_follow = Checkbutton(self.misc,
@@ -330,6 +342,8 @@ class PatchClampGUI(Frame):
             self.clamp.config(state='normal', command=self.robot.pressure.break_in)
             self.clamp_switch.config(state='normal')
             self.switch_follow.config(state='normal')
+            self.video.config(state='normal', command=self.robot.record)
+            self.save_pos.config(state='normal', command=self.robot.save_position)
 
             # Checking changes of robot messages and display them
             self.check_message()
@@ -363,6 +377,8 @@ class PatchClampGUI(Frame):
         self.release.config(state='disable', command=None)
         self.nearing.config(state='disable', command=None)
         self.push.config(state='disable', command=None)
+        self.video.config(state='disable', command=None)
+        self.save_pos.config(state='disable', command=None)
         self.clamp_switch.config(state='disable')
         self.switch_follow.config(state='disable')
         pass

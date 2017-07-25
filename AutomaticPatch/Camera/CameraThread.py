@@ -30,6 +30,7 @@ class CameraThread(Thread):
         self.winname = winname
         self.show = True
         self.click_on_window = False
+        self.recording = False
 
         # OnMouse function when clicking on the window
         self.mouse_callback = mouse_fun
@@ -44,6 +45,22 @@ class CameraThread(Thread):
         self.cam.startContinuousSequenceAcquisition(1)
         # name the window
         cv2.namedWindow(self.winname, flags=cv2.WINDOW_NORMAL)
+
+        path = './video/'
+        # Check if path exist, if not, creates it.
+        if not os.path.exists(os.path.dirname(path)):
+            try:
+                os.makedirs(os.path.dirname(path))
+            except OSError as exc:
+                # Guard against race condition
+                if exc.errno != errno.EEXIST:
+                    raise
+
+        video = cv2.VideoWriter('/video/Capture.mp4',
+                                cv2.VideoWriter_fourcc(*'H264'),
+                                10,
+                                (self.width, self.height),
+                                False)
         while self.show:
             if self.cam.getRemainingImageCount() > 0:
                 # New image has been taken by the camera
@@ -65,6 +82,8 @@ class CameraThread(Thread):
 
                 # Update attributes
                 self.frame = img
+                if self.recording:
+                    video.write(img)
 
                 # Display the image with a cross at the center
                 img_to_display = disp_centered_cross(img)
@@ -76,6 +95,7 @@ class CameraThread(Thread):
                     cv2.setMouseCallback(self.winname, self.mouse_callback)
 
         # End of Thread, stop acquisition and destroy
+        del video
         self.cam.stopSequenceAcquisition()
         camera_unload(self.cam)
         self.cam.reset()
