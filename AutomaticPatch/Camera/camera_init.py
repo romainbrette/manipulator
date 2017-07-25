@@ -42,7 +42,7 @@ def camera_init(camera_name):
     # print mmc.getDevicePropertyNames('Camera')
 
     mmc.setCameraDevice('Camera')
-    mmc.setExposure(60)
+    mmc.setExposure(9)
 
     time.sleep(1)  # the microscope gives a wrong position in the very beginning, so wait a bit
 

@@ -72,7 +72,7 @@ class CameraThread(Thread):
                 img = cv2.convertScaleAbs(temp_frame)
 
                 # Increase contrast (Contrast Limited Adaptive Histogram Equalization)
-                clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+                clahe = cv2.createCLAHE(clipLimit=1.0, tileGridSize=(8, 8))
                 img = clahe.apply(img)
 
                 if self.flip[0]:
