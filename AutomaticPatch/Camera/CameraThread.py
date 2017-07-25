@@ -56,8 +56,8 @@ class CameraThread(Thread):
                 if exc.errno != errno.EEXIST:
                     raise
 
-        video = cv2.VideoWriter('/video/Capture.mp4',
-                                cv2.VideoWriter_fourcc(*'H264'),
+        video = cv2.VideoWriter('./video/Capture.mp4',
+                                cv2.cv.CV_FOURCC('H', '2', '6', '4'),
                                 10,
                                 (self.width, self.height),
                                 False)
@@ -66,15 +66,12 @@ class CameraThread(Thread):
                 # New image has been taken by the camera
                 temp_frame = self.cam.getLastImage()
 
-                # Translate taken image to a 32bits image
-                img = np.float32(temp_frame / (1. * temp_frame.max()))
+                # Convert to 8 bit gray scale
+                img = cv2.convertScaleAbs(temp_frame)
 
                 # Increase contrast (Contrast Limited Adaptive Histogram Equalization)
                 clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
                 img = clahe.apply(img)
-
-                # Add a filter for noise
-                img = cv2.bilateralFilter(img, 1, 10, 10)
 
                 if self.flip[0]:
                     # image has to be flipped
@@ -117,7 +114,7 @@ class CameraThread(Thread):
                     raise
 
         # Translate the image as a 8bit image
-        img = self.frame*256
+        img = self.frame
         n_img = len(os.listdir(path))+1
         cv2.imwrite('./{i}/screenshots/screenshot{n}.jpg'.format(i=self.camera_name, n=n_img), img)
         pass

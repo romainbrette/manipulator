@@ -186,7 +186,7 @@ class PatchClampRobot(Thread):
                 # Envent is finished
                 self.event['event'] = None
 
-            if self.following & (not self.event['event']):
+            if self.following & (self.event['event'] == None):
                 # The tip follow the camera
                 # Same as poistionning, but without updating events at the end
                 pos = np.transpose(self.microscope.position())
@@ -196,7 +196,7 @@ class PatchClampRobot(Thread):
                                                 [(self.y_init - (self.event['y'] - self.template_loc[1])) * self.um_px],
                                                 [self.withdraw_sign*np.sign(self.mat[2, 0])*self.offset]])
                 pos = pos + offset
-                self.arm.absolute_move_group(self.inv_mat*pos)
+                self.arm.absolute_move_group(self.inv_mat*pos, [0,1,2])
             elif self.following & (self.event['event'] == 'PatchClamp'):
                 # Patch (and Clamp) at the clicked position
                 self.message = 'Moving...'
@@ -544,7 +544,7 @@ class PatchClampRobot(Thread):
             for step in range(1, int(nb_step)+1):
                 intermediate_position = step * self.inv_mat * step_vector
                 self.arm.absolute_move_group(self.inv_mat*initial_position + intermediate_position, [0, 1, 2])
-                #time.sleep(0.1)
+                time.sleep(0.07)
 
             # make final move to desired position
             self.arm.absolute_move_group(self.inv_mat*final_position, [0, 1, 2])
