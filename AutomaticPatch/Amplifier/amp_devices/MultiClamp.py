@@ -467,6 +467,19 @@ class MultiClamp(AmplifierClass):
                                           ctypes.byref(self.last_error)):
             self.check_error()
 
+    @needs_select
+    def zap(self):
+        if not self.dll.MCCMSG_Zap(self.msg_handler,
+                                   ctypes.byref(self.last_error)):
+            self.check_error()
+
+    @needs_select
+    def set_zap_duration(self, duration):
+        if not self.dll.MCCMSG_SetZapDuration(self.msg_handler,
+                                              ctypes.c_double(duration),
+                                              ctypes.byref(self.last_error)):
+            self.check_error()
+
     def close(self):
         self.dll.MCCMSG_DestroyObject(self.msg_handler)
         self.msg_handler = None

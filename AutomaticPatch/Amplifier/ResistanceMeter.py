@@ -34,6 +34,9 @@ class ResistanceMeter(Thread, Amplifier):
         self.set_freq_pulse_amplitude(1e-2)
         self.set_freq_pulse_frequency(1e-2)
 
+        # set zap duration
+        self.set_zap_duration(1)
+
         # At begining in resistance meter mode
         self.meter_resist_enable(True)
 

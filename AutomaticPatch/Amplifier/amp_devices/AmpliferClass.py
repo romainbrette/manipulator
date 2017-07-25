@@ -305,6 +305,21 @@ class AmplifierClass(object):
         self.holding = value
         pass
 
+    def zap(self):
+        """
+        Send a zap
+        :return: 
+        """
+        pass
+
+    def set_zap_duration(self, duration):
+        """
+        Set the duration of the zap
+        :param duration: 
+        :return: 
+        """
+        pass
+
     def close(self):
         pass
 

@@ -118,8 +118,8 @@ class Amplifier(object):
         self.amp.set_primary_signal_membcur()
         pass
 
-    def get_primary_signal_membcur(self):
-        return self.amp.get_primary_signal_membcur()
+    def get_primary_signal(self):
+        return self.amp.get_primary_signal()
 
     def set_primary_signal_gain(self, gain):
         self.amp.set_primary_signal_gain(gain)
@@ -137,8 +137,8 @@ class Amplifier(object):
         self.amp.set_secondary_signal_membpot()
         pass
 
-    def get_secondary_signal_membpot(self):
-        self.amp.get_secondary_signal_membpot()
+    def get_secondary_signal(self):
+        self.amp.get_secondary_signal()
         pass
 
     def set_secondary_signal_lpf(self, lpf):
@@ -162,6 +162,14 @@ class Amplifier(object):
 
     def set_holding(self, value):
         self.amp.set_holding(value)
+        pass
+
+    def zap(self):
+        self.amp.zap()
+        pass
+
+    def set_zap_duration(self, duration):
+        self.amp.set_zap_duration(duration)
         pass
 
     def close(self):
