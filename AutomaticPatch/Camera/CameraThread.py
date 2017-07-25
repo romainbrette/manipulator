@@ -58,7 +58,7 @@ class CameraThread(Thread):
 
         nb_video = len(os.listdir(path)) + 1
         video = cv2.VideoWriter('./video/Capture{}.avi'.format(nb_video),
-                                -1,
+                                cv2.cv.CV_FOURCC(*'DIB '),
                                 self.fps,
                                 (self.width, self.height),
                                 False)
