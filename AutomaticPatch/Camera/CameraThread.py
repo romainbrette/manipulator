@@ -56,11 +56,12 @@ class CameraThread(Thread):
                 if exc.errno != errno.EEXIST:
                     raise
 
-        video = cv2.VideoWriter('./video/Capture.mp4',
-                                cv2.cv.CV_FOURCC('H', '2', '6', '4'),
-                                10,
+        video = cv2.VideoWriter('./video/Capture.avi',
+                                -1,
+                                9.,
                                 (self.width, self.height),
                                 False)
+
         while self.show:
             if self.cam.getRemainingImageCount() > 0:
                 # New image has been taken by the camera
@@ -92,7 +93,7 @@ class CameraThread(Thread):
                     cv2.setMouseCallback(self.winname, self.mouse_callback)
 
         # End of Thread, stop acquisition and destroy
-        del video
+        video.release()
         self.cam.stopSequenceAcquisition()
         camera_unload(self.cam)
         self.cam.reset()
