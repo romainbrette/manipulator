@@ -186,7 +186,7 @@ class PatchClampRobot(Thread):
                 # Envent is finished
                 self.event['event'] = None
 
-            if self.following & (self.event['event'] == None):
+            if self.following & (not self.event['event']):
                 # The tip follow the camera
                 # Same as poistionning, but without updating events at the end
                 pos = np.transpose(self.microscope.position())
@@ -196,7 +196,7 @@ class PatchClampRobot(Thread):
                                                 [(self.y_init - (self.event['y'] - self.template_loc[1])) * self.um_px],
                                                 [self.withdraw_sign*np.sign(self.mat[2, 0])*self.offset]])
                 pos = pos + offset
-                self.arm.absolute_move_group(self.inv_mat*pos, [0,1,2])
+                self.arm.absolute_move_group(self.inv_mat*pos, [0, 1, 2])
             elif self.following & (self.event['event'] == 'PatchClamp'):
                 # Patch (and Clamp) at the clicked position
                 self.message = 'Moving...'
@@ -535,10 +535,10 @@ class PatchClampRobot(Thread):
             dir_vector = final_position - initial_position
 
             # Divide directional vector as a series of vector of norm 10um
-            step_vector = 10 * dir_vector/np.linalg.norm(dir_vector)
+            step_vector = 15 * dir_vector/np.linalg.norm(dir_vector)
 
             # Number of sub-directional vector to make
-            nb_step = np.linalg.norm(dir_vector) / 10.
+            nb_step = np.linalg.norm(dir_vector) / 15.
 
             # Moving the arm
             for step in range(1, int(nb_step)+1):
