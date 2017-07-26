@@ -57,11 +57,6 @@ class CameraThread(Thread):
                     raise
 
         nb_video = len(os.listdir(path)) + 1
-        video = cv2.VideoWriter('./video/Capture{}.avi'.format(nb_video),
-                                cv2.cv.CV_FOURCC(*'DIB '),
-                                self.fps,
-                                (self.width, self.height),
-                                False)
 
         while self.show:
             if self.cam.getRemainingImageCount() > 0:
@@ -82,7 +77,14 @@ class CameraThread(Thread):
                 # Update attributes
                 self.frame = img
                 if self.recording:
-                    video.write(img)
+                    try:
+                        video.write(img)
+                    except NameError:
+                        video = cv2.VideoWriter('./video/Capture{}.avi'.format(nb_video),
+                                                cv2.cv.CV_FOURCC(*'DIB '),
+                                                self.fps,
+                                                (self.width, self.height),
+                                                False)
 
                 # Display the image with a cross at the center
                 img_to_display = disp_centered_cross(img)
