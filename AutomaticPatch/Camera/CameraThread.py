@@ -85,6 +85,7 @@ class CameraThread(Thread):
                                                 self.fps,
                                                 (self.width, self.height),
                                                 False)
+                        nb_video += 1
                         video.write(img)
 
                 # Display the image with a cross at the center
@@ -97,11 +98,15 @@ class CameraThread(Thread):
                     cv2.setMouseCallback(self.winname, self.mouse_callback)
 
         # End of Thread, stop acquisition and destroy
-        video.release()
-        self.cam.stopSequenceAcquisition()
-        camera_unload(self.cam)
-        self.cam.reset()
-        cv2.destroyAllWindows()
+        try:
+            video.release()
+        except UnboundLocalError:
+            pass
+        finally:
+            self.cam.stopSequenceAcquisition()
+            camera_unload(self.cam)
+            self.cam.reset()
+            cv2.destroyAllWindows()
 
     def save_img(self):
         """

@@ -432,6 +432,8 @@ class PatchClampGUI(Frame):
         if self.robot:
             # Connection of robot established
             self.res_value['text'] = self.robot.get_resistance(res_type='text')
+            with open('Resistance.txt', 'at') as f:
+                f.write(self.res_value['text'])
             if self.continuous.get():
                 # Retrieving continuoulsy enabled
                 if self.chosen_meter.get() == 1:
@@ -469,6 +471,8 @@ class PatchClampGUI(Frame):
                 self.continuous_meter.select()
                 self.choose_resistance.select()
                 self.switch_continuous_meter()
+                file_res = open('Resistance.txt', 'wt')
+                file_res.close()
         pass
 
     def enable_clamp(self):

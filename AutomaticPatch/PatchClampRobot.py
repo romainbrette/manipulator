@@ -171,6 +171,7 @@ class PatchClampRobot(Thread):
 
                 if abs(self.pipette_resistance-self.get_resistance()) < 1e6:
                     # Pipette has not been obstructed during previous moves, updating pipette offset
+                    self.pressure.release()
                     self.amplifier.auto_pipette_offset()
                     time.sleep(2)
                     if self.patch(mic_pos):
@@ -544,7 +545,7 @@ class PatchClampRobot(Thread):
             for step in range(1, int(nb_step)+1):
                 intermediate_position = step * self.inv_mat * step_vector
                 self.arm.absolute_move_group(self.inv_mat*initial_position + intermediate_position, [0, 1, 2])
-                time.sleep(0.07)
+                time.sleep(0.1)
 
             # make final move to desired position
             self.arm.absolute_move_group(self.inv_mat*final_position, [0, 1, 2])
@@ -937,11 +938,11 @@ class PatchClampRobot(Thread):
                     self.pressure.seal()
                     init_time = time.time()
                     self.amplifier.set_holding_enable(True)
-                    while (self.amplifier.get_meter_value() < 1e9) | (time.time() - init_time < 30):
+                    while (self.amplifier.get_meter_value() < 1e9) | (time.time() - init_time < 10):
                         # Waiting for measure to increased to 1GOhm
-                        if time.time() - init_time < 30:
-                            # decrease holding to -51mV in 30 seconds
-                            self.amplifier.set_holding(-1.7 * 1e-3 * (time.time() - init_time))
+                        if time.time() - init_time < 10:
+                            # decrease holding to -70mV in 10 seconds
+                            self.amplifier.set_holding(-7 * 1e-3 * (time.time() - init_time))
                             self.amplifier.set_holding_enable(True)
                         if time.time() - init_time >= 90:
                             # Resistance did not increased enough in 90sec: failure
