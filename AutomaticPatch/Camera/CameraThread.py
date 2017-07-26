@@ -85,6 +85,7 @@ class CameraThread(Thread):
                                                 self.fps,
                                                 (self.width, self.height),
                                                 False)
+                        video.write(img)
 
                 # Display the image with a cross at the center
                 img_to_display = disp_centered_cross(img)
