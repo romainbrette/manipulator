@@ -51,7 +51,7 @@ while(cap.isOpened()):
             # if the contour is too small, ignore it
             area = cv2.contourArea(c)
             (x, y, w, h) = cv2.boundingRect(c)
-            if (area < 5000) or (area>50000) or (w>500) or (h>500):
+            if (area < 1000) or (area>100000) or (w>1000) or (h>1000):
                 continue
 
             n+=1
