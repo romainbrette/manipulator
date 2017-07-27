@@ -156,6 +156,7 @@ class PatchClampRobot(Thread):
                 # Computing supposed position of the tip.
                 theorical_tip_pos = tip_pos + self.mat*np.array([[self.withdraw_sign*move], [0], [0]])
 
+                '''
                 # Computing intermediate position in the same horizontal plan as the supposed tip position
                 # Only x axis should have an offset compared to the desired position
                 intermediate_x_pos = self.withdraw_sign*abs(theorical_tip_pos[2, 0]-mic_pos[2, 0])/abs(self.mat[2, 0])
@@ -164,9 +165,9 @@ class PatchClampRobot(Thread):
                 # Applying moves to intermediate position
                 self.linear_move(theorical_tip_pos, intermediate_pos)
                 self.arm.wait_motor_stop([0, 1, 2])
-
+                '''
                 # Getting close to the desired postion (offset 10um on x axis)
-                self.linear_move(intermediate_pos, mic_pos+self.mat*np.array([[self.withdraw_sign*10.], [0.], [0.]]))
+                self.linear_move(theorical_tip_pos, mic_pos+self.mat*np.array([[self.withdraw_sign*10.], [0.], [0.]]))
                 self.arm.wait_motor_stop([0, 1, 2])
 
                 if abs(self.pipette_resistance-self.get_resistance()) < 1e6:
@@ -938,7 +939,7 @@ class PatchClampRobot(Thread):
                     self.pressure.seal()
                     init_time = time.time()
                     self.amplifier.set_holding_enable(True)
-                    while (self.amplifier.get_meter_value() < 1e9) | (time.time() - init_time < 10):
+                    while (self.amplifier.get_meter_value() < 1e9) | (time.time() - init_time < 15):
                         # Waiting for measure to increased to 1GOhm
                         if time.time() - init_time < 10:
                             # decrease holding to -70mV in 10 seconds
@@ -963,6 +964,9 @@ class PatchClampRobot(Thread):
         :return: 
         """
         nb_try = 0
+        if 1e9 > self.get_resistance('float'):
+            self.update_message('ERROR: Seal has not been accomplished.')
+            return 0
         self.update_message('Clamping...')
         self.amplifier.meter_resist_enable(True)
         while self.amplifier.get_meter_value() > 300e6:

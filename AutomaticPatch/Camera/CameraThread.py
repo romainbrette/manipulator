@@ -87,6 +87,13 @@ class CameraThread(Thread):
                                                 False)
                         nb_video += 1
                         video.write(img)
+                else:
+                    try:
+                        video.release()
+                    except (NameError, UnboundLocalError):
+                        pass
+                    finally:
+                        video = None
 
                 # Display the image with a cross at the center
                 img_to_display = disp_centered_cross(img)
