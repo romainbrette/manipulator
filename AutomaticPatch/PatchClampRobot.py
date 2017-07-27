@@ -939,7 +939,7 @@ class PatchClampRobot(Thread):
                     self.pressure.seal()
                     init_time = time.time()
                     self.amplifier.set_holding_enable(True)
-                    while (self.amplifier.get_meter_value() < 1e9) | (time.time() - init_time < 15):
+                    while (1e9 > self.get_resistance()) | (time.time() - init_time < 15):
                         # Waiting for measure to increased to 1GOhm
                         if time.time() - init_time < 10:
                             # decrease holding to -70mV in 10 seconds
@@ -969,7 +969,7 @@ class PatchClampRobot(Thread):
             return 0
         self.update_message('Clamping...')
         self.amplifier.meter_resist_enable(True)
-        while self.amplifier.get_meter_value() > 300e6:
+        while 300e6 < self.get_resistance():
             # Breaking in while resistance does not correspond to interior of cell
             self.amplifier.zap()
             self.pressure.break_in()
