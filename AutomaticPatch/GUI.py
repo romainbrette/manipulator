@@ -246,18 +246,6 @@ class PatchClampGUI(Frame):
                                state='disable')
         self.save_pos.grid(row=0, column=1, padx=2, pady=2)
 
-        # Screenshot
-        self.imgsave = Button(self.misc,
-                              text='Screenshot',
-                              state='disable')
-        self.imgsave.grid(row=1, column=0, padx=2, pady=2)
-
-        # Video recording
-        self.video = Button(self.misc,
-                            text='Record video',
-                            state='disable')
-        self.video.grid(row=1, column=1, padx=2, pady=2)
-
         # Pipette follow camera on/off
         self.switch_follow = Checkbutton(self.misc,
                                          text='Following',
@@ -328,7 +316,6 @@ class PatchClampGUI(Frame):
             self.connection.config(state='disable')
 
             # Activate all the others buttons
-            self.imgsave.config(state='normal', command=self.robot.save_img)
             self.load_calibrate.config(state='normal')
             self.calibrate.config(state='normal')
             self.zero.config(state='normal')
@@ -342,7 +329,6 @@ class PatchClampGUI(Frame):
             self.clamp.config(state='normal', command=self.robot.pressure.break_in)
             self.clamp_switch.config(state='normal')
             self.switch_follow.config(state='normal')
-            self.video.config(state='normal', command=self.robot.record)
             self.save_pos.config(state='normal', command=self.robot.save_position)
 
             # Checking changes of robot messages and display them
@@ -361,7 +347,6 @@ class PatchClampGUI(Frame):
 
         # Disable all buttons and enable connection buttons
         self.calibrate.config(state='disable')
-        self.imgsave.config(state='disable', command=None)
         self.load_calibrate.config(state='disable')
         self.zero.config(state='disable')
         self.controllist['state'] = 'readonly'
@@ -377,7 +362,6 @@ class PatchClampGUI(Frame):
         self.release.config(state='disable', command=None)
         self.nearing.config(state='disable', command=None)
         self.push.config(state='disable', command=None)
-        self.video.config(state='disable', command=None)
         self.save_pos.config(state='disable', command=None)
         self.clamp_switch.config(state='disable')
         self.switch_follow.config(state='disable')

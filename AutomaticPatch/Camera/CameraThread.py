@@ -4,7 +4,6 @@ from img_functions import *
 import cv2
 import os
 import errno
-import numpy as np
 
 __all__ = ['CameraThread']
 
@@ -30,7 +29,6 @@ class CameraThread(Thread):
         self.winname = winname
         self.show = True
         self.click_on_window = False
-        self.recording = False
 
         # OnMouse function when clicking on the window
         self.mouse_callback = mouse_fun
@@ -45,18 +43,6 @@ class CameraThread(Thread):
         self.cam.startContinuousSequenceAcquisition(1)
         # name the window
         cv2.namedWindow(self.winname, flags=cv2.WINDOW_NORMAL)
-
-        path = './video/'
-        # Check if path exist, if not, creates it.
-        if not os.path.exists(os.path.dirname(path)):
-            try:
-                os.makedirs(os.path.dirname(path))
-            except OSError as exc:
-                # Guard against race condition
-                if exc.errno != errno.EEXIST:
-                    raise
-
-        nb_video = len(os.listdir(path)) + 1
 
         while self.show:
             if self.cam.getRemainingImageCount() > 0:
@@ -76,24 +62,6 @@ class CameraThread(Thread):
 
                 # Update attributes
                 self.frame = img
-                if self.recording:
-                    try:
-                        video.write(img)
-                    except NameError:
-                        video = cv2.VideoWriter('./video/Capture{}.avi'.format(nb_video),
-                                                cv2.cv.CV_FOURCC(*'DIB '),
-                                                self.fps,
-                                                (self.width, self.height),
-                                                False)
-                        nb_video += 1
-                        video.write(img)
-                else:
-                    try:
-                        video.release()
-                    except (NameError, UnboundLocalError):
-                        pass
-                    finally:
-                        video = None
 
                 # Display the image with a cross at the center
                 img_to_display = disp_centered_cross(img)
@@ -105,15 +73,10 @@ class CameraThread(Thread):
                     cv2.setMouseCallback(self.winname, self.mouse_callback)
 
         # End of Thread, stop acquisition and destroy
-        try:
-            video.release()
-        except UnboundLocalError:
-            pass
-        finally:
-            self.cam.stopSequenceAcquisition()
-            camera_unload(self.cam)
-            self.cam.reset()
-            cv2.destroyAllWindows()
+        self.cam.stopSequenceAcquisition()
+        camera_unload(self.cam)
+        self.cam.reset()
+        cv2.destroyAllWindows()
 
     def save_img(self):
         """

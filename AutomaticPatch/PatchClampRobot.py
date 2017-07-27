@@ -771,7 +771,7 @@ class PatchClampRobot(Thread):
     def save_img(self):
         """
         Save a screenshot
-        :return: 
+        :return:
         """
         self.cam.save_img()
         self.message = 'Screenshot saved.'
@@ -994,10 +994,6 @@ class PatchClampRobot(Thread):
         self.message = text
         if self.verbose:
             print self.message
-
-    def record(self):
-        self.cam.recording ^= 1
-        pass
 
     def save_position(self):
         pass
