@@ -326,7 +326,7 @@ class PatchClampGUI(Frame):
             self.release.config(state='normal', command=self.robot.pressure.release)
             self.nearing.config(state='normal', command=self.robot.pressure.nearing)
             self.push.config(state='normal', command=self.robot.pressure.high_pressure)
-            self.clamp.config(state='normal', command=self.robot.pressure.break_in)
+            self.clamp.config(state='normal', command=self.robot.clamp)
             self.clamp_switch.config(state='normal')
             self.switch_follow.config(state='normal')
             self.save_pos.config(state='normal', command=self.robot.save_position)
