@@ -420,9 +420,11 @@ class PatchClampGUI(Frame):
                 f.write(str(self.robot.get_resistance())+'\n')
             if self.continuous.get():
                 # Retrieving continuoulsy enabled
-                if self.chosen_meter.get() == 1:
+                if (self.chosen_meter.get() == 1) | (self.robot.amplifier.get_meter_resist_enable()):
+                    self.choose_resistance.select()
                     self.after(10, self.get_res)
-                elif self.chosen_meter.get() == 2:
+                elif (self.chosen_meter.get() == 2) | (not self.robot.amplifier.get_meter_resist_enable()):
+                    self.choose_potential.select()
                     self.after(10, self.get_pot)
         pass
 
@@ -436,9 +438,11 @@ class PatchClampGUI(Frame):
             self.potential_value['text'] = self.robot.get_potential(res_type='text')
             if self.continuous.get():
                 # Retrieving continuoulsy enabled
-                if self.chosen_meter.get() == 1:
+                if (self.chosen_meter.get() == 1) | (self.robot.amplifier.get_meter_resist_enable()):
+                    self.choose_resistance.select()
                     self.after(10, self.get_res)
-                elif self.chosen_meter.get() == 2:
+                elif (self.chosen_meter.get() == 2) | (not self.robot.amplifier.get_meter_resist_enable()):
+                    self.choose_potential.select()
                     self.after(10, self.get_pot)
         pass
 
