@@ -792,7 +792,7 @@ class PatchClampRobot(Thread):
         else:
             self.amplifier.stop_continuous_acquisition()
 
-    def get_one_res_metering(self, res_type='float'):
+    def get_single_resistance_metering(self, res_type='float'):
         """
         Get a single resistance meter
         :param res_type: type of return. Either float or text
@@ -900,19 +900,19 @@ class PatchClampRobot(Thread):
         # wait for stable measure
         time.sleep(4)
         # Get pipette resistance
-        self.pipette_resistance = self.get_one_res_metering(res_type='float')
+        self.pipette_resistance = self.get_single_resistance_metering(res_type='float')
         if 5e6 > self.pipette_resistance:
-            self.update_message('ERROR: Tip resistance is too low ({}).' \
-                                ' Should be higher than 5 MOhm.'.format(self.get_one_res_metering(res_type='text')))
+            self.update_message('ERROR: Tip resistance is too low ({}).'
+                                ' Should be higher than 5 MOhm.'.format(self.get_single_resistance_metering('text')))
             self.amplifier.meter_resist_enable(False)
             return 0
         if 10e6 < self.pipette_resistance:
-            self.update_message('ERROR: Tip resistance is too high ({}).' \
-                                ' Should be lower than 10 MOhm.'.format(self.get_one_res_metering(res_type='text')))
+            self.update_message('ERROR: Tip resistance is too high ({}).'
+                                ' Should be lower than 10 MOhm.'.format(self.get_single_resistance_metering('text')))
             self.amplifier.meter_resist_enable(False)
             return 0
         else:
-            self.update_message('Tip resistance is good: {}'.format(self.get_one_res_metering(res_type='text')))
+            self.update_message('Tip resistance is good: {}'.format(self.get_single_resistance_metering('text')))
             self.pipette_resistance_checked = True
             self.set_continuous_meter(True)
             return 1
