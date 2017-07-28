@@ -15,13 +15,14 @@ class Amplifier(object):
         try:
             if amplifier == 'Multiclamp':
                 self.amp = MultiClamp(channel=1)
-            elif amplifier == 'FakeAmplifier':
+            elif (amplifier == 'FakeAmplifier') | (not amplifier):
                 self.amp = FakeAmplifier()
             else:
-                raise AttributeError
+                raise AttributeError('Unkown amplifier: {} \Switching to fake amplifier.'.format(amplifier))
+            self.connected = True
         except (AttributeError, RuntimeError):
             # Unknown amplifier or failed to connect, connact to a fakeAmplifier
-            print 'fake amp'
+            self.connected = False
             self.amp = FakeAmplifier()
         pass
 

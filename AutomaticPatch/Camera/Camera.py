@@ -5,10 +5,10 @@ import cv2
 import os
 import errno
 
-__all__ = ['CameraThread']
+__all__ = ['Camera']
 
 
-class CameraThread(Thread):
+class Camera(Thread):
     """
     Camera thread to refresh screen while making moves
     """

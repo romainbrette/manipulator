@@ -10,13 +10,14 @@ class Pump(object):
         try:
             if pumpclass == 'OB1':
                 self.controller = OB1()
-            elif pumpclass == 'FakePump':
+            elif (pumpclass == 'FakePump') | (not pumpclass):
                 self.controller = FakePump()
             else:
                 raise AttributeError
+            self.connected = True
         except (AttributeError, RuntimeError):
             # Unkown pump or failed to connect
-            print 'fake pump'
+            self.connected = False
             self.controller = FakePump()
 
     def set_pressure(self, value):

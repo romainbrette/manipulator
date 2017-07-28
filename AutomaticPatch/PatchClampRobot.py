@@ -66,8 +66,12 @@ class PatchClampRobot(Thread):
 
         # Connected devices
         self.amplifier = ResistanceMeter(amplifier)
+        if not self.amplifier.connected:
+            self.update_message('Failed to connect to {}, switching to Fake Amplifier.'.format(amplifier))
         self.pressure = PressureController(pump)
-        self.cam = CameraThread(camera, self.click_event)
+        if not self.pressure.connected:
+            self.update_message('Failed to connect to {}, switching to Fake Pump.'.format(pump))
+        self.cam = Camera(camera, self.click_event)
 
         # Patch Clamp variables
         self.enable_clamp = False
@@ -103,10 +107,9 @@ class PatchClampRobot(Thread):
             # Robot has been calibrated, positionning is possible
             if self.event['event'] == 'Positioning':
 
-                self.following = False
-
                 # Move the tip of the pipette to the clicked position
-                self.message = 'Moving...'
+                self.following = False
+                self.update_message('Moving...')
 
                 # Getting the position of the tip and the micriscope
                 pos = np.transpose(self.microscope.position())
@@ -123,13 +126,13 @@ class PatchClampRobot(Thread):
 
                 # Event is finished
                 self.event['event'] = None
-                self.message = 'done.'
+                self.update_message('done.')
 
             elif (self.event['event'] == 'PatchClamp') & self.pipette_resistance_checked & (not self.following):
 
                 self.following = False
                 # Patch (and Clamp) at the clicked position
-                self.message = 'Moving...'
+                self.update_message('Moving...')
 
                 # Getting desired position
                 mic_pos = np.transpose(self.microscope.position())
@@ -183,7 +186,7 @@ class PatchClampRobot(Thread):
                             self.clamp()
                 else:
                     # Pipette has been obstructed
-                    self.message = 'ERROR: pipette is obstructed.'
+                    self.update_message('ERROR: pipette is obstructed.')
 
                 # Envent is finished
                 self.event['event'] = None
@@ -201,7 +204,7 @@ class PatchClampRobot(Thread):
                 self.arm.absolute_move_group(self.inv_mat*pos, [0, 1, 2])
             elif self.following & (self.event['event'] == 'PatchClamp'):
                 # Patch (and Clamp) at the clicked position
-                self.message = 'Moving...'
+                self.update_message('Moving...')
 
                 # Getting desired position
                 mic_pos = np.transpose(self.microscope.position())
@@ -489,7 +492,7 @@ class PatchClampRobot(Thread):
             self.microscope.set_to_zero([0, 1, 2])
             self.calibrated = 1
             self.cam.click_on_window = True
-            self.message = 'Calibration loaded.'
+            self.update_message('Calibration loaded.')
             return 1
 
         except IOError:
@@ -508,6 +511,7 @@ class PatchClampRobot(Thread):
         :param param: extra parameters (auto)
         :return: 
         """
+        del flags, param
         if self.calibrated:
             if event == cv2.EVENT_LBUTTONUP:
                 # Left click
@@ -774,7 +778,7 @@ class PatchClampRobot(Thread):
         :return:
         """
         self.cam.save_img()
-        self.message = 'Screenshot saved.'
+        self.update_message('Screenshot saved.')
         pass
 
     def set_continuous_meter(self, enable):
@@ -788,7 +792,7 @@ class PatchClampRobot(Thread):
         else:
             self.amplifier.stop_continuous_acquisition()
 
-    def get_one_res_metering(self, res_type='float'):
+    def get_single_resistance_metering(self, res_type='float'):
         """
         Get a single resistance meter
         :param res_type: type of return. Either float or text
@@ -896,19 +900,19 @@ class PatchClampRobot(Thread):
         # wait for stable measure
         time.sleep(4)
         # Get pipette resistance
-        self.pipette_resistance = self.get_one_res_metering(res_type='float')
+        self.pipette_resistance = self.get_single_resistance_metering(res_type='float')
         if 5e6 > self.pipette_resistance:
-            self.message = 'ERROR: Tip resistance is too low ({}).' \
-                           ' Should be higher than 5 MOhm.'.format(self.get_one_res_metering(res_type='text'))
+            self.update_message('ERROR: Tip resistance is too low ({}).'
+                                ' Should be higher than 5 MOhm.'.format(self.get_single_resistance_metering('text')))
             self.amplifier.meter_resist_enable(False)
             return 0
         if 10e6 < self.pipette_resistance:
-            self.message = 'ERROR: Tip resistance is too high ({}).' \
-                           ' Should be lower than 10 MOhm.'.format(self.get_one_res_metering(res_type='text'))
+            self.update_message('ERROR: Tip resistance is too high ({}).'
+                                ' Should be lower than 10 MOhm.'.format(self.get_single_resistance_metering('text')))
             self.amplifier.meter_resist_enable(False)
             return 0
         else:
-            self.message = 'Tip resistance is good: {}'.format(self.get_one_res_metering(res_type='text'))
+            self.update_message('Tip resistance is good: {}'.format(self.get_single_resistance_metering('text')))
             self.pipette_resistance_checked = True
             self.set_continuous_meter(True)
             return 1
@@ -987,7 +991,7 @@ class PatchClampRobot(Thread):
 
     def update_message(self, text):
         """
-        Update messages
+        Update messages and display them if verbose is True
         :param text: text's message 
         :return: 
         """
