@@ -508,6 +508,7 @@ class PatchClampRobot(Thread):
         :param param: extra parameters (auto)
         :return: 
         """
+        del flags, param
         if self.calibrated:
             if event == cv2.EVENT_LBUTTONUP:
                 # Left click
