@@ -8,10 +8,10 @@ from scipy import *
 #filename = '/Users/Romain/ownCloud/Paramecium/Comportement/Videos au 20x/gouttelette2.mp4'
 filename = '/Users/Romain/Desktop/paramecie 1.mov'
 
-#cap = cv2.VideoCapture(filename)
-cap = cv2.VideoCapture(0)
-cap.set(3, 1392)
-cap.set(4, 1040)
+cap = cv2.VideoCapture(filename)
+#cap = cv2.VideoCapture(0)
+#cap.set(3, 1392)
+#cap.set(4, 1040)
 
 firstFrame = None
 previous = None
