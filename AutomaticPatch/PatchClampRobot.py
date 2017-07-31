@@ -554,7 +554,6 @@ class PatchClampRobot(Thread):
             if event == cv2.EVENT_LBUTTONUP:
                 # Left click
                 self.event = {'event': 'Positioning', 'x': x, 'y': y}
-                #self.event = {'event': 'para', 'x': x, 'y': y}
 
             elif event == cv2.EVENT_RBUTTONUP:
                 # Right click
