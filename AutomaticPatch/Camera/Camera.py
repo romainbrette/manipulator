@@ -13,7 +13,7 @@ class Camera(Thread):
     Camera thread to refresh screen while making moves
     """
 
-    def __init__(self, camera_name, mouse_fun, winname='Camera'):
+    def __init__(self, camera_name, mouse_fun, img_func=None, winname='Camera'):
 
         # init thread
         Thread.__init__(self)
@@ -32,6 +32,7 @@ class Camera(Thread):
 
         # OnMouse function when clicking on the window
         self.mouse_callback = mouse_fun
+        self.img_fun = img_func
         self.start()
 
     def run(self):
@@ -65,6 +66,8 @@ class Camera(Thread):
 
                 # Display the image with a cross at the center
                 img_to_display = disp_centered_cross(img)
+                if self.img_fun is not None:
+                    self.img_fun(img_to_display)
                 cv2.imshow(self.winname, img_to_display)
                 cv2.waitKey(1)
 

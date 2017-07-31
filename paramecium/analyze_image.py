@@ -37,7 +37,7 @@ while(True):
     height, width = img.shape[:2]
     img = cv2.resize(img, (int(width / 20), int(height / 20)))  # faster
 
-    f = tp.locate(img, diameter, invert=True, noise_size=5, minmass=1000, max_iterations=1,
+    f = tp.locate(img, diameter, invert=True, noise_size=1, minmass=1000, max_iterations=1,
                   characterize=True, engine='python')  # numba is too slow!
     xp = np.array(f['x'])
     yp = np.array(f['y'])

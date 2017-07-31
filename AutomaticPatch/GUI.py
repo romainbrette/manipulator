@@ -339,6 +339,7 @@ class PatchClampGUI(Frame):
             self.clamp_switch.config(state='normal')
             self.switch_follow.config(state='normal')
             self.save_pos.config(state='normal', command=self.robot.save_position)
+            self.paramecia.config(state='normal')
 
             # Checking changes of robot messages and display them
             self.check_message()
