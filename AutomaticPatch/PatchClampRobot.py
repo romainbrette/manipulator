@@ -108,46 +108,6 @@ class PatchClampRobot(Thread):
                 self.event['event'] = None
 
         while self.calibrated & self.running:
-            if self.event['event'] == 'para':
-                width, height = self.cam.width, self.cam.height
-                target = self.rot_inv * np.array([[(width/2 - self.event['x']) * self.um_px],
-                                                  [(height/2 - self.event['y']) * self.um_px],
-                                                  [0]])
-
-                self.microscope.absolute_move_group(np.transpose(self.microscope.position()) + target, [0,1,2])
-                self.event['event'] = None
-
-            if self.follow_paramecia:
-
-                diameter = 11
-                img = self.cam.frame
-                height, width = img.shape[:2]
-                img = cv2.resize(img, (int(width / 20), int(height / 20)))  # faster
-
-                f = tp.locate(img, diameter, invert=True, noise_size=1, minmass=300, max_iterations=1,
-                              characterize=True, engine='python')  # numba is too slow!
-                xp = np.array(f['x'])
-                yp = np.array(f['y'])
-
-                # Closest one
-                if len(xp) > 0:
-                    self.disp_img_func = True
-                    j = np.argmin((xp - width / 40) ** 2 + (yp - height / 40) ** 2)
-                    xt, yt = xp[j], yp[j]
-                    xt *= 20
-                    yt *= 20
-                    self.xt, self.yt = xt, yt
-
-                    target = self.rot_inv * np.array([[(width / 2 - xt) * self.um_px],
-                                                      [(height / 2 - yt) * self.um_px],
-                                                      [0]])
-                    self.microscope.absolute_move_group(np.transpose(self.microscope.position()) + target, [0, 1, 2])
-                    time.sleep(.1)
-                    #self.microscope.wait_motor_stop([0,1,2])
-                else:
-                    self.disp_img_func = False
-
-        while self.calibrated & self.running:
             # Robot has been calibrated, positionning is possible
             if self.event['event'] == 'Positioning':
 
@@ -271,12 +231,42 @@ class PatchClampRobot(Thread):
                 self.arm.relative_move(move, 0)
                 self.arm.wait_motor_stop([0])
 
+            if self.follow_paramecia:
+
+                diameter = 11
+                img = self.cam.frame
+                height, width = img.shape[:2]
+                img = cv2.resize(img, (int(width / 20), int(height / 20)))  # faster
+
+                f = tp.locate(img, diameter, invert=True, noise_size=1, minmass=300, max_iterations=1,
+                              characterize=True, engine='python')  # numba is too slow!
+                xp = np.array(f['x'])
+                yp = np.array(f['y'])
+
+                # Closest one
+                if len(xp) > 0:
+                    self.disp_img_func = True
+                    j = np.argmin((xp - width / 40) ** 2 + (yp - height / 40) ** 2)
+                    xt, yt = xp[j], yp[j]
+                    xt *= 20
+                    yt *= 20
+                    self.xt, self.yt = xt, yt
+
+                    target = self.rot_inv * np.array([[(width / 2 - xt) * self.um_px],
+                                                      [(height / 2 - yt) * self.um_px],
+                                                      [0]])
+                    self.microscope.absolute_move_group(np.transpose(self.microscope.position()) + target,
+                                                        [0, 1, 2])
+                    time.sleep(.1)
+                else:
+                    self.disp_img_func = False
+
                 pass
         pass
 
     def img_func(self, img):
         if self.disp_img_func:
-            cv2.rectangle(img,(int(self.xt)-10,int(self.yt)-10),(int(self.xt)+10,int(self.yt)+10),255,1)
+            cv2.rectangle(img, (int(self.xt)-10, int(self.yt)-10), (int(self.xt)+10, int(self.yt)+10), 255, 1)
 
     def go_to_zero(self):
         """
