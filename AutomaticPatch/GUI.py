@@ -252,11 +252,20 @@ class PatchClampGUI(Frame):
                                          command=self.following,
                                          variable=self.follow,
                                          state='disable')
-        self.switch_follow.grid(row=2, column=0, padx=2, pady=2)
+        self.switch_follow.grid(row=1, column=0, padx=2, pady=2)
 
         self.offset_slide = Scale(self.misc, from_=0, to=20, orient=HORIZONTAL)
         self.offset_slide.set(2)
-        self.offset_slide.grid(row=2, column=1, padx=2, pady=2)
+        self.offset_slide.grid(row=1, column=1, padx=2, pady=2)
+
+        self.follow_paramecia = IntVar()
+        self.paramecia = Checkbutton(self.misc,
+                                     text='paramecia',
+                                     variable=self.follow_paramecia,
+                                     command=self.switch_follow_paramecia,
+                                     state='disable'
+                                     )
+        self.paramecia.grid(row=2, column=0, padx=2, pady=2)
 
         # Messages zone
         self.text_zone = ScrolledText(master=self, width=60, height=10, state='disabled')
@@ -508,6 +517,10 @@ class PatchClampGUI(Frame):
             # Connection of robot established, enable folowing if follow button is checked
             self.robot.following = self.follow.get()
         pass
+
+    def switch_follow_paramecia(self):
+        if self.robot:
+            self.robot.follow_paramecia = self.follow_paramecia.get()
 
     def check_message(self):
         """

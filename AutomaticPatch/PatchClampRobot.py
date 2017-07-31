@@ -9,6 +9,7 @@ from math import fabs
 import time
 import os
 import errno
+import trackpy as tp
 
 __all__ = ['PatchClampRobot']
 
@@ -84,6 +85,7 @@ class PatchClampRobot(Thread):
         self.event = {'event': None, 'x': self.cam.width/2, 'y': self.cam.height/2}
         self.following = False
         self.offset = 0.
+        self.follow_paramecia = False
 
         # Start the thread run
         self.running = True
@@ -102,6 +104,23 @@ class PatchClampRobot(Thread):
                 # Auto calibration
                 _ = self.calibrate()
                 self.event['event'] = None
+
+        while self.calibrated & self.running:
+            if self.follow_paramecia:
+                diameter = 21
+                img = self.cam.frame
+                height, width = img.shape[:2]
+                img = cv2.resize(img, (int(width / 20), int(height / 20)))  # faster
+
+                f = tp.locate(img, diameter, invert=True, noise_size=5, minmass=1000, max_iterations=1,
+                              characterize=True, engine='python')  # numba is too slow!
+                xp = np.array(f['x'])
+                yp = np.array(f['y'])
+
+                # Closest one
+                if len(xp) > 0:
+                    j = np.argmin((xp - width / 40) ** 2 + (yp - height / 40) ** 2)
+                    xt, yt = xp[j], yp[j]
 
         while self.calibrated & self.running:
             # Robot has been calibrated, positionning is possible

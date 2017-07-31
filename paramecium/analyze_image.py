@@ -7,39 +7,59 @@ import cv2
 from time import time, sleep
 import imageio
 import trackpy as tp
+from AutomaticPatch.Camera import *
 
 filename = '/Users/Romain/Desktop/gouttelette2.mp4' # '<video0>' for camera
-#filename = '<video0>'
-reader = imageio.get_reader(filename)
+#reader = imageio.get_reader(filename)
+
+cam = Camera('Lumenera', None)
 
 diameter = 21 # If too large it will be slow
+#width = int(cap.get(3))
+#height = int(cap.get(4))
+#fps = 20.
+#print width,height
 
-for frame in reader:
-    img = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+#cv2.namedWindow('Camera', cv2.WINDOW_NORMAL)
+
+
+while(True):
+    # Capture frame-by-frame
+    #ret, frame = cap.read()
+    frame = cam.frame
+
+    if frame is None:
+        continue
+
+#for frame in reader:
+    #img = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    img = frame
     height, width = img.shape[:2]
     img = cv2.resize(img, (int(width / 20), int(height / 20)))  # faster
 
-    f = tp.locate(img, diameter, invert=True, noise_size=2, minmass=1000, max_iterations=1,
+    f = tp.locate(img, diameter, invert=True, noise_size=5, minmass=1000, max_iterations=1,
                   characterize=True, engine='python')  # numba is too slow!
     xp = np.array(f['x'])
     yp = np.array(f['y'])
 
     # Closest one
     if len(xp)>0:
-        j=np.argmin((xp-width/2)**2+(yp-height/2)**2)
+        j=np.argmin((xp-width/40)**2+(yp-height/40)**2)
         xt,yt= xp[j],yp[j]
+        print f['ecc']
 
     #for i in range(len(xp)):
         #x,y=xp[i]*20,yp[i]*20
-        cv2.rectangle(frame,(int(xt*20)-10,int(yt*20)-10),(int(xt*20)+10,int(yt*20)+10),(0,255,0),1)
+        cv2.rectangle(frame,(int(xt*20)-10,int(yt*20)-10),(int(xt*20)+10,int(yt*20)+10),255,1)
 
-    cv2.imshow('frame',frame)
+    cv2.imshow('track',frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
     #sleep(0.05)
 
-cv2.destroyAllWindows()
+#cv2.destroyAllWindows()
+#cap.release()
 
 
 """
