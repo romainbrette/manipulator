@@ -53,7 +53,12 @@ class Camera(Thread):
                 temp_frame = cv2.cvtColor(temp_frame, cv2.COLOR_GRAY2BGR)
 
                 # Convert to 8 bit gray scale
-                img = cv2.convertScaleAbs(temp_frame)
+                if temp_frame.dtype == 'uint8':
+                    img = cv2.convertScaleAbs(temp_frame)
+                elif temp_frame.dtype == 'uint16':
+                    img = cv2.convertScaleAbs(temp_frame, alpha=2**-2)
+                else:
+                    img = cv2.convertScaleAbs(temp_frame)
 
                 # Increase contrast (Contrast Limited Adaptive Histogram Equalization)
                 # clahe = cv2.createCLAHE(clipLimit=1.0, tileGridSize=(8, 8))
