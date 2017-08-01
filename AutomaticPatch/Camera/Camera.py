@@ -1,6 +1,7 @@
 from threading import Thread
 from camera_init import *
 from img_functions import *
+import numpy as np
 import cv2
 import os
 import errno
@@ -20,7 +21,7 @@ class Camera(Thread):
 
         # init camera device
         self.camera_name = camera_name
-        self.cam, self.fps, self.flip = camera_init(camera_name)
+        self.cam, self.flip = camera_init(camera_name)
 
         # Initializing variables for display
         self.frame = None
@@ -49,9 +50,10 @@ class Camera(Thread):
             if self.cam.getRemainingImageCount() > 0:
                 # New image has been taken by the camera
                 temp_frame = self.cam.getLastImage()
+                temp_frame = cv2.cvtColor(temp_frame, cv2.COLOR_GRAY2BGR)
 
                 # Convert to 8 bit gray scale
-                img = cv2.convertScaleAbs(temp_frame)
+                img = cv2.convertScaleAbs(temp_frame, alpha=2**-2)
 
                 # Increase contrast (Contrast Limited Adaptive Histogram Equalization)
                 # clahe = cv2.createCLAHE(clipLimit=1.0, tileGridSize=(8, 8))

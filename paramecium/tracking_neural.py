@@ -1,14 +1,12 @@
 '''
 Tracking with a convolutional neural network
-
-Only works with Python 3 on Windows!
 '''
 import numpy as np
 import cv2
 from keras.models import load_model
 from AutomaticPatch.Camera import *
 
-cam = Camera('Lumenera', None)
+cam = Camera('Hamamatsu', None)
 model_name = 'seq_2d_50.h5'
 subFrameSize = 75
 FPS = 20
@@ -22,13 +20,17 @@ while True:
     if frame is None:
         continue
 
-    #img = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    img = frame
+    img = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    #img = frame
     img = cv2.resize(img, (subFrameSize, subFrameSize))
     #img = img[135-subFrameSize/2:135+subFrameSize/2+1,316-subFrameSize/2:316+subFrameSize/2+1]
 
     img = img.astype(np.float32)
     img = img / 255
+
+    # Normalize
+    #img = img-img.min()
+    #img = img/img.max()
 
     if previous is None:
         previous = img
