@@ -4,9 +4,9 @@ Tracking with a convolutional neural network
 import numpy as np
 import cv2
 from keras.models import load_model
-from Camera import *
+from AutomaticPatch.Camera import *
 
-cam = Camera('Hamamatsu', None)
+cam = Camera('Lumenera', None)
 model_name = 'seq_2d_50.h5'
 subFrameSize = 75
 FPS = 20
