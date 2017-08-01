@@ -3,7 +3,7 @@ A Z Unit for a Leica microscope, using MicroManager.
 Communication through serial COM port.
 """
 import warnings
-from device import *
+from .device import *
 import sys
 import time
 sys.path.append('C:\\Program Files\\Micro-Manager-1.4') # This is not good!
@@ -115,7 +115,7 @@ if __name__ == '__main__':
 
     time.sleep(1)  # the microscope gives a wrong position in the very beginning, so wait a bit
 
-    print leica.position()
+    print(leica.position())
     leica.relative_move(-50)
     time.sleep(1)
-    print leica.position()
+    print(leica.position())
