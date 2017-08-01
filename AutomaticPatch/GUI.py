@@ -389,9 +389,14 @@ class PatchClampGUI(Frame):
                            icon=INFO):
                 # Pipette in focus and centered: calibrating
                 self.robot.event['event'] = 'Calibration'
-                if self.robot.calibrated:
-                    self.calibrate_msg.config(text='Robot calibrated', fg='black')
+                self.wait_calibration()
             pass
+
+    def wait_calibration(self):
+        if self.robot.event['event'] == 'Calibration':
+            self.after(10, self.wait_calibration)
+        elif self.robot.calibrated:
+            self.calibrate_msg.config(text='Robot calibrated', fg='black')
 
     def load_cali(self):
         """

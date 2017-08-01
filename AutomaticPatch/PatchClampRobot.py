@@ -291,7 +291,7 @@ class PatchClampRobot(Thread):
         self.microscope.set_to_zero([0, 1, 2])
 
         # Get a series of template images for auto focus
-        self.get_template_series(5)
+        self.get_template_series(11)
 
         # Saving initial position of the tip on the screen
         _, _, loc = templatematching(self.cam.frame, self.template[len(self.template) // 2])
@@ -695,7 +695,7 @@ class PatchClampRobot(Thread):
         for k in range(nb_images):
             self.microscope.absolute_move(k - (nb_images - 1) / 2, 2)
             self.microscope.wait_motor_stop(2)
-            time.sleep(0.5)
+            time.sleep(1)
             img = self.template_zone()
             height, width = img.shape[:2]
             img = img[i * height / 4:height / 2 + i * height / 4, j * width / 4:width / 2 + j * width / 4]
