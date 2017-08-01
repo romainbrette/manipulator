@@ -1,5 +1,7 @@
 '''
 Tracking with a convolutional neural network
+
+Only works with Python 3 on Windows!
 '''
 import numpy as np
 import cv2
@@ -20,7 +22,8 @@ while True:
     if frame is None:
         continue
 
-    img = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    #img = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    img = frame
     img = cv2.resize(img, (subFrameSize, subFrameSize))
     #img = img[135-subFrameSize/2:135+subFrameSize/2+1,316-subFrameSize/2:316+subFrameSize/2+1]
 
@@ -46,7 +49,7 @@ while True:
     posX, posY = int(predict_X + subFrameSize/2), int(predict_Y + subFrameSize/2)
     cv2.circle(frame, (posX, posY), 5, (0,255,0), 1)
     # print("%.2f %.2f" % (predict_X, predict_Y))
-    #print predict_X,predict_Y
+    print predict_X,predict_Y
 
     cv2.imshow('track',cv2.resize(frame,(200,200)))
     if cv2.waitKey(1) & 0xFF == ord('q'):
