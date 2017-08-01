@@ -153,7 +153,7 @@ class PatchClampRobot(Thread):
                     move = self.withdraw_sign*(abs(mic_pos[2, 0]-tip_pos[2, 0])+15)/abs(self.mat[2, 0])
                 else:
                     # tip is higher than, or at, desired height
-                    move = self.withdraw_sign * 15 / abs(self.mat[2, 0])
+                    move = -self.withdraw_sign*(abs(mic_pos[2, 0]-tip_pos[2, 0])+15)/abs(self.mat[2, 0])
 
                 # Applying withdraw
                 self.arm.relative_move(move, 0)
@@ -161,20 +161,19 @@ class PatchClampRobot(Thread):
 
                 # From now, use theoretical position rather than true position to compensate for unreachable position
                 # Computing supposed position of the tip.
-                theorical_tip_pos = tip_pos + self.mat*np.array([[self.withdraw_sign*move], [0], [0]])
+                theorical_tip_pos = tip_pos + self.mat*np.array([[move], [0], [0]])
 
-                '''
                 # Computing intermediate position in the same horizontal plan as the supposed tip position
                 # Only x axis should have an offset compared to the desired position
                 intermediate_x_pos = self.withdraw_sign*abs(theorical_tip_pos[2, 0]-mic_pos[2, 0])/abs(self.mat[2, 0])
                 intermediate_pos = mic_pos + self.mat*np.array([[intermediate_x_pos], [0], [0]])
 
                 # Applying moves to intermediate position
-                self.linear_move(theorical_tip_pos, intermediate_pos)
+                self.arm.absolute_move_group(intermediate_pos, [0, 1, 2])
                 self.arm.wait_motor_stop([0, 1, 2])
-                '''
+
                 # Getting close to the desired postion (offset 10um on x axis)
-                self.linear_move(theorical_tip_pos, mic_pos+self.mat*np.array([[self.withdraw_sign*10.], [0.], [0.]]))
+                self.linear_move(intermediate_pos, mic_pos+self.mat*np.array([[self.withdraw_sign*10.], [0.], [0.]]))
                 self.arm.wait_motor_stop([0, 1, 2])
 
                 if abs(self.pipette_resistance-self.get_resistance()) < 1e6:
