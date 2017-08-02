@@ -5,7 +5,6 @@ Use Micro Manager Py
 Initialization of the cameras with micro manager
 """
 
-import time
 import sys
 import warnings
 sys.path.append('C:\\Program Files\\Micro-Manager-1.4')
@@ -28,26 +27,20 @@ def camera_init(camera_name):
     if camera_name == 'Hamamatsu':
         mmc.loadDevice('Camera', 'HamamatsuHam', 'HamamatsuHam_DCAM')
         flip = [True, 2]
-        mmc.initializeDevice('Camera')
-        mmc.setCameraDevice('Camera')
-        mmc.setExposure(30)
+        exposure = 60
     elif camera_name == 'Lumenera':
         mmc.loadDevice('Camera', 'Lumenera', 'LuCam')
         flip = [True, 1]
-        mmc.initializeDevice('Camera')
-        mmc.setCameraDevice('Camera')
-        mmc.setExposure(30)
+        exposure = 30
     else:
         raise SystemError('Unknown camera.')
 
-
+    mmc.initializeDevice('Camera')
+    mmc.setCameraDevice('Camera')
+    mmc.setExposure(exposure)
 
     # To get the properties you can set on the camera:
     # print mmc.getDevicePropertyNames('Camera')
-
-
-
-    time.sleep(1)  # the microscope gives a wrong position in the very beginning, so wait a bit
 
     return mmc, flip
 
