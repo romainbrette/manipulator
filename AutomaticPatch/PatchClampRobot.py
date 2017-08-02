@@ -153,7 +153,7 @@ class PatchClampRobot(Thread):
                     move = self.withdraw_sign*(abs(mic_pos[2, 0]-tip_pos[2, 0])+15)/abs(self.mat[2, 0])
                 else:
                     # tip is higher than, or at, desired height
-                    move = -self.withdraw_sign*(abs(mic_pos[2, 0]-tip_pos[2, 0])+15)/abs(self.mat[2, 0])
+                    move = self.withdraw_sign*15/abs(self.mat[2, 0])
 
                 # Applying withdraw
                 self.arm.relative_move(move, 0)

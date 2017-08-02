@@ -146,12 +146,12 @@ class PatchClampGUI(Frame):
 
         # Patch button
         self.patch = Button(self.pump_box,
-                            text='Patch',
+                            text='Seal',
                             state='disable')
         self.patch.grid(row=0, column=0, padx=2, pady=2)
 
         # Clamp button
-        self.clamp = Button(self.pump_box, text='Clamp', state='disable')
+        self.clamp = Button(self.pump_box, text='Break-in', state='disable')
         self.clamp.grid(row=0, column=1, padx=2, pady=2)
 
         # Nearing button
@@ -164,7 +164,7 @@ class PatchClampGUI(Frame):
 
         # Clamp when right click on/off
         self.clamp_switch = Checkbutton(self.pump_box,
-                                        text='clamp when clicking',
+                                        text='Break-in when clicking',
                                         command=self.enable_clamp,
                                         state='disable')
         self.clamp_switch.grid(row=1, column=0, padx=2, pady=2, columnspan=2)

@@ -14,6 +14,7 @@ Code is in Python 3
 import datetime, time
 import serial
 import binascii
+from devices import *
 
 def to_bytes(n, length, byteorder='big'):
     h = '%x' % n
@@ -38,6 +39,7 @@ class gsioc:
         self.serial = s
         try :
             s.open()
+            print "opened"
             print(s)
         except :
             print(s)
@@ -118,9 +120,17 @@ class gsioc:
 
 
 if __name__ == '__main__':
-    g = gsioc()
-    g.createSerial(port=0, timeout=0.1)
-    g.connect(ID=0)
-    #g.iCommand("1f")
+    #g = gsioc()
+    #g.createSerial(port='COM4', timeout=0.1)
+    #g.connect(ID=0)
+    #g.serial.write('%')
+    #print g.serial.read(6)
     #g.bCommand("Text to display")
-    g.closeSerial()
+    #g.closeSerial()
+    s=SerialDevice('COM4')
+    s.port.timeout=1
+    s.port.open()
+    s.port.write(binascii.a2b_qp('?')) # ?\r ?
+    x=s.port.read()
+    print x,len(x)
+    s.port.close()
