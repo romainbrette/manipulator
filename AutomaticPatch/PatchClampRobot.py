@@ -235,9 +235,14 @@ class PatchClampRobot(Thread):
                 diameter = 11
                 img = self.cam.frame
                 height, width = img.shape[:2]
+                img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
                 img = cv2.resize(img, (int(width / 20), int(height / 20)))  # faster
+                gauss = cv2.GaussianBlur(img, (5, 5), 0)
+                canny = cv2.Canny(gauss, img.shape[0], img.shape[0])
+                gauss = cv2.GaussianBlur(canny, (7, 7), 0)
+                canny = cv2.Canny(gauss, img.shape[0], img.shape[0])
 
-                f = tp.locate(img, diameter, invert=True, noise_size=1, minmass=300, max_iterations=1,
+                f = tp.locate(canny, diameter, invert=False, noise_size=1, minmass=300, max_iterations=1,
                               characterize=True, engine='python')  # numba is too slow!
                 xp = np.array(f['x'])
                 yp = np.array(f['y'])
@@ -247,16 +252,23 @@ class PatchClampRobot(Thread):
                     self.disp_img_func = True
                     j = np.argmin((xp - width / 40) ** 2 + (yp - height / 40) ** 2)
                     xt, yt = xp[j], yp[j]
+                    xt = int(xt)
+                    yt = int(yt)
+                    cv2.circle(canny, (xt, yt), 5, (255, 0, 0), 1)
+                    cv2.imshow('Tracking', canny)
+                    cv2.waitKey(1)
                     xt *= 20
                     yt *= 20
                     self.xt, self.yt = xt, yt
-
-                    target = self.rot_inv * np.array([[(width / 2 - xt) * self.um_px],
-                                                      [(height / 2 - yt) * self.um_px],
+                    target = self.rot_inv * np.array([[(width / 2 - xt) * self.um_px*0.35],
+                                                      [(height / 2 - yt) * self.um_px*0.35],
                                                       [0]])
+                    #self.microscope.step_move(target[0, 0], 0)
+                    #self.microscope.step_move(target[1, 0], 1)
                     self.microscope.absolute_move_group(np.transpose(self.microscope.position()) + target,
                                                         [0, 1, 2])
-                    time.sleep(.1)
+                    #self.microscope.wait_motor_stop([0,1,2])
+
                 else:
                     self.disp_img_func = False
 
@@ -264,8 +276,8 @@ class PatchClampRobot(Thread):
         pass
 
     def img_func(self, img):
-        if self.disp_img_func:
-            cv2.rectangle(img, (int(self.xt)-10, int(self.yt)-10), (int(self.xt)+10, int(self.yt)+10), 255, 1)
+        if self.disp_img_func & self.follow_paramecia:
+            cv2.circle(img, (self.xt, self.yt), 5, (255, 0, 0), 1)
 
     def go_to_zero(self):
         """
@@ -285,10 +297,6 @@ class PatchClampRobot(Thread):
         Set zero position as current position
         Compute rotational matrix between the platform and camera 
         """
-
-        # Make current position the zero position
-        self.arm.set_to_zero([0, 1, 2])
-        self.microscope.set_to_zero([0, 1, 2])
 
         # Get a series of template images for auto focus
         self.get_template_series(11)
@@ -662,6 +670,10 @@ class PatchClampRobot(Thread):
         # Tab
         temp = []
 
+        # Make current position the zero position
+        self.arm.set_to_zero([0, 1, 2])
+        self.microscope.set_to_zero([0, 1, 2])
+
         # Take imges only in the template zone
         template = self.template_zone()
         height, width = template.shape[:2]
@@ -698,7 +710,7 @@ class PatchClampRobot(Thread):
             time.sleep(1)
             img = self.template_zone()
             height, width = img.shape[:2]
-            img = img[i * height / 4:height / 2 + i * height / 4, j * width / 4:width / 2 + j * width / 4]
+            #img = img[i * height / 4:height / 2 + i * height / 4, j * width / 4:width / 2 + j * width / 4]
             self.template += [img]
 
         # reset position at the end
