@@ -710,7 +710,7 @@ class PatchClampRobot(Thread):
             time.sleep(1)
             img = self.template_zone()
             height, width = img.shape[:2]
-            #img = img[i * height / 4:height / 2 + i * height / 4, j * width / 4:width / 2 + j * width / 4]
+            img = img[i * height / 4:height / 2 + i * height / 4, j * width / 4:width / 2 + j * width / 4]
             self.template += [img]
 
         # reset position at the end
