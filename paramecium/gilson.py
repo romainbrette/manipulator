@@ -3,7 +3,7 @@ Controller for Gilson Minipulse 3
 from
 https://github.com/echo-oddly/gsioc_controller
 
-Code is in Python 3
+Doesn' work: probably need to plug on the rs232
 '''
 
 # gsioc defines a class used for controlling gsioc devices
@@ -64,8 +64,8 @@ class gsioc:
     # Use str(resp,'ascii') or resp.decode('ascii') to get ascii string
     def iCommand(self,commandstring):
         command = binascii.a2b_qp(commandstring)
-        if(command[0] not in range(0,255)):     # Change this to correct range
-            raise Exception("Command out of range")
+        #if(command[0] not in range(0,255)):     # Change this to correct range
+        #    raise Exception("Command out of range")
         s = self.serial
         s.flushInput()
         s.write(command[0:1])
@@ -120,16 +120,23 @@ class gsioc:
 
 
 if __name__ == '__main__':
-    #g = gsioc()
-    #g.createSerial(port='COM4', timeout=0.1)
-    #g.connect(ID=0)
+    '''
+    g = gsioc()
+    g.createSerial(port='COM4', timeout=0.1)
+    g.connect(ID=30)
     #g.serial.write('%')
+    print g.iCommand('%')
     #print g.serial.read(6)
     #g.bCommand("Text to display")
-    #g.closeSerial()
+    g.closeSerial()
+    '''
+
     s=SerialDevice('COM4')
     s.port.timeout=1
     s.port.open()
+    s.port.write('xff')
+    s.port.write(to_bytes(30+128, 1, byteorder='big'))
+    s.port.flushInput()
     s.port.write(binascii.a2b_qp('?')) # ?\r ?
     x=s.port.read()
     print x,len(x)
