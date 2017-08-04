@@ -117,7 +117,6 @@ class PatchClampRobot(Thread):
 
                 # Getting the position of the tip and the micriscope
                 pos = np.transpose(self.microscope.position())
-                tip_pos = self.mat * np.transpose(self.arm.position())
 
                 # Computing the desired position
                 offset = self.rot_inv*np.array([[(self.x_init - (self.event['x'] - self.template_loc[0])) * self.um_px],
@@ -126,7 +125,7 @@ class PatchClampRobot(Thread):
                 pos += offset
 
                 # Moving the tip using a linear move for security
-                self.linear_move(tip_pos, pos)
+                self.arm.absolute_move_group(pos, [0, 1, 2])
 
                 # Event is finished
                 self.event['event'] = None
@@ -263,11 +262,8 @@ class PatchClampRobot(Thread):
                     target = self.rot_inv * np.array([[(width / 2 - xt) * self.um_px*0.35],
                                                       [(height / 2 - yt) * self.um_px*0.35],
                                                       [0]])
-                    #self.microscope.step_move(target[0, 0], 0)
-                    #self.microscope.step_move(target[1, 0], 1)
                     self.microscope.absolute_move_group(np.transpose(self.microscope.position()) + target,
                                                         [0, 1, 2])
-                    #self.microscope.wait_motor_stop([0,1,2])
 
                 else:
                     self.disp_img_func = False
