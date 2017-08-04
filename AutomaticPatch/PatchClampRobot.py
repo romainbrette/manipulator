@@ -654,6 +654,15 @@ class PatchClampRobot(Thread):
                 break
         pass
 
+    def get_image_series(self, nb_img):
+        z_pos = self.microscope.position(2)
+        for k in range(nb_img):
+            self.microscope.absolute_move(z_pos + k - (nb_img - 1) / 2, 2)
+            self.microscope.wait_motor_stop(2)
+            time.sleep(1)
+            img = self.cam.frame
+            cv2.imwrite('./screenshots/series{}.jpg'.format(k), img)
+
     def get_template_series(self, nb_images):
         """
         Get a series of template images of the tip, at different height, around the center of an image.
