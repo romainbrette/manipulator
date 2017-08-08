@@ -234,7 +234,7 @@ class PatchClampRobot(Thread):
                     intermediate_pos = mic_pos + self.mat*np.array([[intermediate_x_pos], [0], [0]])
 
                     # Applying moves to intermediate position
-                    self.arm.absolute_move_group(intermediate_pos, [0, 1, 2])
+                    self.arm.absolute_move_group(self.inv_mat*intermediate_pos, [0, 1, 2])
                     self.arm.wait_motor_stop([0, 1, 2])
 
                     # Getting close to the desired postion (offset 10um on x axis)
@@ -663,6 +663,7 @@ class PatchClampRobot(Thread):
             time.sleep(1)
             img = self.cam.frame
             cv2.imwrite('./screenshots/series{}.jpg'.format(k), img)
+        self.microscope.absolute_move(z_pos, 2)
 
     def get_template_series(self, nb_images):
         """
