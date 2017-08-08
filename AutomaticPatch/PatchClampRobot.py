@@ -65,6 +65,10 @@ class PatchClampRobot(Thread):
         self.pipette_resistance = 0.
         self.pipette_resistance_checked = False
 
+        # Messages
+        self.verbose = verbose
+        self.message = ''
+
         # Connected devices
         self.amplifier = ResistanceMeter(amplifier)
         if not self.amplifier.connected:
@@ -76,10 +80,6 @@ class PatchClampRobot(Thread):
 
         # Patch Clamp variables
         self.enable_clamp = False
-
-        # Messages
-        self.verbose = verbose
-        self.message = ''
 
         # Event on camera window
         self.event = {'event': None, 'x': self.cam.width/2, 'y': self.cam.height/2}
@@ -655,7 +655,7 @@ class PatchClampRobot(Thread):
                 break
         pass
 
-    def get_image_series(self, nb_img):
+    def get_image_series(self, nb_img=51):
         z_pos = self.microscope.position(2)
         for k in range(nb_img):
             self.microscope.absolute_move(z_pos + k - (nb_img - 1) / 2, 2)
@@ -1039,8 +1039,9 @@ class PatchClampRobot(Thread):
                 self.update_message('ERROR: Clamp unsuccessful.')
                 return 0
         # Broke in the cell
-        self.amplifier.null_current()
         self.amplifier.meter_resist_enable(False)
+        time.sleep(.5)
+        self.amplifier.null_current()
         self.update_message('Clamp done.')
         return 1
 
