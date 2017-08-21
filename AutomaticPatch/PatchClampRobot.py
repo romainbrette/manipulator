@@ -191,7 +191,7 @@ class PatchClampRobot(Thread):
                     # Moving the tip after a withdraw for security
                     self.arm.relative_move(self.withdraw_sign*10, 0)
                     self.arm.wait_motor_stop(0)
-                    self.arm.absolute_move_group(pos, [0, 1, 2])
+                    self.arm.absolute_move_group(self.inv_mat*pos, [0, 1, 2])
 
                     # Event is finished
                     self.event['event'] = None
