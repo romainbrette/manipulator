@@ -598,63 +598,6 @@ class PatchClampRobot(Thread):
             self.arm.absolute_move_group(self.inv_mat*final_position, [0, 1, 2])
         pass
 
-    def pipettechange(self):
-
-        """
-        Change pipette & recalibration
-        """
-
-        # Get the direction to get the pipette out
-        ratio = fabs(self.mat[0, 0] / self.mat[1, 0])
-
-        if ratio > 1:
-            i = 0
-        else:
-            i = 1
-
-        if (self.template_loc[i] != 0) ^ (self.mat[i, 0] > 0):
-            sign = 1
-        else:
-            sign = -1
-
-        # Get the pipette out
-        self.arm.relative_move(sign * 20000, 0)
-        self.arm.wait_motor_stop(0)
-
-        # Wait until the user change the pipette and press a key
-        key = cv2.waitKey(0)
-        if key & 0xFF == ord('q'):
-            return 0, 0
-
-        # Approching the pipette until on screen
-        self.arm.relative_move(-sign * 17000, 0)
-        self.arm.wait_motor_stop(0)
-
-        while 1:
-            self.arm.relative_move(100, 0)
-            self.arm.wait_motor_stop(0)
-            key = cv2.waitKey(1)
-            if key & 0xFF == ord('q'):
-                return 0
-            img = self.template_zone()
-
-            isin, val, loc = templatematching(img, self.template[len(self.template) / 2])
-
-            if isin:
-                while 0.98 > val:
-                    val, _, loc = self.focus()
-
-                delta = np.array([[(self.x_init - loc[0]) * self.um_px], [(self.y_init - loc[1]) * self.um_px]])
-                move = self.rot_inv * delta
-                for i in range(2):
-                    self.arm.relative_move(move[i, 0], i)
-                self.arm.wait_motor_stop([0, 1])
-                # Change zero position to current position
-                self.arm.set_to_zero([0, 1, 2])
-                self.microscope.set_to_zero([0, 1, 2])
-                break
-        pass
-
     def get_image_series(self, nb_img=51):
         z_pos = self.microscope.position(2)
         for k in range(nb_img):
