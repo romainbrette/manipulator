@@ -268,7 +268,7 @@ class PatchClampGUI(Frame):
         self.paramecia.grid(row=2, column=0, padx=2, pady=2)
 
         self.screenshots = Button(self.misc,
-                                  text='image series',
+                                  text='Screenshot',
                                   state='disable')
         self.screenshots.grid(row=2, column=1, padx=2, pady=2)
 
@@ -345,7 +345,7 @@ class PatchClampGUI(Frame):
             self.switch_follow.config(state='normal')
             self.save_pos.config(state='normal', command=self.robot.save_position)
             self.paramecia.config(state='normal')
-            self.screenshots.config(state='normal', command=self.robot.get_image_series)
+            self.screenshots.config(state='normal', command=self.robot.save_img)
 
             # Checking changes of robot messages and display them
             self.check_message()
