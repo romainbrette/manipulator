@@ -93,7 +93,7 @@ class Camera(Thread):
         Save a screenshot
         :return: 
         """
-        path = './{i}/screenshots/'.format(i=self.camera_name)
+        path = './screenshots/'
         # Check if path exist, creates it if not
         if not os.path.exists(os.path.dirname(path)):
             try:
@@ -106,7 +106,7 @@ class Camera(Thread):
         # Translate the image as a 8bit image
         img = self.frame
         n_img = len(os.listdir(path))+1
-        cv2.imwrite('./{i}/screenshots/screenshot{n}.jpg'.format(i=self.camera_name, n=n_img), img)
+        cv2.imwrite('./screenshots/screenshot{n}.jpg'.format(n=n_img), img)
         pass
 
     def switch_mouse_callback(self):
