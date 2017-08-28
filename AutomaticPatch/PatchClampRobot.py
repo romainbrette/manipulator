@@ -635,7 +635,7 @@ class PatchClampRobot(Thread):
         for i in range(3):
             for j in range(3):
                 if (i != 1) & (j != 1):
-                    # divide template zone into 9 images
+                    # divide template zone into 8 images
                     temp = template[i * height / 4:height / 2 + i * height / 4, j * width / 4:width / 2 + j * width / 4]
 
                     # Search the tip using the number of darkest pixel in the image
