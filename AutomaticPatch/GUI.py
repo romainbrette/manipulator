@@ -63,7 +63,7 @@ class PatchClampGUI(Frame):
 
         self.armlist = ttk.Combobox(self.robot_box,
                                     state='readonly',
-                                    values='dev1 dev2')
+                                    values='dev1 dev2 Arduino')
         self.armlist.grid(row=1, column=1, columnspan=2, padx=2, pady=2)
 
         # Camera

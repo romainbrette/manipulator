@@ -32,6 +32,13 @@ def init_device(devtype, armdev):
         arm = XYZUnit(dev, [1, 2, 3])
     elif armdev == 'dev2':
         arm = XYZUnit(dev, [4, 5, 6])
+    elif armdev == 'Arduino':
+        try:
+            # arduino = appel classe manipulateur arduino
+            #arm = XYZUnit(arduino, [1, 2, 3])
+            arm = 0
+        except SerialException:
+            raise SerialException("Arduino not found.")
     else:
         raise NameError('Unknown device for arm control.')
 
