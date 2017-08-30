@@ -954,7 +954,7 @@ class PatchClampRobot(Thread):
                             return 0
                     # Seal succesfull
                     self.pressure.release()
-                    self.update_message('Patch done.')
+                    self.update_message('Seal done.')
                     return 1
 
         # Broke the loop because arm went too far without finding the cell
@@ -970,7 +970,7 @@ class PatchClampRobot(Thread):
         if 1e9 > self.get_resistance('float'):
             self.update_message('ERROR: Seal has not been accomplished.')
             return 0
-        self.update_message('Clamping...')
+        self.update_message('Breaking in...')
         self.amplifier.meter_resist_enable(True)
         while 300e6 < self.get_resistance():
             # Breaking in while resistance does not correspond to interior of cell
@@ -980,13 +980,13 @@ class PatchClampRobot(Thread):
             nb_try += 1
             if nb_try == 4:
                 # Too many tries: failure
-                self.update_message('ERROR: Clamp unsuccessful.')
+                self.update_message('ERROR: Break-in unsuccessful.')
                 return 0
         # Broke in the cell
         self.amplifier.meter_resist_enable(False)
         time.sleep(.5)
         self.amplifier.null_current()
-        self.update_message('Clamp done.')
+        self.update_message('Done.')
         return 1
 
     def update_message(self, text):
