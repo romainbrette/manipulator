@@ -16,6 +16,7 @@ __all__ = ['PatchClampRobot']
 class PatchClampRobot(Thread):
     """
     Class to control devices for patch clamp.
+    After calibration: Left clic for positionning, Right clic for automatic patch-clamp
     """
 
     def __init__(self, controller, arm, camera, amplifier=None, pump=None, verbose=True):
