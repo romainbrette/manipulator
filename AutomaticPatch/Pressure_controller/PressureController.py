@@ -59,9 +59,6 @@ class PressureController(Pump):
         """
         # Holst thesis: 0 to -345 mBar in 1.5 second
         # Desai: -150 mBar for 1 second; repeated attempts
-        #self.set_pressure(-150)
-        #sleep(1)
-        #self.release()
         init_time = time()*10
         while time()*10-init_time < 15:
             self.set_pressure(-23*(time()*10-init_time))

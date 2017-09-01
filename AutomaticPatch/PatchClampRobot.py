@@ -557,10 +557,6 @@ class PatchClampRobot(Thread):
                 self.event = {'event': 'PatchClamp', 'x': x, 'y': y}
         pass
 
-    def enable_click_position(self):
-        cv2.setMouseCallback(self.cam.winname, self.click_event)
-        pass
-
     def linear_move(self, initial_position, final_position):
         """
         Goes to an absolute position in straight line.
@@ -704,42 +700,6 @@ class PatchClampRobot(Thread):
             raise ValueError('The template image has not been detected.')
 
         return maxval, dep, loc
-
-    def focus_track(self, step, axis):
-        """
-        Focus after a move of the arm
-        """
-
-        # Move the arm
-        self.arm.relative_move(step, axis)
-
-        # Move the platform to center the tip
-        for i in range(3):
-            self.microscope.relative_move(self.mat[i, axis] * step, i)
-
-        # Waiting for motors to stop
-        self.arm.wait_motor_stop(axis)
-        self.microscope.wait_motor_stop([0, 1, 2])
-
-        # Focus around the estimated focus height
-        try:
-            _, _, loc = self.focus()
-        except ValueError:
-            raise EnvironmentError('Could not focus on the tip')
-
-        # Move the platform for compensation
-        delta = np.array([[(self.x_init - loc[0]) * self.um_px], [(self.y_init - loc[1]) * self.um_px], [0]])
-        move = self.rot_inv * delta
-        for i in range(2):
-            self.microscope.relative_move(move[i, 0], i)
-
-        self.microscope.wait_motor_stop([0, 1])
-
-        # Update the estimated move to do for a move of 1 um of the arm
-        for i in range(3):
-            self.mat[i, axis] = self.microscope.position(i)/self.arm.position(axis)
-
-        pass
 
     def matrix_accuracy(self):
         """
