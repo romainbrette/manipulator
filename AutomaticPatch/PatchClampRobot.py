@@ -69,6 +69,10 @@ class PatchClampRobot(Thread):
         self.verbose = verbose
         self.message = ''
 
+        #Last position paramecium
+        self.lastX = 0
+        self.lastY = 0
+
         # Connected devices
         self.amplifier = ResistanceMeter(amplifier)
         if not self.amplifier.connected:
@@ -110,166 +114,155 @@ class PatchClampRobot(Thread):
         while self.calibrated & self.running:
 
             if self.follow_paramecia:
+                self.follow_paramecium()
 
-                diameter = 11
-                img = self.cam.frame
-                height, width = img.shape[:2]
-                ratio = width / 256
-                #img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                img = cv2.resize(img, (width/ratio, height/ratio))  # faster
-                gauss = cv2.GaussianBlur(img, (9, 9), 0)
-                canny = cv2.Canny(gauss, img.shape[0]/8, img.shape[0]/8)
-                ret, thresh = cv2.threshold(canny, 127, 255, 0)
-                im2, contours, hierarchy = cv2.findContours(thresh, 1, 2)
-                for cnt in contours:
-                    try:
-                        M = cv2.moments(cnt)
-                        if bool(cv2.arcLength(cnt, True)) & bool(M['m00']):
-                            (x, y), radius = cv2.minEnclosingCircle(cnt)
-                            cx = int(M['m10'] / M['m00'])
-                            cy = int(M['m01'] / M['m00'])
-                            center = (cx, cy)
-                            radius = int(radius)
-                            if (radius < 55) & (radius > 15):
-                                if ((cx - lastX)**2+(cy-lastY)**2)**0.5 < 30 :
-                                    lastX = cx
-                                    lastY = cy
-                                    target = self.rot_inv * np.array([[(width / 2 - cx*ratio) * self.um_px * 0.35],
-                                                                      [(height / 2 - cy*ratio) * self.um_px * 0.35],
-                                                                      [0]])
-                                    self.microscope.absolute_move_group(
-                                        np.transpose(self.microscope.position()) + target,
-                                        [0, 1, 2])
-                                    break
-                    except cv2.error:
-                        pass
-                '''
-                f = tp.locate(canny, diameter, invert=False, noise_size=1, minmass=300, max_iterations=1,
-                              characterize=True, engine='python')  # numba is too slow!
-                xp = np.array(f['x'])
-                yp = np.array(f['y'])
-
-                # Closest one
-                if len(xp) > 0:
-                    self.disp_img_func = True
-                    j = np.argmin((xp - width / 40) ** 2 + (yp - height / 40) ** 2)
-                    xt, yt = xp[j], yp[j]
-                    xt = int(xt)
-                    yt = int(yt)
-                    cv2.circle(canny, (xt, yt), 5, (255, 0, 0), 1)
-                    cv2.imshow('Tracking', canny)
-                    cv2.waitKey(1)
-                    xt *= 20
-                    yt *= 20
-                    self.xt, self.yt = xt, yt
-                    target = self.rot_inv * np.array([[(width / 2 - xt) * self.um_px*0.35],
-                                                      [(height / 2 - yt) * self.um_px*0.35],
-                                                      [0]])
-                    self.microscope.absolute_move_group(np.transpose(self.microscope.position()) + target,
-                                                        [0, 1, 2])
-
-                else:
-                    self.disp_img_func = False
-                '''
             else:
                 # Robot has been calibrated, positionning is possible
                 if self.event['event'] == 'Positioning':
-
-                    # Move the tip of the pipette to the clicked position
-                    self.following = False
-                    self.update_message('Moving...')
-
-                    # Getting the position of the tip and the micriscope
-                    pos = np.transpose(self.microscope.position())
-
-                    # Computing the desired position
-                    offset = self.rot_inv*np.array([[(self.x_init - (self.event['x'] - self.template_loc[0])) * self.um_px],
-                                                    [(self.y_init - (self.event['y'] - self.template_loc[1])) * self.um_px],
-                                                    [0]])
-                    pos += offset
-
-                    # Moving the tip after a withdraw for security
-                    self.arm.relative_move(self.withdraw_sign*10, 0)
-                    self.arm.wait_motor_stop(0)
-                    self.arm.absolute_move_group(self.inv_mat*pos, [0, 1, 2])
-
-                    # Event is finished
-                    self.event['event'] = None
-                    self.update_message('done.')
+                    self.pipette_positionning()
 
                 elif (self.event['event'] == 'PatchClamp') & self.pipette_resistance_checked:
-
-                    self.following = False
-                    # Patch (and Clamp) at the clicked position
-                    self.update_message('Moving...')
-
-                    # Getting desired position
-                    mic_pos = np.transpose(self.microscope.position())
-
-                    offset = self.rot_inv*np.array([[(self.x_init - (self.event['x'] - self.template_loc[0])) * self.um_px],
-                                                    [(self.y_init - (self.event['y'] - self.template_loc[1])) * self.um_px],
-                                                    [0]])
-                    mic_pos += offset
-                    tip_pos = self.mat*np.transpose(self.arm.position())
-
-                    # Withdraw the pipette for security
-                    if self.withdraw_sign*np.sign(self.mat[2, 0])*(tip_pos[2, 0] - mic_pos[2, 0]) < 0:
-                        # tip is lower than the desired position, withdraw to the desired heigth
-                        move = self.withdraw_sign*(abs(mic_pos[2, 0]-tip_pos[2, 0])+15)/abs(self.mat[2, 0])
-                    else:
-                        # tip is higher than, or at, desired height
-                        move = self.withdraw_sign*15/abs(self.mat[2, 0])
-
-                    # Applying withdraw
-                    self.arm.relative_move(move, 0)
-                    self.arm.wait_motor_stop([0])
-
-                    # From now, use theoretical position rather than true position to compensate for unreachable position
-                    # Computing supposed position of the tip.
-                    theorical_tip_pos = tip_pos + self.mat*np.array([[move], [0], [0]])
-
-                    # Computing intermediate position in the same horizontal plan as the supposed tip position
-                    # Only x axis should have an offset compared to the desired position
-                    intermediate_x_pos = self.withdraw_sign*abs(theorical_tip_pos[2, 0]-mic_pos[2, 0])/abs(self.mat[2, 0])
-                    intermediate_pos = mic_pos + self.mat*np.array([[intermediate_x_pos], [0], [0]])
-
-                    # Applying moves to intermediate position
-                    self.arm.absolute_move_group(self.inv_mat*intermediate_pos, [0, 1, 2])
-                    self.arm.wait_motor_stop([0, 1, 2])
-
-                    # Getting close to the desired postion (offset 10um on x axis)
-                    self.linear_move(intermediate_pos, mic_pos+self.mat*np.array([[self.withdraw_sign*10.], [0.], [0.]]))
-                    self.arm.wait_motor_stop([0, 1, 2])
-
-                    if abs(self.pipette_resistance-self.get_resistance()) < 1e6:
-                        # Pipette has not been obstructed during previous moves, updating pipette offset
-                        self.pressure.release()
-                        self.amplifier.auto_pipette_offset()
-                        time.sleep(2)
-                        if self.patch(mic_pos):
-                            # Patch successful
-                            if self.enable_clamp:
-                                # Clamp is enabled, clamping
-                                time.sleep(120)
-                                self.clamp()
-                    else:
-                        # Pipette has been obstructed
-                        self.update_message('ERROR: pipette is obstructed.')
-
-                    # Envent is finished
-                    self.event['event'] = None
+                    self.automatic_patch_clamp()
 
                 elif self.following & (not self.event['event']):
-                    # The tip follow the camera
-                    # Same as poistionning, but without updating events at the end
-                    pos = np.transpose(self.microscope.position())
-                    # tip_pos = self.mat * np.transpose(self.arm.position())
+                    self.pipette_follows_camera()
 
-                    offset = self.rot_inv*np.array([[(self.x_init - (self.event['x'] - self.template_loc[0])) * self.um_px],
-                                                    [(self.y_init - (self.event['y'] - self.template_loc[1])) * self.um_px],
-                                                    [self.withdraw_sign*np.sign(self.mat[2, 0])*self.offset]])
-                    pos = pos + offset
-                    self.arm.absolute_move_group(self.inv_mat*pos, [0, 1, 2])
+        pass
+
+    def follow_paramecium(self):
+
+        if (self.lastY == 0) & (self.lastX == 0):
+            self.lastX = self.event['x']
+            self.lastY = self.event['y']
+        img = self.cam.frame
+        height, width = img.shape[:2]
+        ratio = width / 256
+        # img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        img = cv2.resize(img, (width / ratio, height / ratio))  # faster
+        gauss = cv2.GaussianBlur(img, (9, 9), 0)
+        canny = cv2.Canny(gauss, img.shape[0] / 8, img.shape[0] / 8)
+        ret, thresh = cv2.threshold(canny, 127, 255, 0)
+        im2, contours, hierarchy = cv2.findContours(thresh, 1, 2)
+        for cnt in contours:
+            try:
+                M = cv2.moments(cnt)
+                if bool(cv2.arcLength(cnt, True)) & bool(M['m00']):
+                    (x, y), radius = cv2.minEnclosingCircle(cnt)
+                    cx = int(M['m10'] / M['m00'])
+                    cy = int(M['m01'] / M['m00'])
+                    center = (cx, cy)
+                    radius = int(radius)
+                    if (radius < 55) & (radius > 15):
+                        if ((cx - self.lastX) ** 2 + (cy - self.lastY) ** 2) ** 0.5 < 30:
+                            self.lastX = cx
+                            self.lastY = cy
+                            target = self.rot_inv * np.array([[(width / 2 - cx * ratio) * self.um_px * 0.35],
+                                                              [(height / 2 - cy * ratio) * self.um_px * 0.35],
+                                                              [0]])
+                            self.microscope.absolute_move_group(
+                                np.transpose(self.microscope.position()) + target,
+                                [0, 1, 2])
+                            break
+            except cv2.error:
+                pass
+
+    def pipette_positionning(self):
+        # Move the tip of the pipette to the clicked position
+        self.following = False
+        self.update_message('Moving...')
+
+        # Getting the position of the tip and the micriscope
+        pos = np.transpose(self.microscope.position())
+
+        # Computing the desired position
+        offset = self.rot_inv * np.array([[(self.x_init - (self.event['x'] - self.template_loc[0])) * self.um_px],
+                                          [(self.y_init - (self.event['y'] - self.template_loc[1])) * self.um_px],
+                                          [0]])
+        pos += offset
+
+        # Moving the tip after a withdraw for security
+        self.arm.relative_move(self.withdraw_sign * 10, 0)
+        self.arm.wait_motor_stop(0)
+        self.arm.absolute_move_group(self.inv_mat * pos, [0, 1, 2])
+
+        # Event is finished
+        self.event['event'] = None
+        self.update_message('done.')
+        pass
+
+    def automatic_patch_clamp(self):
+        self.following = False
+        # Patch (and Clamp) at the clicked position
+        self.update_message('Moving...')
+
+        # Getting desired position
+        mic_pos = np.transpose(self.microscope.position())
+
+        offset = self.rot_inv * np.array([[(self.x_init - (self.event['x'] - self.template_loc[0])) * self.um_px],
+                                          [(self.y_init - (self.event['y'] - self.template_loc[1])) * self.um_px],
+                                          [0]])
+        mic_pos += offset
+        tip_pos = self.mat * np.transpose(self.arm.position())
+
+        # Withdraw the pipette for security
+        if self.withdraw_sign * np.sign(self.mat[2, 0]) * (tip_pos[2, 0] - mic_pos[2, 0]) < 0:
+            # tip is lower than the desired position, withdraw to the desired heigth
+            move = self.withdraw_sign * (abs(mic_pos[2, 0] - tip_pos[2, 0]) + 15) / abs(self.mat[2, 0])
+        else:
+            # tip is higher than, or at, desired height
+            move = self.withdraw_sign * 15 / abs(self.mat[2, 0])
+
+        # Applying withdraw
+        self.arm.relative_move(move, 0)
+        self.arm.wait_motor_stop([0])
+
+        # From now, use theoretical position rather than true position to compensate for unreachable position
+        # Computing supposed position of the tip.
+        theorical_tip_pos = tip_pos + self.mat * np.array([[move], [0], [0]])
+
+        # Computing intermediate position in the same horizontal plan as the supposed tip position
+        # Only x axis should have an offset compared to the desired position
+        intermediate_x_pos = self.withdraw_sign * abs(theorical_tip_pos[2, 0] - mic_pos[2, 0]) / abs(self.mat[2, 0])
+        intermediate_pos = mic_pos + self.mat * np.array([[intermediate_x_pos], [0], [0]])
+
+        # Applying moves to intermediate position
+        self.arm.absolute_move_group(self.inv_mat * intermediate_pos, [0, 1, 2])
+        self.arm.wait_motor_stop([0, 1, 2])
+
+        # Getting close to the desired postion (offset 10um on x axis)
+        self.linear_move(intermediate_pos, mic_pos + self.mat * np.array([[self.withdraw_sign * 10.], [0.], [0.]]))
+        self.arm.wait_motor_stop([0, 1, 2])
+
+        if abs(self.pipette_resistance - self.get_resistance()) < 1e6:
+            # Pipette has not been obstructed during previous moves, updating pipette offset
+            self.pressure.release()
+            self.amplifier.auto_pipette_offset()
+            time.sleep(2)
+            if self.patch(mic_pos):
+                # Patch successful
+                if self.enable_clamp:
+                    # Clamp is enabled, clamping
+                    time.sleep(120)
+                    self.clamp()
+        else:
+            # Pipette has been obstructed
+            self.update_message('ERROR: pipette is obstructed.')
+
+        # Envent is finished
+        self.event['event'] = None
+        pass
+
+    def pipette_follows_camera(self):
+        # The tip follows the camera
+        # Same as poistionning, but without updating events at the end
+        pos = np.transpose(self.microscope.position())
+        # tip_pos = self.mat * np.transpose(self.arm.position())
+
+        offset = self.rot_inv * np.array([[(self.x_init - (self.event['x'] - self.template_loc[0])) * self.um_px],
+                                          [(self.y_init - (self.event['y'] - self.template_loc[1])) * self.um_px],
+                                          [self.withdraw_sign * np.sign(self.mat[2, 0]) * self.offset]])
+        pos = pos + offset
+        self.arm.absolute_move_group(self.inv_mat * pos, [0, 1, 2])
         pass
 
     def img_func(self, img):
