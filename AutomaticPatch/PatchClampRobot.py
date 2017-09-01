@@ -9,7 +9,6 @@ from math import fabs
 import time
 import os
 import errno
-import trackpy as tp
 
 __all__ = ['PatchClampRobot']
 
@@ -69,7 +68,7 @@ class PatchClampRobot(Thread):
         self.verbose = verbose
         self.message = ''
 
-        #Last position paramecium
+        # Last position paramecium
         self.lastX = 0
         self.lastY = 0
 
@@ -989,6 +988,6 @@ if __name__ == '__main__':
             if not calibrated:
                 print 'Calibration canceled.'
         if calibrated:
-            robot.enable_click_position()
+            robot.cam.mouse_callback = 1
 
     del robot
