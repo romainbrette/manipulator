@@ -1,0 +1,5 @@
+Notes on the code
+-----------------
+GUI is a GUI around PatchClampRobot, which runs as a thread.
+It catches events produced by the GUI.
+Manipulators are handled in Camera. (?)
